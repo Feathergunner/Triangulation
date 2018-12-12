@@ -241,6 +241,9 @@ class MT_MinimumTriangulation:
 		
 		# Get a basis of the chordless cycles of G:
 		self.cycles = self.get_all_cycles()
+		logging.debug("all cycles of G:")
+		for c in self.cycles:
+			logging.debug(c)
 		self.cycle_ids = {self.cycles[i] : i for i in range(len(self.cycles))}
 		
 		# Check the maximum cycle length. If the largest cycle contains more than 16 nodes, abort.
@@ -400,9 +403,48 @@ class MT_MinimumTriangulation:
 		'''
 		Constructs a list of all cycles of length > 3 within the graph.
 		'''
+		logging.info("=== MT_MinimumTriangulation.get_all_cycles ===")
+
+		# use depth-first-search at each node
+		cycles = {}
+		for node in self.G:
+			logging.debug("Considering start node "+str(node))
+			visited = {n : 0 for n in self.G}
+			visited[node] = 1
+			dfs_stack = [node]
+			## TODO: work with backtracking-stack, dfs_stack obviously does not work to retrace cycles...
+			backtracking_stack = [node]
+			while len(dfs_stack) > 0:
+				current_dfs_node = dfs_stack.pop()
+				logging.debug("current dfs-node: "+str(current_dfs_node))
+				logging.debug("current dfs-stack:")
+				logging.debug(dfs_stack)
+				for n in [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 0]:
+					dfs_stack.append(n)
+					visited[n] = 1
+				for n in [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 1]:
+					# add new cycle
+					backtracking_index_offset = 1
+					while backtracking_index_offset < len(dfs_stack) and not dfs_stack[backtracking_index_offset] == n:
+						backtracking_index_offset += 1
+					if backtracking_index_offset < len(dfs_stack):
+						cycle_edges = dfs_stack[-1*backtracking_index_offset:]+[current_dfs_node]
+						if len(cycle_edges) > 3:
+							logging.debug("Found a cycle of length > 3:")
+							new_cycle = MT_Cycle(cycle_edges)
+							logging.debug(new_cycle)
+							if new_cycle not in cycles:
+								logging.debug("Cycle is new!")
+								cycles[new_cycle] = 0
+							else:
+								logging.debug("Cycle already exists!")
+
+				visited[current_dfs_node] = 2
+
 		## TO DO
 		## cycle_basis is not enough!
-		return [MT_Cycle(c) for c in nx.cycle_basis(self.G) if len(c) > 3]
+		#return [MT_Cycle(c) for c in nx.cycle_basis(self.G) if len(c) > 3]
+		return [c for c in cycles]
 		
 	#def check_if_cycle_exists_in_database(self, cycle):
 	#	'''
