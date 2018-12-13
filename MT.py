@@ -156,10 +156,6 @@ class MT_MinimumTriangulation:
 		# initialize a database
 		self.init_cycle_chord_database()
 		
-		logging.debug("Initialization finished. List of all cycles:")
-		for c in self.cycles:
-			logging.debug(c)
-		
 		# initialize stack of currently considered edges:
 		current_edge_stack = []
 		# initialize map of edgesets:
@@ -187,6 +183,10 @@ class MT_MinimumTriangulation:
 			for cycle_id in range(len(self.cycles)):
 				logging.debug(" "+str(cycle_id)+" : "+str(self.cycles[cycle_id])+" ["+str(self.cycles[cycle_id].is_in_graph)+"]")
 			logging.debug("Current number of nonchordal cycles: "+str(self.number_of_nonchordal_cycles))
+			
+			logging.debug("Current chords in the graph:")
+			for chord in [e for e in self.F if e.is_in_graph]:
+				logging.debug(chord)
 				
 			# get next chord that is
 			# a) not in graph and
@@ -239,7 +239,7 @@ class MT_MinimumTriangulation:
 		for c in nx.cycle_basis(self.G):
 			logging.debug(c)
 		
-		# Get a basis of the chordless cycles of G:
+		# Get all chordless cycles of G:
 		self.cycles = self.get_all_cycles()
 		logging.debug("all cycles of G:")
 		for c in self.cycles:
@@ -256,6 +256,9 @@ class MT_MinimumTriangulation:
 		# Construct set of all possible chord edges for G:
 		# and the database describing chord-cycle-relationships
 		for cycle_id in range(len(self.cycles)):
+			logging.debug("Current chord_id data:")
+			for key in self.chord_adjacencies:
+				logging.debug(str(key)+ " : " +str(self.chord_adjacencies[key]))
 			self.init_cycle_chord_database_for_cycle(cycle_id)
 	
 	def init_cycle_chord_database_for_cycle(self, cycle_id):
@@ -263,7 +266,11 @@ class MT_MinimumTriangulation:
 		Initialize the database for a single cycle.
 		'''
 		logging.info("=== MT_MinimumTriangulation.init_cycle_chord_database_for_cycle ===")
-		logging.info("Init cycle chord databse for cycle "+str(cycle_id)+": "+str(self.cycles[cycle_id]))
+		logging.info("Init cycle chord database for cycle "+str(cycle_id)+": "+str(self.cycles[cycle_id]))
+		
+		#logging.debug("Current chord_id data:")
+		#for key in self.chord_adjacencies:
+		#	logging.debug(str(key)+ " : " +str(self.chord_adjacencies[key]))
 		
 		cycle = self.cycles[cycle_id]
 		for i in range(len(cycle)):
@@ -273,7 +280,8 @@ class MT_MinimumTriangulation:
 				if i == 0 and j == len(cycle)-1:
 					break
 				if cycle[j] not in self.chord_adjacencies[cycle[i]]:
-					self.chord_adjacencies[cycle[j]] = {}
+					if cycle[j] not in self.chord_adjacencies:
+						self.chord_adjacencies[cycle[j]] = {}
 					current_chord_id = len(self.F)
 					self.chord_adjacencies[cycle[i]][cycle[j]] = current_chord_id
 					self.chord_adjacencies[cycle[j]][cycle[i]] = current_chord_id
@@ -411,51 +419,48 @@ class MT_MinimumTriangulation:
 			logging.debug("Considering start node "+str(node))
 			visited = {n : 0 for n in self.G}
 			visited[node] = 1
-			dfs_stack = [node]
-			## TODO: work with backtracking-stack, dfs_stack obviously does not work to retrace cycles...
-			backtracking_stack = [node]
-			while len(dfs_stack) > 0:
-				current_dfs_node = dfs_stack.pop()
-				logging.debug("current dfs-node: "+str(current_dfs_node))
-				logging.debug("current dfs-stack:")
-				logging.debug(dfs_stack)
-				for n in [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 0]:
-					dfs_stack.append(n)
-					visited[n] = 1
-				for n in [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 1]:
+			predecessors = {}
+			predecessors[node] = None
+			current_dfs_node = node
+			
+			while not current_dfs_node == None:
+				logging.debug("Current node: "+str(current_dfs_node))
+				#logging.debug("Neighbors of current node:")
+				#for n in self.G.neighbors(current_dfs_node):
+				#	logging.debug(n)
+				#logging.debug("current predecessors data:")
+				#for node in predecessors:
+				#	logging.debug(str(node) +": "+str(predecessors[node]))
+					
+				visited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 1]
+				for node in visited_neighbors:
+					#logging.debug("Looking for a cycle with neighbor "+str(node))
 					# add new cycle
-					backtracking_index_offset = 1
-					while backtracking_index_offset < len(dfs_stack) and not dfs_stack[backtracking_index_offset] == n:
-						backtracking_index_offset += 1
-					if backtracking_index_offset < len(dfs_stack):
-						cycle_edges = dfs_stack[-1*backtracking_index_offset:]+[current_dfs_node]
-						if len(cycle_edges) > 3:
-							logging.debug("Found a cycle of length > 3:")
-							new_cycle = MT_Cycle(cycle_edges)
-							logging.debug(new_cycle)
-							if new_cycle not in cycles:
-								logging.debug("Cycle is new!")
-								cycles[new_cycle] = 0
-							else:
-								logging.debug("Cycle already exists!")
+					cycle = []
+					current_cycle_node = current_dfs_node
+					while not current_cycle_node == node:
+						cycle.append(current_cycle_node)
+						current_cycle_node = predecessors[current_cycle_node]
+					cycle.append(current_cycle_node)
+					
+					if len(cycle) > 3:
+						logging.debug("Found a cycle of length > 3:")
+						new_cycle = MT_Cycle(cycle)
+						logging.debug(new_cycle)
+						if new_cycle not in cycles:
+							logging.debug("Cycle is new!")
+							cycles[new_cycle] = 0
+						else:
+							logging.debug("Cycle already exists!")
 
-				visited[current_dfs_node] = 2
-
-		## TO DO
-		## cycle_basis is not enough!
-		#return [MT_Cycle(c) for c in nx.cycle_basis(self.G) if len(c) > 3]
+				unvisited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 0]
+				if len(unvisited_neighbors) > 0:
+					visited[current_dfs_node] = 1
+					neighbor = unvisited_neighbors[0]
+					predecessors[neighbor] = current_dfs_node
+					current_dfs_node = neighbor
+				else:
+					visited[current_dfs_node] = 2
+					current_dfs_node = predecessors[current_dfs_node]
+					
 		return [c for c in cycles]
-		
-	#def check_if_cycle_exists_in_database(self, cycle):
-	#	'''
-	#	For a (new) cycle object, check if this specific cycle already exists in self.cycles
-	#	
-	#	Args:
-	#		cycle : a cycle (type MT_Cycle)
-	#		
-	#	Return:
-	#		cycle_index : an int s.t. self.cycles[cycle_index] == cycle if the cycle already exists. Otherwise -1
-	#	'''
-	#	logging.info("=== MT_MinimumTriangulation.check_if_cycle_exists_in_database ===")
-	#	for i in range(len(self.cycles))
-		
