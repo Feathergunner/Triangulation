@@ -10,7 +10,7 @@ import LEX_M
 import EG
 import MT
 
-import graph_construction as gc
+#import graph_construction as gc
 import graph_meta as meta
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
