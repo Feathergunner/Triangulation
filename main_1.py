@@ -30,6 +30,12 @@ def test_triangulation(G, algo=LEX_M.triangulate_LEX_M):
 	draw_chordal_graph(H, edges_original, edges_added)
 	return H
 
+def test_EG(G):
+	H = elimination_game_triangulation(G)
+	edges_added = [e for e in H.edges() if e not in G.edges()]
+	print ("Size of this triangulation by elimination game: "+str(len(H.edges())-len(G.edges())))
+	draw_chordal_graph(H, edges_original, edges_added)
+	
 def check_all_cycles(G):
 	all_cycles = nx.cycle_basis(G)
 	for cycle in all_cycles:
@@ -52,12 +58,12 @@ def test_mt(G):
 	chord_edges = mt.edges_of_minimum_triangulation
 	Triang = G.copy()
 	Triang.add_edges_from(chord_edges)
-	
 	print ("Result is chordal: "+str(nx.is_chordal(Triang)))
 	if not nx.is_chordal(Triang):
 		for c in nx.cycle_basis(Triang):
 			print (c)
 	print ("Size of minimum triangulation: "+str(len(chord_edges)))
+	#draw_chordal_graph(G)
 	draw_chordal_graph(Triang, G.edges(), chord_edges)
 	
 	#draw_chordal_graph(G)
@@ -82,26 +88,30 @@ def draw_chordal_graph(G, edges_original=None, edges_added=None):
 	plt.show()
 
 if __name__=="__main__":
-	number_of_nodes = 6
+	number_of_nodes = 10
 
 	#G = nx.cycle_graph(number_of_nodes)
-	#G = nx.erdos_renyi_graph(number_of_nodes,0.6)
+	G = nx.erdos_renyi_graph(number_of_nodes,0.4)
 	
-	V = [n for n in range(number_of_nodes)]
-	E = [(0, 1), (0, 2), (0, 3), (0, 5), (1, 4), (2, 3), (2, 5), (3, 4), (3, 5), (4, 5)]
-	G = nx.Graph()
-	G.add_nodes_from(V)
-	G.add_edges_from(E)
+	#V = [n for n in range(number_of_nodes)]
+	#E = [(0, 1), (0, 2), (0, 3), (0, 5), (1, 4), (2, 3), (2, 5), (3, 4), (3, 5), (4, 5)]#, (4,0)]
+	#G = nx.Graph()
+	#G.add_nodes_from(V)
+	#G.add_edges_from(E)
+	# this graph is chordal after adding the single edge (4,0)
 	
 	logging.debug([n for n in G])
 	logging.debug([e for e in G.edges])
 	
-	logging.debug("Cycle basis for G:")
-	for c in nx.cycle_basis(G):
-		logging.debug(c)
-	logging.debug("Minimum cycle basis for G:")
+	draw_chordal_graph(G)
+	print(nx.is_chordal(G))
+	G_POE = G.copy()
+	test_poe(G_POE)
+	G_LEX = G.copy()
+	test_triangulation(G_LEX)
+	G_MIN = G.copy()
+	test_mt(G_MIN)
 	
-	test_mt(G)
 	#test_triangulation(G)
 	#H = test_triangulation(G)
 	#test_poe(G)
