@@ -173,11 +173,6 @@ class MT_MinimumTriangulation:
 		current_chord_id = 0
 		terminated = False
 		while not terminated:
-			if current_chord_id >= len(self.F):
-				terminated = True
-				logging.debug("Current id larger than total number of chords. Terminate.")
-				break
-				
 			logging.debug("=*= NEXT ITERATION =*=")
 			logging.debug("Current cycles in the graph:")
 			for cycle_id in range(len(self.cycles)):
@@ -202,7 +197,13 @@ class MT_MinimumTriangulation:
 			# otherwise
 			#	pop the next tuple from the stack
 			#	merge all cylces that were split by that last operation from the stack
-			if current_chord_id >= 0:
+			
+			if current_chord_id >= len(self.F):
+				terminated = True
+				logging.debug("Current id larger than total number of chords. Terminate.")
+				break
+				
+			elif current_chord_id >= 0:
 				logging.debug("Add this chord to graph.")
 				cycles_to_split = [cycle_id for cycle_id in self.F[current_chord_id].cycle_indices if self.cycles[cycle_id].is_in_graph]
 				chord_stack.append((current_chord_id, cycles_to_split))
@@ -223,8 +224,9 @@ class MT_MinimumTriangulation:
 				for cycle_id in last_split_cycles:
 					self.merge_cycle(current_chord_id, cycle_id)
 				current_chord_id += 1
+				
 			else:
-				logging.warning("Something unexpected happened in main loop. Terminate.")
+				logging.warning("All possibilities are evaluated. Terminate.")
 				terminated = True
 		
 		self.edges_of_minimum_triangulation = [e.get_edge() for e in minimum_triangulation_chordset]
@@ -236,14 +238,12 @@ class MT_MinimumTriangulation:
 		'''
 		logging.info("=== MT_MinimumTriangulation.init_cycle_chord_database ===")
 		
-		for c in nx.cycle_basis(self.G):
-			logging.debug(c)
-		
 		# Get all chordless cycles of G:
 		self.cycles = self.get_all_cycles()
 		logging.debug("all cycles of G:")
 		for c in self.cycles:
 			logging.debug(c)
+		
 		self.cycle_ids = {self.cycles[i] : i for i in range(len(self.cycles))}
 		
 		# Check the maximum cycle length. If the largest cycle contains more than 16 nodes, abort.
@@ -407,7 +407,7 @@ class MT_MinimumTriangulation:
 			current_chord_id += 1
 		return -1
 		
-	def get_all_cycles(self):
+	def get_all_cycles(self, only_base_cycles=True):
 		'''
 		Constructs a list of all cycles of length > 3 within the graph.
 		'''
@@ -444,14 +444,21 @@ class MT_MinimumTriangulation:
 					cycle.append(current_cycle_node)
 					
 					if len(cycle) > 3:
-						logging.debug("Found a cycle of length > 3:")
-						new_cycle = MT_Cycle(cycle)
-						logging.debug(new_cycle)
-						if new_cycle not in cycles:
-							logging.debug("Cycle is new!")
-							cycles[new_cycle] = 0
-						else:
-							logging.debug("Cycle already exists!")
+						logging.debug("Found a cycle of length > 3")
+						add_this_cycle = True
+						if only_base_cycles:
+							subgraph = self.G.subgraph(cycle)
+							if len(subgraph.edges()) > len(cycle):
+								add_this_cycle = False
+								logging.debug("Cycle contains a chord!")							
+						if add_this_cycle:
+							new_cycle = MT_Cycle(cycle)
+							logging.debug("Cycle: "+str(new_cycle))
+							if new_cycle not in cycles:
+								logging.debug("Cycle is new!")
+								cycles[new_cycle] = 0
+							else:
+								logging.debug("Cycle already exists!")
 
 				unvisited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 0]
 				if len(unvisited_neighbors) > 0:
