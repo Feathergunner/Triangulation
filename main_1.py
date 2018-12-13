@@ -88,27 +88,32 @@ def draw_chordal_graph(G, edges_original=None, edges_added=None):
 	plt.show()
 
 if __name__=="__main__":
-	number_of_nodes = 10
+	number_of_nodes = 8
 
 	#G = nx.cycle_graph(number_of_nodes)
-	G = nx.erdos_renyi_graph(number_of_nodes,0.4)
+	#G = nx.erdos_renyi_graph(number_of_nodes,0.6)
 	
-	#V = [n for n in range(number_of_nodes)]
-	#E = [(0, 1), (0, 2), (0, 3), (0, 5), (1, 4), (2, 3), (2, 5), (3, 4), (3, 5), (4, 5)]#, (4,0)]
-	#G = nx.Graph()
+	# this graph is chordal after adding the single edge (4,0):
+	E1 = [(0, 1), (0, 2), (0, 3), (0, 5), (1, 4), (2, 3), (2, 5), (3, 4), (3, 5), (4, 5)]#, (4,0)]
+
+	# in this graph a new non-chordal cycle of length 4 is created by the minimum triangulation:
+	E2 = [(0, 1), (0, 2), (0, 3), (0, 5), (0, 6), (1, 2), (1, 3), (1, 6), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 4), (3, 5), (3, 6), (4, 5), (4, 7), (6, 7)]
+
+	E3 = [(0,1), (1,2), (2,3), (3,0), (0,4), (1,4), (0,5), (3,5), (4,5), (0,6), (3,6), (2,7), (3,7), (6,7)]
+
+	G = nx.Graph()
 	#G.add_nodes_from(V)
-	#G.add_edges_from(E)
-	# this graph is chordal after adding the single edge (4,0)
-	
+	G.add_edges_from(E3)
+		
 	logging.debug([n for n in G])
-	logging.debug([e for e in G.edges])
+	logging.debug([e for e in G.edges()])
 	
 	draw_chordal_graph(G)
-	print(nx.is_chordal(G))
-	G_POE = G.copy()
-	test_poe(G_POE)
-	G_LEX = G.copy()
-	test_triangulation(G_LEX)
+	#print(nx.is_chordal(G))
+	#G_POE = G.copy()
+	#test_poe(G_POE)
+	#G_LEX = G.copy()
+	#test_triangulation(G_LEX)
 	G_MIN = G.copy()
 	test_mt(G_MIN)
 	
