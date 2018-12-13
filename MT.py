@@ -209,6 +209,11 @@ class MT_MinimumTriangulation:
 				chord_stack.append((current_chord_id, cycles_to_split))
 				for cycle_id in cycles_to_split:
 					self.split_cycle(cycle_id, current_chord_id)
+					# set chord as added:
+					self.F[current_chord_id].is_in_graph = True
+					## TO DO: check if a new cycle was constructed:
+					#self.get_all_cycles_single_startnode(self.F[current_chord_id][0])
+
 					# check if graph is chordal:
 					if self.number_of_nonchordal_cycles == 0:
 						# check if current edge set has minimum size so far:
@@ -223,6 +228,8 @@ class MT_MinimumTriangulation:
 				logging.debug("Last added chord: "+str(current_chord_id)+": "+str(self.F[current_chord_id]))
 				for cycle_id in last_split_cycles:
 					self.merge_cycle(current_chord_id, cycle_id)
+
+				self.F[current_chord_id].is_in_graph = False
 				current_chord_id += 1
 				
 			else:
@@ -239,8 +246,8 @@ class MT_MinimumTriangulation:
 		logging.info("=== MT_MinimumTriangulation.init_cycle_chord_database ===")
 		
 		# Get all chordless cycles of G:
-		self.cycles = self.get_all_cycles()
-		logging.debug("all cycles of G:")
+		self.get_all_cycles()
+		logging.debug("All cycles of G:")
 		for c in self.cycles:
 			logging.debug(c)
 		
@@ -291,7 +298,7 @@ class MT_MinimumTriangulation:
 				logging.debug("Add chord "+str(current_chord_id)+" ("+str(cycle[i])+","+str(cycle[j])+") to this cycle.")
 				self.F[current_chord_id].add_cycle(cycle_id)
 				self.cycles[cycle_id].add_chord(current_chord_id)
-		
+
 	def split_cycle(self, cycle_id, chord_id):
 		'''
 		Splits a cycle into two subcycles by a given edge.
@@ -303,7 +310,7 @@ class MT_MinimumTriangulation:
 		logging.info("=== MT_MinimumTriangulation.split_cycle ===")
 		logging.info("split cycle "+str(cycle_id)+": "+str(self.cycles[cycle_id]))
 		logging.info("at chord "+str(chord_id))
-		
+
 		if chord_id in self.cycles[cycle_id].subcycles:
 			# get ids of subcycles
 			for subcycle_id in self.cycles[cycle_id].subcycles[chord_id]:
@@ -335,8 +342,6 @@ class MT_MinimumTriangulation:
 		# set cycle as removed:
 		self.cycles[cycle_id].is_in_graph = False
 		self.number_of_nonchordal_cycles -= 1
-		# set chord as added:
-		self.F[chord_id].is_in_graph = True
 			
 	def merge_cycle(self, chord_id, cycle_id):
 		'''
@@ -351,7 +356,6 @@ class MT_MinimumTriangulation:
 		
 		self.cycles[cycle_id].is_in_graph = True
 		self.number_of_nonchordal_cycles += 1
-		self.F[chord_id].is_in_graph = False
 		for subcycle_id in self.cycles[cycle_id].subcycles[chord_id]:
 			self.cycles[subcycle_id].is_in_graph = False
 			self.number_of_nonchordal_cycles -= 1
@@ -414,71 +418,76 @@ class MT_MinimumTriangulation:
 		Args:
 			min_cycle_length : the minimum length of cycles that are considered
 			only_base_cycles : if true, this method returns only chordless cycles. Otherwise, all cycles will be returned
-
-		Return:
-			a list of all cycles (type MT_cycle) that are contained in the graph and are conform to the specified restrictions.
 		'''
 		logging.info("=== MT_MinimumTriangulation.get_all_cycles ===")
 
-		
-
 		# use depth-first-search at each node
-		cycles = {}
 		for node in self.G:
-			logging.debug("Considering start node "+str(node))
-			visited = {n : 0 for n in self.G}
-			visited[node] = 1
-			predecessors = {}
-			successors = {n : [] for n in self.G}
-			predecessors[node] = None
-			current_dfs_node = node
-			
-			while not current_dfs_node == None:
-				logging.debug("Current node: "+str(current_dfs_node))
-				#logging.debug("Neighbors of current node:")
-				#for n in self.G.neighbors(current_dfs_node):
-				#	logging.debug(n)
-				#logging.debug("current predecessors data:")
-				#for node in predecessors:
-				#	logging.debug(str(node) +": "+str(predecessors[node]))
-					
-				visited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 1]
-				for node in visited_neighbors:
-					#logging.debug("Looking for a cycle with neighbor "+str(node))
-					# add new cycle
-					cycle = []
-					current_cycle_node = current_dfs_node
-					while not current_cycle_node == node:
-						cycle.append(current_cycle_node)
-						current_cycle_node = predecessors[current_cycle_node]
-					cycle.append(current_cycle_node)
-					
-					if len(cycle) > 3:
-						logging.debug("Found a cycle of length > 3")
-						add_this_cycle = True
-						if only_base_cycles:
-							subgraph = self.G.subgraph(cycle)
-							if len(subgraph.edges()) > len(cycle):
-								add_this_cycle = False
-								logging.debug("Cycle contains a chord!")							
-						if add_this_cycle:
-							new_cycle = MT_Cycle(cycle)
-							logging.debug("Cycle: "+str(new_cycle))
-							if new_cycle not in cycles:
-								logging.debug("Cycle is new!")
-								cycles[new_cycle] = 0
-							else:
-								logging.debug("Cycle already exists!")
+			self.get_all_cycles_single_startnode(node, min_cycle_length, only_base_cycles)
 
-				unvisited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if (visited[n] == 0) or (visited[n] == 2 and not n in successors[current_dfs_node])]
-				if len(unvisited_neighbors) > 0:
-					visited[current_dfs_node] = 1
-					neighbor = unvisited_neighbors[0]
-					predecessors[neighbor] = current_dfs_node
-					successors[current_dfs_node].append(neighbor)
-					current_dfs_node = neighbor
-				else:
-					visited[current_dfs_node] = 2
-					current_dfs_node = predecessors[current_dfs_node]
-					
-		return [c for c in cycles]
+	def get_all_cycles_single_startnode(self, startnode, min_cycle_length=4, only_base_cycles=True):
+		'''
+		Performs a DFS (depth-first-search) from a specific starting node and adds all new found cycles to the data structure
+
+		Args:
+			startnode : the starting node for the DFS
+			min_cycle_length : the minimum length of cycles that are considered
+			only_base_cycles : if true, this method returns only chordless cycles. Otherwise, all cycles will be returned
+
+		Return:
+			returns the number of added cycles
+		'''
+		logging.info("=== MT_MinimumTriangulation.get_all_cycles_single_startnode ===")
+		logging.debug("Considering start node "+str(startnode))
+
+		visited = {n : 0 for n in self.G}
+		visited[startnode] = 1
+		predecessors = {}
+		successors = {n : [] for n in self.G}
+		predecessors[startnode] = None
+		current_dfs_node = startnode
+		
+		number_of_added_cycles = 0
+
+		while not current_dfs_node == None:
+			logging.debug("Current node: "+str(current_dfs_node))
+				
+			visited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 1]
+			for node in visited_neighbors:
+				# add new cycle
+				cycle = []
+				current_cycle_node = current_dfs_node
+				while not current_cycle_node == node:
+					cycle.append(current_cycle_node)
+					current_cycle_node = predecessors[current_cycle_node]
+				cycle.append(current_cycle_node)
+				
+				if len(cycle) > 3:
+					logging.debug("Found a cycle of length > 3")
+					add_this_cycle = True
+					if only_base_cycles:
+						subgraph = self.G.subgraph(cycle)
+						if len(subgraph.edges()) > len(cycle):
+							add_this_cycle = False
+							logging.debug("Cycle contains a chord!")							
+					if add_this_cycle:
+						new_cycle = MT_Cycle(cycle)
+						logging.debug("Cycle: "+str(new_cycle))
+						if new_cycle not in self.cycles:
+							logging.debug("Cycle is new!")
+							self.cycles.append(new_cycle)
+							number_of_added_cycles += 1
+						else:
+							logging.debug("Cycle already exists!")
+			unvisited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if (visited[n] == 0) or (visited[n] == 2 and not n in successors[current_dfs_node])]
+			if len(unvisited_neighbors) > 0:
+				visited[current_dfs_node] = 1
+				neighbor = unvisited_neighbors[0]
+				predecessors[neighbor] = current_dfs_node
+				successors[current_dfs_node].append(neighbor)
+				current_dfs_node = neighbor
+			else:
+				visited[current_dfs_node] = 2
+				current_dfs_node = predecessors[current_dfs_node]
+
+		return number_of_added_cycles
