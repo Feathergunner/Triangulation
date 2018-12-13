@@ -171,7 +171,7 @@ class MT_MinimumTriangulation:
 		#current_cycle_id = 0
 		#current_chord_in_cycle_id = 0
 		current_chord_id = 0
-		terminated = False
+		terminated = nx.is_chordal(self.G) or len(self.cycles) == 0
 		while not terminated:
 			logging.debug("=*= NEXT ITERATION =*=")
 			logging.debug("Current cycles in the graph:")
@@ -407,11 +407,20 @@ class MT_MinimumTriangulation:
 			current_chord_id += 1
 		return -1
 		
-	def get_all_cycles(self, only_base_cycles=True):
+	def get_all_cycles(self, min_cycle_length=4, only_base_cycles=True):
 		'''
-		Constructs a list of all cycles of length > 3 within the graph.
+		Constructs a list of all cycles of a minimum length of the graph G
+
+		Args:
+			min_cycle_length : the minimum length of cycles that are considered
+			only_base_cycles : if true, this method returns only chordless cycles. Otherwise, all cycles will be returned
+
+		Return:
+			a list of all cycles (type MT_cycle) that are contained in the graph and are conform to the specified restrictions.
 		'''
 		logging.info("=== MT_MinimumTriangulation.get_all_cycles ===")
+
+		
 
 		# use depth-first-search at each node
 		cycles = {}
@@ -420,6 +429,7 @@ class MT_MinimumTriangulation:
 			visited = {n : 0 for n in self.G}
 			visited[node] = 1
 			predecessors = {}
+			successors = {n : [] for n in self.G}
 			predecessors[node] = None
 			current_dfs_node = node
 			
@@ -460,11 +470,12 @@ class MT_MinimumTriangulation:
 							else:
 								logging.debug("Cycle already exists!")
 
-				unvisited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 0]
+				unvisited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if (visited[n] == 0) or (visited[n] == 2 and not n in successors[current_dfs_node])]
 				if len(unvisited_neighbors) > 0:
 					visited[current_dfs_node] = 1
 					neighbor = unvisited_neighbors[0]
 					predecessors[neighbor] = current_dfs_node
+					successors[current_dfs_node].append(neighbor)
 					current_dfs_node = neighbor
 				else:
 					visited[current_dfs_node] = 2
