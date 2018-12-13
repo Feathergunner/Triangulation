@@ -1,6 +1,8 @@
 #!usr/bin/python
 # -*- coding: utf-8 -*-
 
+import logging
+
 def hashable_string_from_set(set):
 	'''
 	Sorts the item of the set an constructs a string
