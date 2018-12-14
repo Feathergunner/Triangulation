@@ -271,6 +271,9 @@ class MT_MinimumTriangulation:
 	def init_cycle_chord_database_for_cycle(self, cycle_id):
 		'''
 		Initialize the database for a single cycle.
+		
+		Args:
+			cycle_id : The id of the cycle for which the database is initialized.
 		'''
 		logging.info("=== MT_MinimumTriangulation.init_cycle_chord_database_for_cycle ===")
 		logging.info("Init cycle chord database for cycle "+str(cycle_id)+": "+str(self.cycles[cycle_id]))
@@ -308,13 +311,13 @@ class MT_MinimumTriangulation:
 			chord_id : the chord that splits the cycle
 		'''
 		logging.info("=== MT_MinimumTriangulation.split_cycle ===")
-		logging.info("split cycle "+str(cycle_id)+": "+str(self.cycles[cycle_id]))
-		logging.info("at chord "+str(chord_id))
+		logging.info("split cycle "+str(cycle_id)+": "+str(self.cycles[cycle_id])+" at chord "+str(chord_id)+": "+str(self.F[chord_id]))
 
 		if chord_id in self.cycles[cycle_id].subcycles:
 			# get ids of subcycles
 			for subcycle_id in self.cycles[cycle_id].subcycles[chord_id]:
 				self.cycles[subcycle_id].is_in_graph = True
+				self.number_of_nonchordal_cycles += 1
 		else:
 			# compute new subcycles:
 			nodes_new_cycles = self.get_subcycles(cycle_id, chord_id)
