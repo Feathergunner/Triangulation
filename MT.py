@@ -225,8 +225,11 @@ class MT_MinimumTriangulation:
 					'''
 					number_of_added_cycles = self.get_all_cycles_single_startnode(self.F[current_chord_id][0])
 					if number_of_added_cycles > 0:
-						print ("Add a new cycle")
-						for cycle_id in range(-number_of_added_cycles,0):
+						print ("Add new cycles with chord "+str(current_chord_id))
+						print ([self.F[edge_id].get_edge() for (edge_id, cyclelist) in chord_stack])
+						num_cycles = len(self.cycles)
+						for cycle_id in range(num_cycles-number_of_added_cycles,num_cycles):
+							print ("Add a new cycle: "+str(self.cycles[cycle_id]))
 							self.F[current_chord_id].induced_cycles.append(cycle_id)
 							self.init_cycle_chord_database_for_cycle(cycle_id)					
 
@@ -242,11 +245,13 @@ class MT_MinimumTriangulation:
 				logging.debug("Remove last chord from graph.")
 				(current_chord_id, last_split_cycles) = chord_stack.pop()
 				logging.debug("Last added chord: "+str(current_chord_id)+": "+str(self.F[current_chord_id]))
+
 				# merge previously split cycles:
 				for cycle_id in last_split_cycles:
 					self.merge_cycle(current_chord_id, cycle_id)
 				# remove induced cycles:
 				for cycle_id in self.F[current_chord_id].induced_cycles:
+					print ("Remove cycle: "+str(self.cycles[cycle_id]))
 					self.cycles[cycle_id].is_in_cycle = False
 					for chord_id in self.cycles[cycle_id].chordedge_ids:
 						self.F[chord_id].cycle_indices.remove(cycle_id)
@@ -363,6 +368,7 @@ class MT_MinimumTriangulation:
 						if not self.cycles[subcycle_id].is_in_graph:
 							self.cycles[subcycle_id].is_in_graph = True
 							self.number_of_nonchordal_cycles += 1
+					logging.debug("Add subcycle "+str(subcycle_id)+" to chord "+str(chord_id)+" of cycle "+str(cycle_id))
 					self.cycles[cycle_id].subcycles[chord_id].append(subcycle_id)
 
 		# set cycle as removed:
@@ -468,6 +474,7 @@ class MT_MinimumTriangulation:
 		
 		G_temp = self.G.copy()
 		G_temp.add_edges_from([e.get_edge() for e in self.F if e.is_in_graph])
+		logging.debug("Graph "+str(G_temp.edges()))
 
 		visited = {n : 0 for n in G_temp}
 		visited[startnode] = 1
@@ -493,6 +500,7 @@ class MT_MinimumTriangulation:
 				
 				if len(cycle) > 3:
 					logging.debug("Found a cycle of length > 3")
+					logging.debug(str(cycle))
 					add_this_cycle = True
 					if only_base_cycles:
 						subgraph = G_temp.subgraph(cycle)
@@ -517,6 +525,8 @@ class MT_MinimumTriangulation:
 				current_dfs_node = neighbor
 			else:
 				visited[current_dfs_node] = 2
+				successors[current_dfs_node] = []
 				current_dfs_node = predecessors[current_dfs_node]
+
 
 		return number_of_added_cycles
