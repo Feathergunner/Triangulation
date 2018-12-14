@@ -26,6 +26,7 @@ class MT_TooLargeCycleError(Exception):
 	Custom error type that gets thrown when the input graph contains a cycle that is too large.
 	This is intended to prevent running out of memory (and out of time),
 	since memory requirement of this algorithm is in O(2^k), where k < |E(G)| is the length of the largest basic cycle in G.
+	Time complexity is in O(2^n), with n = |G|.
 	'''
 	
 class MT_Chordedge:
@@ -40,6 +41,7 @@ class MT_Chordedge:
 		node_v, node_u : the nodes that define the edge
 		is_in_graph : a bool that describes whether this edge is currently contained in the triangulation or not
 		cycle_indices : a list of ints that contains all indices of cycles (type MT_Cycle) for which this edge is a chord-edge
+		induced_cycles : a list of integers that contains all indices of cycles that are not in the base graph but can appear once this edge is in the graph.
 	'''
 	def __init__(self, node_v, node_u):
 		logging.info("=== MT_Chordedge.init ===")
@@ -47,6 +49,7 @@ class MT_Chordedge:
 		self.node_u = node_u
 		self.is_in_graph = False
 		self.cycle_indices = []
+		self.induced_cycles = []
 
 	def add_cycle(self, cycle_id):
 		self.cycle_indices.append(cycle_id)
@@ -80,6 +83,7 @@ class MT_Cycle:
 		chordedge_ids : a list of ints that contains all indices of chord-edges (type MT_Chordedge) that are chords for this cycle
 		is_in_graph : a bool that describes whether this cycle is currently contained unsplit in the triangulation or not
 		subcycles : a dict {chord_edge_id (int) : subcycle_ids(list(int))} that maps chordedge-indices to lists subcycle-indices, where each subcycle-indexdescribes a cycle that is created when this cycle is split by the chordedge defined by chord_edge_id
+		required_chordedges : a list of ints that contain all indices of chordedges that have to be in the graph for this cycle to appear.
 	'''
 	def __init__(self, cyclenodes):
 		logging.info("=== MT_Cycle.init ===")
@@ -87,6 +91,7 @@ class MT_Cycle:
 		self.chordedge_ids = []
 		self.is_in_graph = True
 		self.subcycles = {}
+		self.required_chordedges = []
 
 	def __len__(self):
 		return len(self.cyclenodes)
@@ -111,8 +116,6 @@ class MT_Cycle:
 
 	def add_chord(self, chord_id):
 		self.chordedge_ids.append(chord_id)
-		
-	
 
 	#def set_as_split(self, chord_id, list_of_subcycle_ids):
 	#	self.subcycles[chord_id] = list_of_subcycle_ids
@@ -149,7 +152,7 @@ class MT_MinimumTriangulation:
 		'''
 		Finds a minimum triangulation of G, by checking each possible order of inserting chord-edges into the graph G until G is chordal.
 	
-		Running time in O(2^k), where k < |E(G)| is the sum of the lengths of all basic cycles in G.
+		Running time in O(poly(n) * 2^n), where n = |G|.
 		'''
 		logging.info("=== MT_MinimumTriangulation.find_minimum_triangulation ===")
 		
@@ -212,7 +215,20 @@ class MT_MinimumTriangulation:
 					# set chord as added:
 					self.F[current_chord_id].is_in_graph = True
 					## TO DO: check if a new cycle was constructed:
-					#self.get_all_cycles_single_startnode(self.F[current_chord_id][0])
+					'''
+					for induced_cycle_id in self.F[current_chord_id].induced_cycles:
+						for required_edge_id in self.cycles[induced_cycle_id].required_chordedges:
+							if self.F[required_edge_id].is_in_graph:
+								logging.debug("Cycle "+str(induced_cycle_id)+" has to be added!")
+								self.cycles[induced_cycle_id].is_in_graph = True
+								# check if cycle is already split:
+					'''
+					number_of_added_cycles = self.get_all_cycles_single_startnode(self.F[current_chord_id][0])
+					if number_of_added_cycles > 0:
+						print ("Add a new cycle")
+						for cycle_id in range(-number_of_added_cycles,0):
+							self.F[current_chord_id].induced_cycles.append(cycle_id)
+							self.init_cycle_chord_database_for_cycle(cycle_id)					
 
 					# check if graph is chordal:
 					if self.number_of_nonchordal_cycles == 0:
@@ -226,9 +242,16 @@ class MT_MinimumTriangulation:
 				logging.debug("Remove last chord from graph.")
 				(current_chord_id, last_split_cycles) = chord_stack.pop()
 				logging.debug("Last added chord: "+str(current_chord_id)+": "+str(self.F[current_chord_id]))
+				# merge previously split cycles:
 				for cycle_id in last_split_cycles:
 					self.merge_cycle(current_chord_id, cycle_id)
-
+				# remove induced cycles:
+				for cycle_id in self.F[current_chord_id].induced_cycles:
+					self.cycles[cycle_id].is_in_cycle = False
+					for chord_id in self.cycles[cycle_id].chordedge_ids:
+						self.F[chord_id].cycle_indices.remove(cycle_id)
+				self.F[current_chord_id].induced_cycles = []
+				
 				self.F[current_chord_id].is_in_graph = False
 				current_chord_id += 1
 				
@@ -442,11 +465,14 @@ class MT_MinimumTriangulation:
 		'''
 		logging.info("=== MT_MinimumTriangulation.get_all_cycles_single_startnode ===")
 		logging.debug("Considering start node "+str(startnode))
+		
+		G_temp = self.G.copy()
+		G_temp.add_edges_from([e.get_edge() for e in self.F if e.is_in_graph])
 
-		visited = {n : 0 for n in self.G}
+		visited = {n : 0 for n in G_temp}
 		visited[startnode] = 1
 		predecessors = {}
-		successors = {n : [] for n in self.G}
+		successors = {n : [] for n in G_temp}
 		predecessors[startnode] = None
 		current_dfs_node = startnode
 		
@@ -455,7 +481,7 @@ class MT_MinimumTriangulation:
 		while not current_dfs_node == None:
 			logging.debug("Current node: "+str(current_dfs_node))
 				
-			visited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if visited[n] == 1]
+			visited_neighbors = [n for n in G_temp.neighbors(current_dfs_node) if visited[n] == 1]
 			for node in visited_neighbors:
 				# add new cycle
 				cycle = []
@@ -469,7 +495,7 @@ class MT_MinimumTriangulation:
 					logging.debug("Found a cycle of length > 3")
 					add_this_cycle = True
 					if only_base_cycles:
-						subgraph = self.G.subgraph(cycle)
+						subgraph = G_temp.subgraph(cycle)
 						if len(subgraph.edges()) > len(cycle):
 							add_this_cycle = False
 							logging.debug("Cycle contains a chord!")							
@@ -482,7 +508,7 @@ class MT_MinimumTriangulation:
 							number_of_added_cycles += 1
 						else:
 							logging.debug("Cycle already exists!")
-			unvisited_neighbors = [n for n in self.G.neighbors(current_dfs_node) if (visited[n] == 0) or (visited[n] == 2 and not n in successors[current_dfs_node])]
+			unvisited_neighbors = [n for n in G_temp.neighbors(current_dfs_node) if (visited[n] == 0) or (visited[n] == 2 and not n in successors[current_dfs_node])]
 			if len(unvisited_neighbors) > 0:
 				visited[current_dfs_node] = 1
 				neighbor = unvisited_neighbors[0]
