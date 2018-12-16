@@ -190,23 +190,14 @@ class MT_MinimumTriangulation:
 					'''
 					G_temp = self.G.copy()
 					G_temp.add_edges_from([e.get_edge() for e in self.F if e.is_in_graph])
-					all_cycles = gm.get_all_cycles_single_startnode(G_temp, self.F[current_chord_id][0])
-					#number_of_added_cycles = self.get_all_cycles_single_startnode(self.F[current_chord_id][0])
-					'''
-					if number_of_added_cycles > 0:
-						print ("Add new cycles with chord "+str(current_chord_id))
-						print ([self.F[edge_id].get_edge() for (edge_id, cyclelist) in chord_stack])
-						num_cycles = len(self.cycles)
-						for cycle_id in range(num_cycles-number_of_added_cycles,num_cycles):
-							print ("Add a new cycle: "+str(self.cycles[cycle_id]))
-							self.F[current_chord_id].induced_cycles.append(cycle_id)
-							self.init_cycle_chord_database_for_cycle(cycle_id)
-					'''
+					all_cycles = gm.get_all_cycle_from_cycle_basis(G_temp)
 					for cycle in all_cycles:
-						if cycle not in self.cycles:
-							print ("Add new cycles with chord "+str(current_chord_id))
-							self.F[current_chord_id].induced_cycles.append(cycle_id)
-							self.init_cycle_chord_database_for_cycle(cycle_id)
+						cycle_c = MT_Cycle(cycle)
+						if cycle_c not in self.cycles:
+							next_cycle_id = len(self.cycles)
+							self.cycles.append(cycle_c)
+							self.F[current_chord_id].induced_cycles.append(next_cycle_id)
+							self.init_cycle_chord_database_for_cycle(next_cycle_id)
 
 					# check if graph is chordal:
 					if self.number_of_nonchordal_cycles == 0:
@@ -226,7 +217,6 @@ class MT_MinimumTriangulation:
 					self.merge_cycle(current_chord_id, cycle_id)
 				# remove induced cycles:
 				for cycle_id in self.F[current_chord_id].induced_cycles:
-					print ("Remove cycle: "+str(self.cycles[cycle_id]))
 					self.cycles[cycle_id].is_in_cycle = False
 					for chord_id in self.cycles[cycle_id].chordedge_ids:
 						self.F[chord_id].cycle_indices.remove(cycle_id)
@@ -249,7 +239,7 @@ class MT_MinimumTriangulation:
 		logging.info("=== MT_MinimumTriangulation.init_cycle_chord_database ===")
 		
 		# Get all chordless cycles of G:
-		self.cycles = [MT_Cycle(c) for c in gm.get_all_cycles(self.G)]#get_all_cycles()
+		self.cycles = [MT_Cycle(c) for c in gm.get_all_cycle_from_cycle_basis(self.G)]#get_all_cycles()
 		logging.debug("All cycles of G:")
 		for c in self.cycles:
 			logging.debug(c)

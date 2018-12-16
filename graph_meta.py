@@ -3,9 +3,16 @@
 
 import logging
 
+import networkx as nx
+
 class Cycle:
 	def __init__(self, cyclenodes):
-		self.cyclenodes = cyclenodes
+		# the order of the nodes of the cycle is rotated s.t. the cycle starts with the minimum node:
+		min_node = min(cyclenodes)
+		min_index = cyclenodes.index(min_node)
+		self.cyclenodes = []
+		for i in range(len(cyclenodes)):
+			self.cyclenodes.append(cyclenodes[(i+min_index)%len(cyclenodes)])
 
 	def __str__(self):
 		return str(self.cyclenodes)	
@@ -20,30 +27,11 @@ class Cycle:
 		return key in self.cyclenodes
 
 	def __hash__(self):
-		# note that in case of comparability, the actual order of the nodes within the cycle does not matter
-		# since the cycle-nodes and the edges of the graph define the cycle
-		return hashable_from_set(self.cyclenodes)
+		return hash(str(self.cyclenodes))
 		
 	def __eq__(self, other):
-		# we can simply use the hash-values to compare cycles, see comment at __hash__
-		return hashable_from_set(self) == hashable_from_set(other)
-
-
-def hashable_from_set(set):
-	'''
-	Sorts the item of the set an constructs a string
-	
-	Args:
-		set: a list/set/multiset .... where the order of the elements is not important
-	
-	Return:
-		A unique string based on the elements of the input set.
-	'''	
-	#logging.info("=== hashable_from_set ===")
-	
-	sorted_list_elements = sorted([x for x in set])
-	#logging.debug(sorted_list_elements)
-	return hash(str(sorted_list_elements))
+		# we can simply use the hash-values to compare cycles
+		return hash(str(self.cyclenodes)) == hash(str(other.cyclenodes))
 
 def get_post_order(T, root=None):
 	'''
@@ -174,12 +162,16 @@ def get_all_cycles(G, min_cycle_length=4, only_base_cycles=True):
 	'''
 	logging.info("=== MT_MinimumTriangulation.get_all_cycles ===")
 	# use depth-first-search at each node
-	all_cycles = []
+	startnode = [n for n in G.nodes][0]
+	all_cycles = get_all_cycles_single_startnode(G, startnode, min_cycle_length, only_base_cycles)
+	'''
 	for node in G:
 		newcycles = get_all_cycles_single_startnode(G, node, min_cycle_length, only_base_cycles)
 		for cycle in newcycles:
 			if cycle not in all_cycles:
 				all_cycles.append(cycle)
+		break
+	'''
 	return all_cycles
 
 def get_all_cycles_single_startnode(G, startnode, min_cycle_length=4, only_base_cycles=True):
@@ -206,8 +198,9 @@ def get_all_cycles_single_startnode(G, startnode, min_cycle_length=4, only_base_
 	current_dfs_node = startnode		
 	number_of_added_cycles = 0
 	while not current_dfs_node == None:
-		logging.debug("Current node: "+str(current_dfs_node))				
+		logging.debug("Current node: "+str(current_dfs_node))
 		visited_neighbors = [n for n in G.neighbors(current_dfs_node) if visited[n] == 1]
+		logging.debug("visited neighbors: "+str(visited_neighbors))
 		for node in visited_neighbors:
 			# add new cycle
 			cycle = []
@@ -215,8 +208,8 @@ def get_all_cycles_single_startnode(G, startnode, min_cycle_length=4, only_base_
 			while not current_cycle_node == node:
 				cycle.append(current_cycle_node)
 				current_cycle_node = predecessors[current_cycle_node]
-			cycle.append(current_cycle_node)				
-			if len(cycle) > 3:
+			cycle.append(current_cycle_node)
+			if len(cycle) >= min_cycle_length:
 				logging.debug("Found a cycle of length > 3")
 				logging.debug(str(cycle))
 				add_this_cycle = True
@@ -224,7 +217,7 @@ def get_all_cycles_single_startnode(G, startnode, min_cycle_length=4, only_base_
 					subgraph = G.subgraph(cycle)
 					if len(subgraph.edges()) > len(cycle):
 						add_this_cycle = False
-						logging.debug("Cycle contains a chord!")							
+						logging.debug("Cycle contains a chord!")
 				if add_this_cycle:
 					new_cycle = Cycle(cycle)
 					logging.debug("Cycle: "+str(new_cycle))
@@ -235,6 +228,8 @@ def get_all_cycles_single_startnode(G, startnode, min_cycle_length=4, only_base_
 					else:
 						logging.debug("Cycle already exists!")
 		unvisited_neighbors = [n for n in G.neighbors(current_dfs_node) if (visited[n] == 0) or (visited[n] == 2 and not n in successors[current_dfs_node])]
+		logging.debug("unvisited neighbors: " +str(unvisited_neighbors))
+		logging.debug("visited successor: "+str([n for n in G.neighbors(current_dfs_node) if visited[n] == 2 and n in successors[current_dfs_node]]))
 		if len(unvisited_neighbors) > 0:
 			visited[current_dfs_node] = 1
 			neighbor = unvisited_neighbors[0]
@@ -244,5 +239,135 @@ def get_all_cycles_single_startnode(G, startnode, min_cycle_length=4, only_base_
 		else:
 			visited[current_dfs_node] = 2
 			#successors[current_dfs_node] = []
+			successors[current_dfs_node] = []
 			current_dfs_node = predecessors[current_dfs_node]
+			
 	return cycles
+	
+def get_all_cycle_from_cycle_basis(G, min_cycle_length=4):
+	bcc = Basic_Cycle_Constructor(G)
+	cycles = bcc.get_all_cycles_from_cyclebasis()
+	return cycles
+	
+class Basic_Cycle_Constructor:
+	def __init__(self, G):
+		logging.debug("=== Basic_Cycle_Constructor.init ===")
+		self.G = G
+		self.edges = [e for e in self.G.edges()]
+		#logging.debug(self.G.nodes())
+		logging.debug("edges: "+str(self.edges))
+		self.cycle_basis = [c for c in nx.cycle_basis(self.G)]
+		logging.debug("cycle_basis: "+str([str(c) for c in self.cycle_basis]))
+		cycle_basis_edges = [self.cycle_node_to_edges(c) for c in self.cycle_basis]
+		#logging.debug("cycle_basis_edges: "+str(cycle_basis_edges))
+		self.cycle_basis_binaries = [self.cycle_edges_to_binary(c) for c in cycle_basis_edges]
+		self.cycle_edge_graph = self.construct_cycle_edge_graph()
+		self.all_cycles = self.compute_all_cycles_from_cyclebasis()
+	
+	def cycle_node_to_edges(self, cycle):
+		edges = []
+		for i in range(len(cycle)):
+			edges.append((cycle[i], cycle[(i+1)%len(cycle)]))
+		return edges
+		
+	def cycle_edges_to_binary(self, cycle):
+		logging.info("=== Basis_Cycle_Constructor.cycle_edges_to_binary ===")
+		logging.debug("cycle: "+str(cycle))
+		binary = 0
+		index = 0
+		for edge in self.edges:
+			#logging.debug("Check edge: "+str(edge))
+			if edge in cycle or (edge[1], edge[0]) in cycle:
+				binary += 2**index
+			index += 1
+		logging.debug("Binary representation for cycle "+str(cycle)+" : "+str(binary))
+		return binary
+		
+	def binary_to_cycle_edges(self, binary):
+		cycle_edge_indices = []
+		for i in range(len(self.edges)):
+			if binary & 2**i > 0:
+				cycle_edge_indices.append(i)
+		logging.debug("cycle_edge_indices: "+str(cycle_edge_indices))
+		cycle_edges = [self.edges[i] for i in cycle_edge_indices]
+		logging.debug(str([str(e) for e in cycle_edges]))
+		return cycle_edges
+		
+	def construct_cycle_edge_graph(self):
+		'''
+		Constructs a graph that has a node for each cycle of the cycle basis of in the original graph,
+		and an edge between two nodes if the corresponding cycles have a common edge.
+		This datastructure is used to determine if a set ob base cycles is connected
+		'''
+		logging.info("=== Basis_Cycle_Constructor.construct_cycle_edge_graph ===")
+		V = [i for i in range(len(self.cycle_basis))]
+		E = []
+		for i in range(len(self.cycle_basis)):
+			for j in range(i+1, len(self.cycle_basis)):
+				if self.cycle_basis_binaries[i] & self.cycle_basis_binaries[j] > 0:
+					E.append((i,j))
+		cycle_edge_graph = nx.Graph()
+		cycle_edge_graph.add_nodes_from(V)
+		cycle_edge_graph.add_edges_from(E)
+		return cycle_edge_graph
+	
+	def compute_all_cycles_from_cyclebasis(self):
+		logging.info("=== Basis_Cycle_Constructor.get_all_cycles_from_cyclebasis ===")
+	
+		all_cycles_edges = []
+		# iterate through all possible subsets of cycles from the cycle basis:
+		number_of_subsets = 2**len(self.cycle_basis)
+		for i in range(number_of_subsets):
+			# get next subset:
+			this_iteration_cyclesubset = []
+			for j in range(len(self.cycle_basis)):
+				# check next cycle:
+				if 2**j & i > 0:
+					this_iteration_cyclesubset.append(j)
+			# check if subset is not trivial
+			if len(this_iteration_cyclesubset) > 1:
+				# check if subset is not disjunct:
+				cycle_subgraph = self.cycle_edge_graph.subgraph(this_iteration_cyclesubset)
+				if nx.is_connected(cycle_subgraph):
+					# construct binary representation of new cycle:
+					combined_cycle_binary = self.cycle_basis_binaries[this_iteration_cyclesubset[0]]
+					for j in range(1,len(this_iteration_cyclesubset)):
+						combined_cycle_binary = combined_cycle_binary^self.cycle_basis_binaries[this_iteration_cyclesubset[j]]
+						
+					# decode binary to set of edges:
+					new_cycle = self.binary_to_cycle_edges(combined_cycle_binary)
+					all_cycles_edges.append(new_cycle)
+		
+		# decode cycles from sets of edges to sets of nodes
+		all_cycles = []
+		for cycle_edges in all_cycles_edges:
+			used_edges = [False for e in cycle_edges]
+			cycle_nodes = [cycle_edges[0][0], cycle_edges[0][1]]
+			used_edges[0] = True
+			for i in range(1, len(cycle_edges)-1):
+				for j in range(len(cycle_edges)):
+					if not used_edges[j]:
+						if cycle_edges[j][0] == cycle_nodes[-1]:
+							cycle_nodes.append(cycle_edges[j][1])
+							used_edges[j] = True
+							break
+						elif cycle_edges[j][1] == cycle_nodes[-1]:
+							cycle_nodes.append(cycle_edges[j][0])
+							used_edges[j] = True
+							break
+			all_cycles.append(cycle_nodes)
+		
+		return all_cycles+self.cycle_basis
+		
+	def get_all_cycles_from_cyclebasis(self, min_cycle_length=4, only_base_cycles=True):
+		cycles = []
+		for cycle in self.all_cycles:
+			if len(cycle) >= min_cycle_length:
+				add_this_cycle = True
+				if only_base_cycles:
+					subgraph = self.G.subgraph(cycle)
+					if len(subgraph.edges()) > len(cycle):
+						add_this_cycle = False
+				if add_this_cycle:
+					cycles.append(cycle)
+		return cycles

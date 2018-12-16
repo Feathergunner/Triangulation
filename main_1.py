@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import LEX_M
 import EG
 import MT
+import graph_meta as gm
 
 #import graph_construction as gc
 import graph_meta as meta
@@ -18,7 +19,7 @@ logging.basicConfig(
 	filename='debug.log',
 	filemode='w',
 	format=log_format,
-	level=logging.DEBUG,
+	level=logging.INFO,
 )
 
 def test_triangulation(G, algo=LEX_M.triangulate_LEX_M):
@@ -86,6 +87,10 @@ def draw_chordal_graph(G, edges_original=None, edges_added=None):
 	nx.draw_networkx_labels(G, pos, labels, font_size=16)
 	plt.axis('off')
 	plt.show()
+	
+def test_get_all_cycles(G):
+	print([str(c) for c in gm.get_all_cycles(G)])
+	print([str(c) for c in gm.get_all_cycle_from_cycle_basis(G)])
 
 if __name__=="__main__":
 	number_of_nodes = 8
@@ -100,15 +105,20 @@ if __name__=="__main__":
 	E2 = [(0, 1), (0, 2), (0, 3), (0, 5), (0, 6), (1, 2), (1, 3), (1, 6), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (3, 4), (3, 5), (3, 6), (4, 5), (4, 7), (6, 7)]
 
 	E3 = [(0,1), (1,2), (2,3), (3,0), (0,4), (1,4), (0,5), (3,5), (4,5), (0,6), (3,6), (2,7), (3,7), (6,7), (2,4), (2,5), (1,6), (1,7)]
+	
+	# graph to test get_all_cycles:
+	E4 = [(0,1), (0,2), (0,3), (0,4), (1,2), (2,3), (3,4), (4,1)]
 
 	G = nx.Graph()
 	#G.add_nodes_from(V)
-	G.add_edges_from(E3)
+	G.add_edges_from(E1)
 		
 	logging.debug([n for n in G])
 	logging.debug([e for e in G.edges()])
 	
-	draw_chordal_graph(G)
+	#draw_chordal_graph(G)
+	
+	#test_get_all_cycles(G)
 	#print(nx.is_chordal(G))
 	#G_POE = G.copy()
 	#test_poe(G_POE)
