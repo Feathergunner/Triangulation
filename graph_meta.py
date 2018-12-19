@@ -339,9 +339,9 @@ class Basic_Cycle_Constructor:
 			logging.debug([self.cycle_basis[i] for i in this_iteration_cyclesubset])
 			# check if subset is not trivial
 			if len(this_iteration_cyclesubset) > 1:
-				# check if subset is not disjunct:
-				cycle_subgraph = self.cycle_edge_graph.subgraph(this_iteration_cyclesubset)
-				if nx.is_connected(cycle_subgraph):
+					# check if subset is not disjunct:
+					#cycle_subgraph = self.cycle_edge_graph.subgraph(this_iteration_cyclesubset)
+					#if nx.is_connected(cycle_subgraph):
 					logging.debug("This subset is connected.")
 					# construct binary representation of new cycle:
 					combined_cycle_binary = self.cycle_basis_binaries[this_iteration_cyclesubset[0]]
@@ -357,12 +357,7 @@ class Basic_Cycle_Constructor:
 						all_cycles_edges.append(new_cycle)
 						new_cycle_nodes = self.cycle_edges_to_nodes(new_cycle)
 						if not new_cycle_nodes == None:
-							all_cycles_nodes.append(new_cycle_nodes)
-		
-		# decode cycles from sets of edges to sets of nodes
-		#
-		#for cycle_edges in all_cycles_edges:
-			
+							all_cycles_nodes.append(new_cycle_nodes)			
 			
 		return all_cycles_nodes+self.cycle_basis
 		
