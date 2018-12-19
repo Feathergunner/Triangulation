@@ -10,9 +10,13 @@ class Cycle:
 		# the order of the nodes of the cycle is rotated s.t. the cycle starts with the minimum node:
 		min_node = min(cyclenodes)
 		min_index = cyclenodes.index(min_node)
+		cyclelength = len(cyclenodes)
+		cycle_dir = 1
+		if cyclenodes[min_index-1] < cyclenodes[(min_index+1)%cyclelength]:
+			cycle_dir = -1
 		self.cyclenodes = []
-		for i in range(len(cyclenodes)):
-			self.cyclenodes.append(cyclenodes[(i+min_index)%len(cyclenodes)])
+		for i in range(0, len(cyclenodes), cycle_dir):
+			self.cyclenodes.append(cyclenodes[(i+min_index)%cyclelength])
 
 	def __str__(self):
 		return str(self.cyclenodes)	
@@ -152,21 +156,21 @@ def LEX_BFS(G):
 				i += 1
 	return {out[i]: i for i in range(len(out))}
 
-def get_all_cycles(G, min_cycle_length=4, only_base_cycles=True):
+def get_all_cycles(G, min_cycle_length=4, only_chordless_cycles=True):
 	'''
 	Constructs a list of all cycles of a minimum length of a graph G
 	Args:
 		G : a graph in networkx format
 		min_cycle_length : the minimum length of cycles that are considered
-		only_base_cycles : if true, this method returns only chordless cycles. Otherwise, all cycles will be returned
+		only_chordless_cycles : if true, this method returns only chordless cycles. Otherwise, all cycles will be returned
 	'''
 	logging.info("=== MT_MinimumTriangulation.get_all_cycles ===")
 	# use depth-first-search at each node
-	startnode = [n for n in G.nodes][0]
-	all_cycles = get_all_cycles_single_startnode(G, startnode, min_cycle_length, only_base_cycles)
+	startnode = [n for n in G.nodes()][0]
+	all_cycles = get_all_cycles_single_startnode(G, startnode, min_cycle_length, only_chordless_cycles)
 	'''
 	for node in G:
-		newcycles = get_all_cycles_single_startnode(G, node, min_cycle_length, only_base_cycles)
+		newcycles = get_all_cycles_single_startnode(G, node, min_cycle_length, only_chordless_cycles)
 		for cycle in newcycles:
 			if cycle not in all_cycles:
 				all_cycles.append(cycle)
@@ -261,7 +265,7 @@ class Basic_Cycle_Constructor:
 		cycle_basis_edges = [self.cycle_node_to_edges(c) for c in self.cycle_basis]
 		#logging.debug("cycle_basis_edges: "+str(cycle_basis_edges))
 		self.cycle_basis_binaries = [self.cycle_edges_to_binary(c) for c in cycle_basis_edges]
-		self.cycle_edge_graph = self.construct_cycle_edge_graph()
+		#self.cycle_edge_graph = self.construct_cycle_edge_graph()
 		self.all_cycles = self.compute_all_cycles_from_cyclebasis()
 	
 	def cycle_node_to_edges(self, cycle):
