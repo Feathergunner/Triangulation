@@ -3,6 +3,8 @@
 
 import logging
 
+import cProfile 
+
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -10,6 +12,7 @@ import LEX_M
 import EG
 import MT
 import graph_meta as gm
+import run_time_eval as rte
 
 #import graph_construction as gc
 import graph_meta as meta
@@ -89,8 +92,21 @@ def draw_chordal_graph(G, edges_original=None, edges_added=None):
 	plt.show()
 	
 def test_get_all_cycles(G):
-	print([str(c) for c in gm.get_all_cycles(G)])
-	print([str(c) for c in gm.get_all_cycle_from_cycle_basis(G)])
+	#gm.get_all_cycles(G)
+	#gm.get_all_cycle_from_cycle_basis(G)
+	
+	result_1 = rte.measure_running_time(gm.get_all_cycles, G)
+	result_2 = rte.measure_running_time(gm.get_all_cycle_from_cycle_basis, G)
+	print ("Runnint time algo 1: "+str(result_1.running_time))
+	print ("Result:")
+	print (str(result_1))
+	print ("Runnint time algo 2: "+str(result_2.running_time))
+	print ("Result:")
+	print (str(result_2))
+
+def test_cprofile(G):
+	cProfile.run("gm.get_all_cycles(G)")
+	cProfile.run("gm.get_all_cycle_from_cycle_basis(G)")
 
 if __name__=="__main__":
 	number_of_nodes = 8
@@ -111,21 +127,23 @@ if __name__=="__main__":
 
 	G = nx.Graph()
 	#G.add_nodes_from(V)
-	G.add_edges_from(E1)
+	G.add_edges_from(E3)
 		
 	logging.debug([n for n in G])
 	logging.debug([e for e in G.edges()])
 	
 	#draw_chordal_graph(G)
 	
-	#test_get_all_cycles(G)
+	#test_cprofile(G)
+
+	test_get_all_cycles(G)
 	#print(nx.is_chordal(G))
 	#G_POE = G.copy()
 	#test_poe(G_POE)
 	#G_LEX = G.copy()
 	#test_triangulation(G_LEX)
-	G_MIN = G.copy()
-	test_mt(G_MIN)
+	#G_MIN = G.copy()
+	#test_mt(G_MIN)
 	
 	#test_triangulation(G)
 	#H = test_triangulation(G)
