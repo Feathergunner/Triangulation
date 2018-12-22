@@ -4,7 +4,9 @@
 import logging
 
 import networkx as nx
+
 import graph_meta as gm
+import TriangulationAlgorithm as ta
 
 class MT_TooLargeCycleError(Exception):
 	'''
@@ -85,7 +87,7 @@ class MT_Cycle(gm.Cycle):
 	#def set_as_split(self, chord_id, list_of_subcycle_ids):
 	#	self.subcycles[chord_id] = list_of_subcycle_ids
 
-class MT_MinimumTriangulation:
+class MT_MinimumTriangulation(ta.TriangulationAlgorithm):
 	'''
 	This class contains the methods to compute a minimum triangulation and handles all the neccessary datastructures.
 	Note that the current working graph is not explicitly stored, as it follows from G and the subset of chordedges of F that are flagged with is_in_graph = True.
@@ -113,13 +115,13 @@ class MT_MinimumTriangulation:
 
 		self.edges_of_minimum_triangulation = None
 
-	def find_minimum_triangulation(self):
+	def run(self):
 		'''
 		Finds a minimum triangulation of G, by checking each possible order of inserting chord-edges into the graph G until G is chordal.
 	
 		Running time in O(poly(n) * 2^n), where n = |G|.
 		'''
-		logging.info("=== MT_MinimumTriangulation.find_minimum_triangulation ===")
+		logging.info("=== MT_MinimumTriangulation.run ===")
 		
 		# initialize a database
 		self.init_cycle_chord_database()
