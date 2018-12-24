@@ -21,7 +21,7 @@ class LEX_M:
 		return self.H
 '''
 
-def triangulate_LEX_M(G, randomize_order=False):
+def triangulate_LEX_M(G, randomize=False):
 	'''
 	Implementation of LEX M Algorithm 
 		Rose, Tarjan, Lueker: Algorithmic Aspects of Vertex Elimination on Graphs
@@ -31,7 +31,7 @@ def triangulate_LEX_M(G, randomize_order=False):
 	
 	Args:
 		G : a graph in netwokx format
-		randomize_order : if set to True, the order in which the nodes are processed is randomized
+		randomize : if set to True, the order in which the nodes are processed is randomized
 	
 	Returns:
 		H : a minimal triangulation of G.
@@ -46,12 +46,12 @@ def triangulate_LEX_M(G, randomize_order=False):
 	n = len(G)
 	for i in range(n,0, -1):
 		logging.debug("Iteration: "+str(i))
-		node_v = get_maxlex_node(G, alpha, nodelabels)
+		node_v = get_maxlex_node(G, alpha, nodelabels, randomize)
 		logging.debug("max lex node: "+str(node_v))
 		alpha[node_v] = i
 		S = []
 		all_unnumbered_vertices = [n for n in G if n not in alpha]
-		if randomize_order:
+		if randomize:
 			random.shuffle(all_unnumbered_vertices)
 		logging.debug("all unnumbered nodes:")
 		logging.debug([str(n)+": "+str(nodelabels[n]) for n in all_unnumbered_vertices])
@@ -79,7 +79,7 @@ def triangulate_LEX_M(G, randomize_order=False):
 		return None
 	return G#, alpha
 	
-def get_maxlex_node(G, alpha, nodelabels):
+def get_maxlex_node(G, alpha, nodelabels, randomize=False):
 	'''
 	Get an unnumbered vertex v of lexicograpohically maximum label from G
 
@@ -87,6 +87,7 @@ def get_maxlex_node(G, alpha, nodelabels):
 		G : a graph in networkx format
 		alpha : a dictionary of node numbers
 		nodelabels : a dictionary of node labels
+		randomize : if set to True and if there are multiple nodes with the max lex. label, one of these is returned at random
 
 	Returns:
 		v : an unnumbered vertex v of lexicograpohically maximum label from G
@@ -96,6 +97,9 @@ def get_maxlex_node(G, alpha, nodelabels):
 	
 	current_max_label = ''
 	current_best_node = None
+	nodes = [n for n in G]
+	if randomize:
+		random.shuffle(nodes)
 	for node in G: 
 		if (node not in alpha) and ((current_best_node == None) or (list_lexicographic_is_less_than(current_max_label, nodelabels[node]))):
 			current_best_node = node
