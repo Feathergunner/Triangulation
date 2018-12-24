@@ -3,6 +3,7 @@
 
 import logging
 
+import random
 import networkx as nx
 
 '''
@@ -20,7 +21,7 @@ class LEX_M:
 		return self.H
 '''
 
-def triangulate_LEX_M(G):
+def triangulate_LEX_M(G, randomize_order=False):
 	'''
 	Implementation of LEX M Algorithm 
 		Rose, Tarjan, Lueker: Algorithmic Aspects of Vertex Elimination on Graphs
@@ -30,6 +31,7 @@ def triangulate_LEX_M(G):
 	
 	Args:
 		G : a graph in netwokx format
+		randomize_order : if set to True, the order in which the nodes are processed is randomized
 	
 	Returns:
 		H : a minimal triangulation of G.
@@ -49,6 +51,8 @@ def triangulate_LEX_M(G):
 		alpha[node_v] = i
 		S = []
 		all_unnumbered_vertices = [n for n in G if n not in alpha]
+		if randomize_order:
+			random.shuffle(all_unnumbered_vertices)
 		logging.debug("all unnumbered nodes:")
 		logging.debug([str(n)+": "+str(nodelabels[n]) for n in all_unnumbered_vertices])
 		for node_u in all_unnumbered_vertices:
