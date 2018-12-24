@@ -8,14 +8,29 @@ import matplotlib.pyplot as plt
 
 import graph_meta as gm
 
+class TriangulationNotSuccessfulException(Exception):
+	'''
+	Custom error type that gets thrown
+	when an internal check yields that the graph resulting from a trianguliation
+	is somehow not chordal.
+	'''
+
 class TriangulationAlgorithm:
 	'''
 	Superclass for all triangulation algorithms
+
+	Args:
+		G : the graph to triangulate
+
+	Attributes:
+		G : the original graph
+		H : the triangulated graph
+		edges_of_triangulation = the set of edges that are added to G to achieve H
 	'''
 	def __init__(self, G):
 		self.G = G
+		self.H = None
 		self.edges_of_triangulation = []
-		#self.size_of_triangulation = -1
 
 	def run(self):
 		pass

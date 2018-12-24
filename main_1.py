@@ -13,6 +13,7 @@ import EG
 import MT
 import graph_meta as gm
 import run_time_eval as rte
+import random_algos as ra
 
 #import graph_construction as gc
 import graph_meta as meta
@@ -25,7 +26,7 @@ logging.basicConfig(
 	level=logging.INFO,
 )
 
-def test_triangulation(G, algo=LEX_M.triangulate_LEX_M):
+def test_triangulation(G, algo=LEX_M.triangulate_Lex_M):
 	edges_original = [e for e in G.edges()]
 	H = algo(G)
 	edges_added = [e for e in H.edges() if e not in edges_original]
@@ -75,6 +76,11 @@ def test_mt(G):
 	#for c in nx.cycle_basis(H):
 	#	print (c)
 
+def test_random(G):
+	ae_random = rte.AlgorithmEvaluator(ra.random_search_for_best_triangulation, G)
+	ae_random.run()
+	print (str(ae_random.results[0]))
+
 def draw_chordal_graph(G, edges_original=None, edges_added=None):
 	if edges_original == None:
 		edges_original = G.edges()
@@ -94,22 +100,24 @@ def draw_chordal_graph(G, edges_original=None, edges_added=None):
 def test_get_all_cycles(G):
 	#gm.get_all_cycles(G)
 	#gm.get_all_cycle_from_cycle_basis(G)
-	
-	result_1 = rte.measure_running_time(gm.get_all_cycles, G)
-	result_2 = rte.measure_running_time(gm.get_all_cycle_from_cycle_basis, G)
-	print ("Runnint time algo 1: "+str(result_1.running_time))
+	ae_cycles_simple = rte.AlgorithmEvaluator(gm.get_all_cycles, G)
+	ae_cycles_simple.run()
+	result_cycle_simple = ae_cycles_simple.results[0]
+	ae_cycles_basis = rte.AlgorithmEvaluator(gm.get_all_cycle_from_cycle_basis, G)
+	ae_cycles_basis.run()
+	result_cycle_basis = ae_cycles_basis.results[0]
+
 	print ("Result:")
-	print (str(result_1))
-	print ("Runnint time algo 2: "+str(result_2.running_time))
+	print (str(result_cycle_simple))
 	print ("Result:")
-	print (str(result_2))
+	print (str(result_cycle_basis))
 
 def test_cprofile(G):
 	cProfile.run("gm.get_all_cycles(G)")
 	cProfile.run("gm.get_all_cycle_from_cycle_basis(G)")
 
 if __name__=="__main__":
-	number_of_nodes = 8
+	number_of_nodes = 10
 
 	#G = nx.cycle_graph(number_of_nodes)
 	#G = nx.erdos_renyi_graph(number_of_nodes,0.6)
@@ -127,7 +135,7 @@ if __name__=="__main__":
 
 	G = nx.Graph()
 	#G.add_nodes_from(V)
-	G.add_edges_from(E3)
+	G.add_edges_from(E2)
 		
 	logging.debug([n for n in G])
 	logging.debug([e for e in G.edges()])
@@ -136,12 +144,13 @@ if __name__=="__main__":
 	
 	#test_cprofile(G)
 
-	test_get_all_cycles(G)
+	#test_random(G)
+	#test_get_all_cycles(G)
 	#print(nx.is_chordal(G))
 	#G_POE = G.copy()
 	#test_poe(G_POE)
-	#G_LEX = G.copy()
-	#test_triangulation(G_LEX)
+	G_LEX = G.copy()
+	test_triangulation(G_LEX)
 	#G_MIN = G.copy()
 	#test_mt(G_MIN)
 	
