@@ -8,6 +8,16 @@ import networkx as nx
 import graph_meta as gm
 import TriangulationAlgorithm as ta
 
+def find_minimum_triangulation(G, n=None):
+	mt = Algorithm_MinimumTriangulation(G)
+	mt.run()
+	return mt.get_triangulated()
+
+def get_minimum_triangulation_size(G, n=None):
+	mt = Algorithm_MinimumTriangulation(G)
+	mt.run()
+	return len(mt.edges_of_minimum_triangulation)
+
 class MT_TooLargeCycleError(Exception):
 	'''
 	Custom error type that gets thrown when the input graph contains a cycle that is too large.
@@ -87,7 +97,7 @@ class MT_Cycle(gm.Cycle):
 	#def set_as_split(self, chord_id, list_of_subcycle_ids):
 	#	self.subcycles[chord_id] = list_of_subcycle_ids
 
-class MT_MinimumTriangulation(ta.TriangulationAlgorithm):
+class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 	'''
 	This class contains the methods to compute a minimum triangulation and handles all the neccessary datastructures.
 	Note that the current working graph is not explicitly stored, as it follows from G and the subset of chordedges of F that are flagged with is_in_graph = True.
@@ -114,6 +124,11 @@ class MT_MinimumTriangulation(ta.TriangulationAlgorithm):
 		self.chord_adjacencies = {}
 
 		self.edges_of_minimum_triangulation = None
+		
+	def get_triangulated(self):
+		H = self.G.copy()
+		H.add_edges_from(self.edges_of_minimum_triangulation)
+		return H
 
 	def run(self):
 		'''
@@ -181,15 +196,7 @@ class MT_MinimumTriangulation(ta.TriangulationAlgorithm):
 					self.split_cycle(cycle_id, current_chord_id)
 					# set chord as added:
 					self.F[current_chord_id].is_in_graph = True
-					## TO DO: check if a new cycle was constructed:
-					'''
-					for induced_cycle_id in self.F[current_chord_id].induced_cycles:
-						for required_edge_id in self.cycles[induced_cycle_id].required_chordedges:
-							if self.F[required_edge_id].is_in_graph:
-								logging.debug("Cycle "+str(induced_cycle_id)+" has to be added!")
-								self.cycles[induced_cycle_id].is_in_graph = True
-								# check if cycle is already split:
-					'''
+					# compute current set of cycles:
 					G_temp = self.G.copy()
 					G_temp.add_edges_from([e.get_edge() for e in self.F if e.is_in_graph])
 					all_cycles = gm.get_all_cycle_from_cycle_basis(G_temp)
@@ -228,7 +235,7 @@ class MT_MinimumTriangulation(ta.TriangulationAlgorithm):
 				current_chord_id += 1
 				
 			else:
-				logging.warning("All possibilities are evaluated. Terminate.")
+				logging.debug("All possibilities are evaluated. Terminate.")
 				terminated = True
 		
 		self.edges_of_minimum_triangulation = [e.get_edge() for e in minimum_triangulation_chordset]
