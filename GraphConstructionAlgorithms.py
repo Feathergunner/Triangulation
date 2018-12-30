@@ -3,15 +3,30 @@
 
 import networkx as nx
 import random
+import logging
+import math
 
 class TooManyEdgesException(Exception):
 	'''
 	Custom error type that gets thrown from algorithms that construct planar graphs.
 	Gets thrown when the specified number of edges is too large s.t. no planar graph can be constructed
 	'''
+	
+class TooManyIterationsException(Exception):
+	'''
+	Custom Exception that gets thrown when after a significant number of iterations no planar graph has been found
+	If n is small and m is large, the probability that a random er graph is planar is small
+
+	The number of edges in the produced graph might be larger than required, because connectivity is enforced.
+	'''
+
+class NoEdgesLeftException(Exception):
+	'''
+	Custom Exception that gets thrown if during construction a maximum planar graph is constructed, but it contains less than the required number of edges
+	'''
 
 class GraphGenerator:
-	def construct_conneted_er(self, n, p):
+	def construct_connected_er(self, n, p):
 		'''
 		Constructs a random graph that is guaranteed to be connected.
 		At first, a random erdös-renyi-graph G is constructed. If G contains more than
@@ -45,14 +60,7 @@ class GraphGenerator:
 		Note that for m < 3n, the probability that G is planar converges to 1 if n is large
 		(citation needed)
 		'''
-
-		class TooManyIterationsException(Exception):
-			'''
-			Custom Exception that gets thrown when after a significant number of iterations no planar graph has been found
-			If n is small and m is large, the probability that a random er graph is planar is small
-
-			The number of edges in the produced graph might be larger than required, because connectivity is enforced.
-			'''
+		#logging.info("=== construct_planar_er ===")
 
 		if m > 3*n-6:
 			# number of edges is too large: no planar graph possible
@@ -76,15 +84,12 @@ class GraphGenerator:
 	def construct_planar_random(self, n, m):
 		'''
 		Constructs a random planar graph with n nodes and m edges.
-		Edges are introduced iteratively. Each edge is chosen uniform from all possible remaining edges. The edge is only added if the graph remains planar.
+		Edges are introduced iteratively in batches. Each edge is chosen uniform from all possible remaining edges. A batch of edges is only added if the graph remains planar.
 		Note that this algorithm differs significantly from the Erdös-Renyi random graph.
 		'''
-
-		class NoEdgesLeftException(Exception):
-			'''
-			Custom Exception that gets thrown if during construction a maximum planar graph is constructed, but it contains less than the required number of edges
-			'''
-
+		#logging.info("=== construct_planar_random ===")
+		
+		m = int(m)
 		if m > 3*n-6:
 			# number of edges is too large: no planar graph possible
 			raise TooManyEdgesException("Number of edges too large. No planar graph with these parameters can exist.")
@@ -94,20 +99,34 @@ class GraphGenerator:
 
 		edges_to_add = {(i,j) for i in range(n) for j in range(i+1,n)}
 		
-		for i in range(m):
-			found_edge_to_add = False
-			while not found_edge_to_add:
-				if len(edges_to_add) == 0:
-					raise TooManyEdgesException("Graph is maximal planar: no more edges can be added.")
-
-				new_edge = random.sample(edges_to_add, 1)[0]
-				print (new_edge)
-				G.add_edges_from([new_edge])
-				if not nx.check_planarity(G)[0]:
-					print ("Graph is not planar. remove this edge")
-					G.remove_edges_from([new_edge])
-				else:
-					found_edge_to_add = True
-				edges_to_add.remove(new_edge)
+		batch_size = int(m/2)
+		number_failed_attempts = 0
+		while len(G.edges()) < m:
+			#logging.debug ("edges to add:")
+			#logging.debug (edges_to_add)
+			if len(edges_to_add) == 0:
+				raise NoEdgesLeftException("Graph is maximal planar: no more edges can be added.")
+				
+			current_batch_size = min((m - len(G.edges)), len(edges_to_add), batch_size)
+			#logging.debug("Next iteration with batch size: "+str(current_batch_size))
+			
+			#while len(new_edges) < current_batch_size and len(edges_to_add) > 0:
+			new_edges = random.sample(edges_to_add, current_batch_size)
+			
+			#logging.debug ("new edges:")
+			#logging.debug (new_edges)
+			G.add_edges_from(new_edges)
+			if not nx.check_planarity(G)[0]:
+				#logging.debug("Graph is not planar after adding batch of edges.")
+				G.remove_edges_from(new_edges)
+				number_failed_attempts += 1
+				if number_failed_attempts > 2 and batch_size > 1:
+					#logging.debug("Decrease batch size.")
+					batch_size = int(max(1, math.ceil(batch_size*0.5)))
+					number_failed_attempts = 0
+			else:
+				for e in new_edges:
+					#logging.debug ("remove edge "+str(e))
+					edges_to_add.remove(e)
 
 		return G
