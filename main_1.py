@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-
 import cProfile 
 
 import networkx as nx
@@ -20,7 +19,7 @@ import graph_meta as meta
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
 logging.basicConfig(
-	filename='debug.log',
+	filename='logs/debug_tryout.log',
 	filemode='w',
 	format=log_format,
 	level=logging.INFO,
