@@ -27,7 +27,7 @@ def evaluate_randomized_LEX_M(G, n=None):
 class Algorithm_LexM(ta.TriangulationAlgorithm):
 	def __init__(self, G):
 		logging.info("=== LexM.Algorithm_LexM.init ===")
-		self.G = G
+		super().__init__(G)
 		self.alpha = {}
 
 	def run(self):

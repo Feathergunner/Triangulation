@@ -51,9 +51,9 @@ class TriangulationAlgorithm:
 		nx.draw_networkx_edges(self.G, pos, edgelist=self.edges_of_triangulation, width=1, edge_color='blue')
 
 		labels = {}
-		for n in G:
+		for n in self.G.nodes():
 			labels[n] = n
-		nx.draw_networkx_labels(G, pos, labels, font_size=16)
+		nx.draw_networkx_labels(self.G, pos, labels, font_size=16)
 		plt.axis('off')
 		plt.show()
 		
