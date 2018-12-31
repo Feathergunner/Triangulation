@@ -43,8 +43,8 @@ def check_filepath(filepath, fileending="json"):
 	if len(path_components) > 1:
 		filename = path_components[-1]
 
-	if not "."+fileending in filename:
-		filename += "."+fileending
+	#if not "."+fileending in filename:
+	#	filename += "."+fileending
 
 	return [path, filename]
 

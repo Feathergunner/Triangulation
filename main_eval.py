@@ -54,11 +54,11 @@ def construct_full_set_random_planar_graphs():
 			except gca.TooManyIterationsException:
 				logging.debug("TooManyIterationsException: No graphs constructed for this setting")			
 			
-def run_tests():
+def run_evaluation():
 	for algo in all_algorithms:
 		rte.run_set_of_experiments(algo, "data/eval/random", max_number_of_iterations)
 
 #cProfile.run("gdo.construct_set_random_planar(1,40,60)")
-construct_full_set_random_planar_graphs()
+#construct_full_set_random_planar_graphs()
 #construct_full_set_random_graphs()
-#run_tests()
+run_evaluation()

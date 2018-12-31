@@ -1,14 +1,18 @@
 #!usr/bin/python
 # -*- coding: utf-8 -*-
 
+import meta
+import logging
 import os
 import time
 import networkx as nx
 import random
 import json
+import csv
+import re
 
 import GraphDataOrganizer as gdo
-import graph_meta as gm
+#import graph_meta as gm
 
 class EvalData:
 	'''
@@ -25,13 +29,7 @@ class EvalData:
 		self.running_time = None
 		
 	def __json__(self):
-		json_dict = {"name" : self.algo.__name__, "input_id": self.id}
-		if self.max_iterations >= 0:
-			json_dict["max_iter"] = self.max_iterations
-		if self.measurement_finished:
-			json_dict["output"] = self.output
-			json_dict["running_time"] = self.running_time
-		return json_dict
+		return self.to_dict()
 
 	def __str__(self):
 		string =      "ALGO_NAME:    "+self.algo.__name__+"\n"
@@ -46,6 +44,15 @@ class EvalData:
 			string += "OUTPUT:       "+str(self.output)+"\n"
 			string += "RUNNING TIME: "+str(self.running_time)+" sec."
 		return string
+		
+	def to_dict(self):
+		dict = {"name" : self.algo.__name__, "input_id": self.id}
+		if self.max_iterations >= 0:
+			dict["max_iter"] = self.max_iterations
+		if self.measurement_finished:
+			dict["output"] = self.output
+			dict["running_time"] = self.running_time
+		return dict
 		
 	def set_max_iter(self, n):
 		self.max_iterations = n
@@ -70,13 +77,21 @@ def run_single_experiment(evaldata):
 	evaldata.set_results(result, t_diff)
 	return evaldata
 
-def run_set_of_experiments(algo, datadir, n):
+def run_set_of_experiments(algo, datadir, n, force_new_data=False):
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
-	for filename in os.listdir(datadir+"/input"):
-		results = []
-		if ".json" in filename:
+	all_datafiles = [filename for filename in os.listdir(datadir+"/input") if ".json" in filename]
+	num_files = len(all_datafiles)
+	i = 0
+	for file in all_datafiles:
+		filename = re.split(r'\.json', file)[0]
+		result_filename = "results_"+algo.__name__+"_"+filename
+		logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
+		meta.print_progress(i, num_files)
+		i += 1
+		if (not os.path.isfile(result_filename)) or force_new_data:
+			results = []
 			list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
 			for graphdata in list_of_graphs:
 				evaldata = EvalData(algo, graphdata)
@@ -84,15 +99,26 @@ def run_set_of_experiments(algo, datadir, n):
 				#id = graphdata["id"]
 				#graph = [graphdata["V"], graphdata["E"]]
 				results.append(run_single_experiment(evaldata))
-		result_filename = "results_"+algo.__name__+"_"+filename
-		store_results(results, datadir+"/results/"+result_filename)
+			store_results_json(results, datadir+"/results/"+result_filename)
+			store_results_csv(results, datadir+"/results/"+result_filename)
 				
-def store_results(list_of_results, filename):
-	print(filename)
+def store_results_json(list_of_results, filename):
+	logging.debug("Store evaluation results to json file: "+filename)
 	[path, filename] = gdo.check_filepath(filename)
 		
-	with open(path+filename, 'w') as jsonfile:
-		json.dump(list_of_results, jsonfile, cls=gm.My_JSON_Encoder)
+	with open(path+filename+".json", 'w') as jsonfile:
+		json.dump(list_of_results, jsonfile, cls=meta.My_JSON_Encoder)
+		
+def store_results_csv(list_of_results, filename):
+	logging.debug("Store evaluation results to csv file: "+filename)
+	[path, filename] = gdo.check_filepath(filename)
+	
+	with open (path+filename+".csv", 'w') as csvfile:
+		csvwriter = csv.DictWriter(csvfile, fieldnames=list_of_results[0].to_dict().keys())
+		csvwriter.writeheader()
+		for r in list_of_results:
+			csvwriter.writerow(r.to_dict())
+		#csvwriter.writerows([r.to_dict() for r in list_of_results])
 
 def make_statistics():
 	## TODO
