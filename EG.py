@@ -4,6 +4,7 @@
 import logging
 
 import networkx as nx
+import random
 
 import TriangulationAlgorithm as ta
 
@@ -16,19 +17,33 @@ def evaluate_elimination_game(G, n=None):
 	aeg.run()
 	return len(aeg.edges_of_triangulation)
 
+def evaluate_randomized_elimination_game(G, n=10):
+	aeg = Algorithm_EliminationGame(G)
+	best_result = -1
+	for i in range(n):
+		result = len(aeg.elimination_game_triangulation(G.copy(), randomized=True))
+		if best_result < 0 or result < best_result:
+			best_result = result
+	return best_result
+	
 class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 	def __init__(self, G):
 		super().__init__(G)
 		
 	def run(self):
 		self.elimination_game_triangulation(self.G)
+		
+	def run_randomized(self):
+		self.elimination_game_triangulation(self.G, randomized=True)
 	
-	def elimination_game_triangulation(self, G, alpha=None):
+	def elimination_game_triangulation(self, G, alpha=None, randomized=False):
 		'''
 		The elimination game algorithm for computing a triangulation algorithm
 		
 		Args:
 			G : the input graph in networkx format
+			alpha : an ordering of the nodes that defines the order in which the nodes are processed
+			randomized : if no ordering alpha is specified and randomized is set to True, the order of the nodes is shuffled
 	
 		Returns:
 			H : a graph in networkx format, which is a triangulation of G
@@ -38,6 +53,8 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 		
 		if alpha == None:
 			all_nodes = [n for n in G]
+			if randomized:
+				random.shuffle(all_nodes)
 		else:
 			all_nodes = sorted([n for n in alpha.keys()], key=lambda x: alpha[x])
 		G_temp = G.copy()

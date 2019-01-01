@@ -20,7 +20,7 @@ def evaluate_LEX_M(G, n=None):
 	
 def evaluate_randomized_LEX_M(G, n=None):
 	algo = Algorithm_LexM(G)
-	algo.triangulate(randomize=True)
+	algo.run_randomized()
 	return len(algo.edges_of_triangulation)
 
 

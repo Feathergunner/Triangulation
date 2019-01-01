@@ -123,11 +123,11 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		self.number_of_nonchordal_cycles = 0
 		self.chord_adjacencies = {}
 
-		self.edges_of_minimum_triangulation = None
+		self.edges_of_triangulation = []
 		
 	def get_triangulated(self):
 		H = self.G.copy()
-		H.add_edges_from(self.edges_of_minimum_triangulation)
+		H.add_edges_from(self.edges_of_triangulation)
 		return H
 
 	def run(self):
@@ -238,7 +238,7 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 				logging.debug("All possibilities are evaluated. Terminate.")
 				terminated = True
 		
-		self.edges_of_minimum_triangulation = [e.get_edge() for e in minimum_triangulation_chordset]
+		self.edges_of_triangulation = [e.get_edge() for e in minimum_triangulation_chordset]
 
 	def init_cycle_chord_database(self):
 		'''

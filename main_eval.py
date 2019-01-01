@@ -16,7 +16,7 @@ import MT
 import EG
 import Random_Approx_MT as ramt
 
-all_algorithms = [LEX_M.evaluate_LEX_M, EG.evaluate_elimination_game]#, ramt.random_search_for_minimum_triangulation]#MT.find_minimum_triangulation,
+all_algorithms = [LEX_M.evaluate_LEX_M, EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]#, ramt.random_search_for_minimum_triangulation]#MT.find_minimum_triangulation,
 max_number_of_iterations = 100
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')

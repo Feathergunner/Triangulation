@@ -90,7 +90,7 @@ def run_set_of_experiments(algo, datadir, n, force_new_data=False):
 		logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
 		meta.print_progress(i, num_files)
 		i += 1
-		if (not os.path.isfile(result_filename)) or force_new_data:
+		if (not os.path.isfile(result_filename+".json")) or force_new_data:
 			results = []
 			list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
 			for graphdata in list_of_graphs:
