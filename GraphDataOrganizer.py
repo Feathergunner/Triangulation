@@ -64,7 +64,7 @@ def write_graphs_to_json(list_of_graphs, filename):
 	id_nr = 0
 	for g in list_of_graphs:
 		filenameparts = re.split(r'\.', filename)
-		data.append(GraphData(g.nodes, g.edges, filenameparts[0]+"_"+str(id_nr)+"."+filenameparts[1]))
+		data.append(GraphData(g.nodes, g.edges, filenameparts[0]+"_"+str(id_nr)))
 		id_nr += 1
 		
 	with open(path+filename, 'w') as jsonfile:

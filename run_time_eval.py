@@ -21,6 +21,8 @@ class EvalData:
 	def __init__(self, algo, input_graph_data):
 		self.algo = algo
 		self.input = input_graph_data.G
+		self.n = len(input_graph_data.G.nodes())
+		self.m = len(input_graph_data.G.edges())
 		self.id = input_graph_data.id
 		self.max_iterations = -1
 		
@@ -46,7 +48,11 @@ class EvalData:
 		return string
 		
 	def to_dict(self):
-		dict = {"name" : self.algo.__name__, "input_id": self.id}
+		dict = {"input_id": self.id, "n": self.n, "m": self.m}
+		if type(self.algo) is str:
+			{"name" : self.algo}
+		else:
+			{"name" : self.algo.__name__}
 		if self.max_iterations >= 0:
 			dict["max_iter"] = self.max_iterations
 		if self.measurement_finished:
@@ -120,6 +126,29 @@ def store_results_csv(list_of_results, filename):
 			csvwriter.writerow(r.to_dict())
 		#csvwriter.writerows([r.to_dict() for r in list_of_results])
 
+def load_evaldata_from_json(basedir, filename):
+	graphdataset = []
+	evaldataset = []
+	with open(basedir+"/results/"+filename+".json", "r") as jsonfile:
+		dataset = json.load(jsonfile)
+		for data in dataset:
+			graph_id = re.split(r'\.',data["input_id"])[0]
+			if graphdataset == []:
+				#graphdatafileparts = re.split(r'_',data["input_id"])
+				#print (graphdatafileparts)
+				graphdatafile = "_".join(re.split(r'_',data["input_id"])[:-1])+".json"
+				graphdataset = gdo.load_graphs_from_json(basedir+"/input/"+graphdatafile)
+			graphdata = None
+			for gd in graphdataset:
+				gd.id = re.split(r'\.', gd.id)[0]
+				if gd.id == graph_id:
+					graphdata = gd
+					break
+			evaldata = EvalData(data["name"], graphdata)
+			evaldata.set_results(data["output"], data["running_time"])
+			evaldataset.append(evaldata)
+	return evaldataset	
+		
 def make_statistics():
 	## TODO
 	pass
