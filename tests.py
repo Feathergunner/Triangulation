@@ -79,6 +79,8 @@ try:
 	logging.debug("number of edges: "+str(len(planar_er.edges())))
 except gca.TooManyIterationsException:
 	logging.debug("No graph was constructed (TooManyIterationsException).")
+except gca.WrongNetworkxVersion:
+	logging.debug("No graph was constructed (WrongNetworkxVersion).")
 print("ok")
 
 # ===== Planar random Graph =====
@@ -91,6 +93,8 @@ try:
 	logging.debug("number of edges: "+str(len(planar_random.edges())))
 except gca.NoEdgesLeftException:
 	logging.debug("No graph was constructed (NoEdgesLeftException).")
+except gca.WrongNetworkxVersion:
+	logging.debug("No graph was constructed (WrongNetworkxVersion).")
 print("ok")
 	
 # ======= Test triangulation algorithms =======
