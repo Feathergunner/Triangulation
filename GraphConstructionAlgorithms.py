@@ -25,6 +25,11 @@ class NoEdgesLeftException(Exception):
 	Custom Exception that gets thrown if during construction a maximum planar graph is constructed, but it contains less than the required number of edges
 	'''
 
+class WrongNetworkxVersion(Exception):
+	'''
+	Custom Exception that gets thrown if the installed version of networkx is below 2.2, because in these older versions check_planarity is not implemented.
+	'''
+	
 class GraphGenerator:
 	def construct_connected_er(self, n, p):
 		'''
@@ -61,7 +66,7 @@ class GraphGenerator:
 		(citation needed)
 		'''
 		#logging.info("=== construct_planar_er ===")
-
+		
 		if m > 3*n-6:
 			# number of edges is too large: no planar graph possible
 			raise TooManyEdgesException("Number of edges too large. No planar graph with these parameters can exist.")
@@ -73,7 +78,11 @@ class GraphGenerator:
 		while iterations < max_number_of_iterations and not planar_graph_constructed:
 			iterations += 1
 			G = nx.erdos_renyi_graph(n, p)
-			if nx.check_planarity(G)[0]:
+			try:
+				is_planar = nx.check_planarity(G)[0]
+			except AttributeError:
+				raise WrongNetworkxVersion("Old version of networkx does not support planarity check")
+			if is_planar:
 				planar_graph_constructed = True
 
 		if not planar_graph_constructed:
@@ -116,7 +125,13 @@ class GraphGenerator:
 			#logging.debug ("new edges:")
 			#logging.debug (new_edges)
 			G.add_edges_from(new_edges)
-			if not nx.check_planarity(G)[0]:
+			
+			try:
+				is_planar = nx.check_planarity(G)[0]
+			except AttributeError:
+				raise WrongNetworkxVersion("Old version of networkx does not support planarity check")
+				
+			if not is_planar:
 				#logging.debug("Graph is not planar after adding batch of edges.")
 				G.remove_edges_from(new_edges)
 				number_failed_attempts += 1
