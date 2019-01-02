@@ -85,7 +85,7 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 					S.append(node_u)
 			for node_u in S:
 				nodelabels[node_u].append(i)
-				if (node_v, node_u) not in H.edges:
+				if (node_v, node_u) not in H.edges():
 					F.append((node_v, node_u))
 					logging.debug("added edge: "+str((node_v, node_u)))
 			logging.debug("End of iteration. all node labels:")

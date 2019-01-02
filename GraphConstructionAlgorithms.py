@@ -116,7 +116,7 @@ class GraphGenerator:
 			if len(edges_to_add) == 0:
 				raise NoEdgesLeftException("Graph is maximal planar: no more edges can be added.")
 				
-			current_batch_size = min((m - len(G.edges)), len(edges_to_add), batch_size)
+			current_batch_size = min((m - len(G.edges())), len(edges_to_add), batch_size)
 			#logging.debug("Next iteration with batch size: "+str(current_batch_size))
 			
 			#while len(new_edges) < current_batch_size and len(edges_to_add) > 0:
