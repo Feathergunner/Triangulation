@@ -16,7 +16,7 @@ def find_minimum_triangulation(G, n=None):
 def get_minimum_triangulation_size(G, n=None):
 	mt = Algorithm_MinimumTriangulation(G)
 	mt.run()
-	return len(mt.edges_of_minimum_triangulation)
+	return len(mt.edges_of_triangulation)
 
 class MT_TooLargeCycleError(Exception):
 	'''
