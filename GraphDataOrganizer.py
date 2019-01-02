@@ -21,7 +21,7 @@ class GraphData():
 		self.id = id
 		
 	def __json__(self):
-		return {"V": [n for n in self.G.nodes], "E": [e for e in self.G.edges], "id": self.id}	
+		return {"V": [n for n in self.G.nodes()], "E": [e for e in self.G.edges()], "id": self.id}	
 
 def check_filepath(filepath, fileending="json"):
 	'''
@@ -64,7 +64,7 @@ def write_graphs_to_json(list_of_graphs, filename):
 	id_nr = 0
 	for g in list_of_graphs:
 		filenameparts = re.split(r'\.', filename)
-		data.append(GraphData(g.nodes, g.edges, filenameparts[0]+"_"+str(id_nr)))
+		data.append(GraphData(g.nodes(), g.edges(), filenameparts[0]+"_"+str(id_nr)))
 		id_nr += 1
 		
 	with open(path+filename, 'w') as jsonfile:
