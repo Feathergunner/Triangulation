@@ -102,8 +102,6 @@ def run_set_of_experiments(algo, datadir, n, force_new_data=False):
 			for graphdata in list_of_graphs:
 				evaldata = EvalData(algo, graphdata)
 				evaldata.set_max_iter(n)
-				#id = graphdata["id"]
-				#graph = [graphdata["V"], graphdata["E"]]
 				results.append(run_single_experiment(evaldata))
 			store_results_json(results, datadir+"/results/"+result_filename)
 			store_results_csv(results, datadir+"/results/"+result_filename)
@@ -124,8 +122,7 @@ def store_results_csv(list_of_results, filename):
 		csvwriter.writeheader()
 		for r in list_of_results:
 			csvwriter.writerow(r.to_dict())
-		#csvwriter.writerows([r.to_dict() for r in list_of_results])
-
+			
 def load_evaldata_from_json(basedir, filename):
 	graphdataset = []
 	evaldataset = []
@@ -134,8 +131,6 @@ def load_evaldata_from_json(basedir, filename):
 		for data in dataset:
 			graph_id = re.split(r'\.',data["input_id"])[0]
 			if graphdataset == []:
-				#graphdatafileparts = re.split(r'_',data["input_id"])
-				#print (graphdatafileparts)
 				graphdatafile = "_".join(re.split(r'_',data["input_id"])[:-1])+".json"
 				graphdataset = gdo.load_graphs_from_json(basedir+"/input/"+graphdatafile)
 			graphdata = None
@@ -144,11 +139,33 @@ def load_evaldata_from_json(basedir, filename):
 				if gd.id == graph_id:
 					graphdata = gd
 					break
-			evaldata = EvalData(data["name"], graphdata)
+			if "name" in data:
+				evaldata = EvalData(data["name"], graphdata)
+			else:
+				evaldata = EvalData("generic", graphdata)
 			evaldata.set_results(data["output"], data["running_time"])
 			evaldataset.append(evaldata)
 	return evaldataset	
 		
-def make_statistics():
-	## TODO
-	pass
+def compute_statistics(datadir):
+	stats = {}
+	for file in os.listdir(datadir+"/results"):
+		if ".json" in file:
+			filename = re.split(r'\.', file)[0]
+			evaldata = load_evaldata_from_json(datadir, filename)
+			graph_id = evaldata[0].id
+			avg_n = float(sum([data.n for data in evaldata])) / len(evaldata)
+			avg_m = float(sum([data.m for data in evaldata])) / len(evaldata)
+			avg_time = float(sum([data.running_time for data in evaldata])) / len(evaldata)
+			#avg_output = float(sum([data.output for data in evaldata])) / len(evaldata)
+			if "algo" not in stats:
+				stats["algo"] = evaldata[0].algo
+			stats[graph_id] = {
+				"avg_n" : avg_n,
+				"avg_m" : avg_m, 
+				"avg_time" : avg_time, 
+				#"avg_output" : avg_output
+			}
+				
+	return stats
+			
