@@ -12,7 +12,8 @@ import EG
 import MT
 import graph_meta as gm
 import run_time_eval as rte
-import random_algos as ra
+#import random_algos as ra
+import GraphConstructionAlgorithms as gca
 
 #import graph_construction as gc
 import graph_meta as meta
@@ -75,10 +76,10 @@ def test_mt(G):
 	#for c in nx.cycle_basis(H):
 	#	print (c)
 
-def test_random(G):
-	ae_random = rte.AlgorithmEvaluator(ra.random_search_for_best_triangulation, G)
-	ae_random.run()
-	print (str(ae_random.results[0]))
+#def test_random(G):
+#	ae_random = rte.AlgorithmEvaluator(ra.random_search_for_best_triangulation, G)
+#	ae_random.run()
+#	print (str(ae_random.results[0]))
 
 def draw_chordal_graph(G, edges_original=None, edges_added=None):
 	if edges_original == None:
@@ -115,7 +116,7 @@ def test_cprofile(G):
 	cProfile.run("gm.get_all_cycles(G)")
 	cProfile.run("gm.get_all_cycle_from_cycle_basis(G)")
 
-if __name__=="__main__":
+def test_algos():
 	number_of_nodes = 10
 
 	#G = nx.cycle_graph(number_of_nodes)
@@ -161,4 +162,11 @@ if __name__=="__main__":
 	#test_random(10)
 	#G = nx.erdos_renyi_graph(10,0.5)
 	#T = nx.minimum_spanning_tree(G)
+	
+if __name__=="__main__":
+	gg = gca.GraphGenerator()
+	G = gg.construct_random_max_degree(20, 0.5, 3)
+	draw_chordal_graph(G)
+	for n in G.nodes():
+		print ("deg("+str(n)+"): "+str(G.degree(n)))
 	

@@ -145,3 +145,22 @@ class GraphGenerator:
 					edges_to_add.remove(e)
 
 		return G
+
+	def construct_random_max_degree(self, n, p, max_degree=4):
+		V = [i for i in range(n)]
+		E = []
+		node_degrees = [0 for i in range(n)]
+		for v in V:
+			u = v+1
+			while u < n and node_degrees[v] < max_degree:
+				if node_degrees[u] < max_degree and random.random() < p:
+					E.append((v,u))
+					node_degrees[v] += 1
+					node_degrees[u] += 1
+				u += 1
+		G = nx.Graph()
+		G.add_nodes_from(V)
+		G.add_edges_from(E)
+		
+		return G
+					
