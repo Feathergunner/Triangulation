@@ -36,7 +36,7 @@ def construct_full_set_random_graphs():
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", p "+str(p))
 			meta.print_progress(i, total)
 			i += 1
-			gdo.construct_set_random_graphs(100, n, p)
+			gdo.construct_set_random_er(100, n, p)
 	
 def construct_full_set_random_planar_graphs():
 	logging.info("=== construct_full_set_random_planar_graphs ===")
@@ -60,5 +60,7 @@ def run_evaluation():
 
 #cProfile.run("gdo.construct_set_random_planar(1,40,60)")
 #construct_full_set_random_planar_graphs()
-#construct_full_set_random_graphs()
-run_evaluation()
+construct_full_set_random_graphs()
+#run_evaluation()
+
+#print (rte.compute_statistics("data/eval/random"))
