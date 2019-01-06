@@ -163,4 +163,45 @@ class GraphGenerator:
 		G.add_edges_from(E)
 		
 		return G
-					
+	
+	def construct_random_max_clique_size(self, n, p, max_clique_size=4):
+		'''
+		Construct a random graph conform to a maximum clique size.
+		Note that the time complexity is exponential in the size of the maximum clique,
+		i.e. only use to generate graphs with small maximum clique size.
+		'''
+		V = [i for i in range(n)]
+		G = nx.Graph()
+		G.add_nodes_from(V)
+		adjacencies = {}
+		for v in V:
+			for u in range(v+1, n):
+				if random.random() < p:
+					# check for max clique if this edge gets inserted:
+					common_neighbors = [n for n in V if n in adjacencies[v] and n in adjacencies[u]]
+					if len(common_neighbors) < max_clique_size - 1:
+						# large clique not possible
+						# add edge
+						G.add_edges_from([(v,u)])
+						if v not in adjacencies:
+							adjacencies[v] = []
+						adjacencies[v].append(u)
+						if u not in adjacencies:
+							adjacencies[u] = []
+						adjacencies[u].append(v)
+					else:
+						# check clique explicitly:
+						# neighborhood:
+						gn = G.subgraph(common_neighbors)
+						max_neighbor_clique_size = max([len(c) for c in nx.find_cliques(gn)])
+						if max_neighbor_clique_size < max_clique_size - 1:
+							# with u,v new max clique is at most max_clique_size:
+							# add edge
+							G.add_edges_from([(v,u)])
+							if v not in adjacencies:
+								adjacencies[v] = []
+							adjacencies[v].append(u)
+							if u not in adjacencies:
+								adjacencies[u] = []
+							adjacencies[u].append(v)
+		return G
