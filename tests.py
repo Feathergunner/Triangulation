@@ -41,10 +41,14 @@ logging.info(GRAPH_TEST)
 NUM_NODES = 50
 PROB_EDGES = 0.3
 NUM_EDGES_PLANAR = int(1.5 * NUM_NODES)
+MAX_DEGREE = 4
+MAX_CLIQUE_SIZE = 4
 logging.info("Parameters for graph construction:")
 logging.info("NUM_NODES: "+str(NUM_NODES))
 logging.info("PROB_EDGES: "+str(PROB_EDGES))
 logging.info("NUM_EDGES_PLANAR: "+str(NUM_EDGES_PLANAR))
+logging.info("MAX_DEGREE: "+str(MAX_DEGREE))
+logging.info("MAX_CLIQUE_SIZE: "+str(MAX_CLIQUE_SIZE))
 
 logging.info("Start tests")
 print("Start tests")
@@ -96,6 +100,36 @@ except gca.NoEdgesLeftException:
 except gca.WrongNetworkxVersion:
 	logging.debug("No graph was constructed (WrongNetworkxVersion).")
 print("ok")
+
+# ===== Random graph with max node degree =====
+logging.info("===== TEST RANDOM GRAPH WITH MAXIMUM NODE DEGREE =====")
+print("TEST RANDOM GRAPH WITH MAXIMUM NODE DEGREE")
+random_maxdeg = gg.construct_random_max_degree(NUM_NODES, PROB_EDGES, MAX_DEGREE)
+max_deg = max([random_maxdeg.degree(v) for v in random_maxdeg.nodes()])
+logging.debug("Constructed graph:")
+logging.debug("number of nodes: "+str(len(random_maxdeg.nodes())))
+logging.debug("number of edges: "+str(len(random_maxdeg.edges())))
+logging.debug("maximum node degree: "+str(max_deg))
+if max_deg > MAX_DEGREE:
+	logging.debug("constructed graph not conform to requirements!")
+	print ("NOT OKAY")
+else:
+	print("ok")
+
+# ===== Random graph with max clique size =====
+logging.info("===== TEST RANDOM GRAPH WITH MAXIMUM CLIQUE SIZE =====")
+print("TEST RANDOM GRAPH WITH MAXIMUM CLIQUE SIZE")
+random_maxclique = gg.construct_random_max_degree(NUM_NODES, PROB_EDGES, MAX_CLIQUE_SIZE)
+max_clique = max([len(c) for c in nx.find_cliques(random_maxclique)])
+logging.debug("Constructed graph:")
+logging.debug("number of nodes: "+str(len(random_maxdeg.nodes())))
+logging.debug("number of edges: "+str(len(random_maxdeg.edges())))
+logging.debug("maximum clique size: "+str(max_clique))
+if max_clique > MAX_CLIQUE_SIZE:
+	logging.debug("constructed graph not conform to requirements!")
+	print ("NOT OKAY")
+else:
+	print ("ok")
 	
 # ======= Test triangulation algorithms =======
 logging.info("======= TEST TRIANGULATION ALGORITHMS =======")
