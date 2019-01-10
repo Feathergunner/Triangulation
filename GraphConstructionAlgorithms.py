@@ -175,7 +175,11 @@ class GraphGenerator:
 		G.add_nodes_from(V)
 		adjacencies = {}
 		for v in V:
+			if v not in adjacencies:
+				adjacencies[v] = []
 			for u in range(v+1, n):
+				if u not in adjacencies:
+					adjacencies[u] = []
 				if random.random() < p:
 					# check for max clique if this edge gets inserted:
 					common_neighbors = [n for n in V if n in adjacencies[v] and n in adjacencies[u]]
@@ -183,11 +187,7 @@ class GraphGenerator:
 						# large clique not possible
 						# add edge
 						G.add_edges_from([(v,u)])
-						if v not in adjacencies:
-							adjacencies[v] = []
 						adjacencies[v].append(u)
-						if u not in adjacencies:
-							adjacencies[u] = []
 						adjacencies[u].append(v)
 					else:
 						# check clique explicitly:

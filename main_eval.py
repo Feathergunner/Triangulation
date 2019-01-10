@@ -52,7 +52,40 @@ def construct_full_set_random_planar_graphs():
 				#gdo.construct_set_random_planar_er(100,n,m)
 				gdo.construct_set_random_planar(100,n,m)
 			except gca.TooManyIterationsException:
-				logging.debug("TooManyIterationsException: No graphs constructed for this setting")			
+				logging.debug("TooManyIterationsException: No graphs constructed for this setting")
+
+def construct_full_set_random_maxdegree_graphs():
+	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
+	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXDEGREE_SETTINGS)
+	i = 0
+	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
+		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
+			for md in gs.RANDOM_MAXDEGREE_SETTINGS:
+				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max degree: "+str(md))
+				meta.print_progress(i, total)
+				i += 1
+				try:
+					#gdo.construct_set_random_planar_er(100,n,m)
+					gdo.construct_set_random_maxdeg(100,n,p,md)
+				except gca.TooManyIterationsException:
+					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
+
+
+def construct_full_set_random_maxclique_graphs():
+	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
+	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXCLIQUE_SETTINGS)
+	i = 0
+	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
+		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
+			for mc in gs.RANDOM_MAXCLIQUE_SETTINGS:
+				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max clique size: "+str(mc))
+				meta.print_progress(i, total)
+				i += 1
+				try:
+					#gdo.construct_set_random_planar_er(100,n,m)
+					gdo.construct_set_random_maxclique(100,n,p,mc)
+				except gca.TooManyIterationsException:
+					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
 			
 def run_evaluation():
 	for algo in all_algorithms:
@@ -60,7 +93,8 @@ def run_evaluation():
 
 #cProfile.run("gdo.construct_set_random_planar(1,40,60)")
 #construct_full_set_random_planar_graphs()
-construct_full_set_random_graphs()
+#construct_full_set_random_graphs()
+construct_full_set_random_maxclique_graphs()
 #run_evaluation()
 
 #print (rte.compute_statistics("data/eval/random"))

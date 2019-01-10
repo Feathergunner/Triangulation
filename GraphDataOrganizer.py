@@ -129,3 +129,23 @@ def construct_set_random_planar(number_of_graphs, n, m, force_new_data=False):
 			graphs.append(gg.construct_planar_random(n, m))
 
 		write_graphs_to_json(graphs, filename)
+
+def construct_set_random_maxdeg(number_of_graphs, n, p, max_deg, force_new_data=False):
+	filename = "data/eval/random_maxdeg/input/ERMD_n"+str(n)+"_p"+str(int(p))+"_d"+str(max_deg).replace('.','')
+	if (not os.path.isfile(filename+".json")) or force_new_data:
+		gg = gca.GraphGenerator()
+		graphs = []
+		for i in range(number_of_graphs):
+			graphs.append(gg.construct_random_max_degree(n, p, max_deg))
+
+		write_graphs_to_json(graphs, filename)
+
+def construct_set_random_maxclique(number_of_graphs, n, p, max_cliquesize, force_new_data=False):
+	filename = "data/eval/random_maxclique/input/ERMC_n"+str(n)+"_p"+str(int(p))+"_c"+str(max_cliquesize).replace('.','')
+	if (not os.path.isfile(filename+".json")) or force_new_data:
+		gg = gca.GraphGenerator()
+		graphs = []
+		for i in range(number_of_graphs):
+			graphs.append(gg.construct_random_max_clique_size(n, p, max_cliquesize))
+
+		write_graphs_to_json(graphs, filename)
