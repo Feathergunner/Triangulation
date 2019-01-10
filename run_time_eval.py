@@ -87,7 +87,10 @@ def run_set_of_experiments(algo, datadir, n, force_new_data=False):
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
+	logging.info("=== run_set_of_experiments ===")
 	all_datafiles = [filename for filename in os.listdir(datadir+"/input") if ".json" in filename]
+	logging.debug("all_Datafiles: "+str(all_datafiles))
+	
 	num_files = len(all_datafiles)
 	i = 0
 	for file in all_datafiles:

@@ -16,7 +16,8 @@ import MT
 import EG
 import Random_Approx_MT as ramt
 
-all_algorithms = [LEX_M.evaluate_LEX_M, EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]#, ramt.random_search_for_minimum_triangulation]#MT.find_minimum_triangulation,
+#all_algorithms = [LEX_M.evaluate_LEX_M, EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]#, ramt.random_search_for_minimum_triangulation]#MT.find_minimum_triangulation,
+all_algorithms = [EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]
 max_number_of_iterations = 100
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
@@ -26,6 +27,17 @@ logging.basicConfig(
 	format=log_format,
 	level=logging.DEBUG,
 )
+
+def fix_filenames(datadir):
+	import os
+	import re
+	for filename in [filename for filename in os.listdir(datadir)]:
+		filenameparts = re.split(r'\.', filename)
+		new_filename = ''.join(filenameparts[:-1])
+		new_filename += '.'+filenameparts[-1]
+		print ("orig filename: "+filename)
+		print ("new filename: "+new_filename)
+		os.rename(datadir+"/"+filename, datadir+"/"+new_filename)
 
 def construct_full_set_random_graphs():
 	logging.info("=== construct_full_set_random_graphs ===")
@@ -89,12 +101,14 @@ def construct_full_set_random_maxclique_graphs():
 			
 def run_evaluation():
 	for algo in all_algorithms:
-		rte.run_set_of_experiments(algo, "data/eval/random", max_number_of_iterations)
+		rte.run_set_of_experiments(algo, "data/eval/random_maxclique", max_number_of_iterations)
 
 #cProfile.run("gdo.construct_set_random_planar(1,40,60)")
 #construct_full_set_random_planar_graphs()
 #construct_full_set_random_graphs()
+#construct_full_set_random_maxdegree_graphs()
 construct_full_set_random_maxclique_graphs()
 #run_evaluation()
 
 #print (rte.compute_statistics("data/eval/random"))
+	
