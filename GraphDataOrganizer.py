@@ -22,13 +22,13 @@ class GraphData():
 		self.G.add_nodes_from(V)
 		self.G.add_edges_from(E)
 		self.id = id
-		self.other_parameters = parameters
+		self.parameters = parameters
 		
 	def __json__(self):
 		return {"V": [n for n in self.G.nodes()],
 				"E": [e for e in self.G.edges()],
 				"id": self.id,
-				"parameters": self.other_parameters}	
+				"parameters": self.parameters}	
 
 def check_filepath(filepath):
 	'''
