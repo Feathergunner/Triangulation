@@ -18,13 +18,13 @@ class EvalData:
 	'''
 	Data structure to organize test and evaluation results
 	'''
-	def __init__(self, algo, input_graph_data):
+	def __init__(self, algo, input_graph_data, algo_parameters={}):
 		self.algo = algo
 		self.input = input_graph_data.G
 		self.n = len(input_graph_data.G.nodes())
 		self.m = len(input_graph_data.G.edges())
 		self.id = input_graph_data.id
-		self.max_iterations = -1
+		self.algo_parameters = algo_parameters
 		
 		self.measurement_finished = False
 		self.output = None
@@ -41,27 +41,20 @@ class EvalData:
 		else:
 			string += "INPUT:        "+str(self.input)+"\n"
 		if self.measurement_finished:
-			if self.max_iterations >= 0:
-				string += "ITERATIONS:   "+str(self.max_iterations)+"\n"
 			string += "OUTPUT:       "+str(self.output)+"\n"
 			string += "RUNNING TIME: "+str(self.running_time)+" sec."
 		return string
 		
 	def to_dict(self):
-		dict = {"input_id": self.id, "n": self.n, "m": self.m}
+		dict = {"input_id": self.id, "n": self.n, "m": self.m, "parameters": self.algo_parameters}
 		if type(self.algo) is str:
 			{"name" : self.algo}
 		else:
 			{"name" : self.algo.__name__}
-		if self.max_iterations >= 0:
-			dict["max_iter"] = self.max_iterations
 		if self.measurement_finished:
 			dict["output"] = self.output
 			dict["running_time"] = self.running_time
 		return dict
-		
-	def set_max_iter(self, n):
-		self.max_iterations = n
 		
 	def set_results(self, output, running_time):
 		self.measurement_finished = True
@@ -83,16 +76,17 @@ def run_single_experiment(evaldata):
 	evaldata.set_results(result, t_diff)
 	return evaldata
 
-def run_set_of_experiments(algo, datadir, n, force_new_data=False):
+def run_set_of_experiments(algo, datadir, algo_parameters, force_new_data=False):
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
 	all_datafiles = [filename for filename in os.listdir(datadir+"/input") if ".json" in filename]
 	num_files = len(all_datafiles)
+	filename_sufix = ''.join(["_"+k+str(algo_parameters[k]) for k in algo_parameters])
 	i = 0
 	for file in all_datafiles:
 		filename = re.split(r'\.json', file)[0]
-		result_filename = "results_"+algo.__name__+"_"+filename
+		result_filename = "results_"+algo.__name__+"_"+filename+filename_sufix
 		logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
 		meta.print_progress(i, num_files)
 		i += 1
@@ -100,8 +94,7 @@ def run_set_of_experiments(algo, datadir, n, force_new_data=False):
 			results = []
 			list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
 			for graphdata in list_of_graphs:
-				evaldata = EvalData(algo, graphdata)
-				evaldata.set_max_iter(n)
+				evaldata = EvalData(algo, graphdata, algo_parameters)
 				results.append(run_single_experiment(evaldata))
 			store_results_json(results, datadir+"/results/"+result_filename)
 			store_results_csv(results, datadir+"/results/"+result_filename)
@@ -140,7 +133,7 @@ def load_evaldata_from_json(basedir, filename):
 					graphdata = gd
 					break
 			if "name" in data:
-				evaldata = EvalData(data["name"], graphdata)
+				evaldata = EvalData(data["name"], graphdata, data["parameters"])
 			else:
 				evaldata = EvalData("generic", graphdata)
 			evaldata.set_results(data["output"], data["running_time"])

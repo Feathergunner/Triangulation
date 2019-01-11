@@ -27,8 +27,9 @@ class TriangulationAlgorithm:
 		H : the triangulated graph
 		edges_of_triangulation = the set of edges that are added to G to achieve H
 	'''
-	def __init__(self, G):
+	def __init__(self, G, parameters={}):
 		self.G = G
+		self.parameters = parameters
 		self.H = None
 		self.edges_of_triangulation = []
 

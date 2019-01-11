@@ -34,8 +34,11 @@ TEST_FILEPATH = "test/testgraph.json"
 GRAPH_TEST_EDGES = [(0,1), (1,2), (2,3),(3,0)]
 GRAPH_TEST = nx.Graph()
 GRAPH_TEST.add_edges_from(GRAPH_TEST_EDGES)
+GRAPH_TEST_ADDITIONAL_PARAMETERS = {"n": 10}
 logging.info("Graph for testing:")
 logging.info(GRAPH_TEST)
+logging.info("with additional parameters:")
+logging.info(GRAPH_TEST_ADDITIONAL_PARAMETERS)
 
 # parameters for testing graph construction algorithms:
 NUM_NODES = 50
@@ -103,34 +106,34 @@ print("TEST TRIANGULATION ALGORITHMS")
 # ===== Elimination Game =====
 logging.info("===== TEST ELIMINATION GAME =====")
 print("TEST ELIMINATION GAME")
-eg_triangulation_size = EG.evaluate_elimination_game(GRAPH_TEST.copy())
+eg_triangulation_size = EG.evaluate_elimination_game(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
 logging.debug("Size of triangulation by elimination game: "+str(eg_triangulation_size))
 print("ok")
 
 # ===== LEX M =====
 logging.info("===== TEST LEX M =====")
 print("TEST LEX M")
-lexm_triangulation_size = LEX_M.evaluate_LEX_M(GRAPH_TEST.copy())
+lexm_triangulation_size = LEX_M.evaluate_LEX_M(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
 logging.debug("Size of triangulation by Lex M: "+str(lexm_triangulation_size))
 print("ok")
 
 # ===== Randomized LEX M =====
 logging.info("===== TEST RANDOMIZED LEX M =====")
 print("TEST RANDOMIZED LEX M")
-randomized_lexm_triangulation_size = LEX_M.evaluate_randomized_LEX_M(GRAPH_TEST.copy())
+randomized_lexm_triangulation_size = LEX_M.evaluate_randomized_LEX_M(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
 logging.debug("Size of triangulation by randomized Lex M: "+str(randomized_lexm_triangulation_size))
 print("ok")
 
 # ===== Minimum Triangulation =====
 logging.info("===== TEST MINIMUM TRIANGULATION =====")
 print("TEST MINIMUM TRIANGULATION")
-mt_triangulation_size = MT.get_minimum_triangulation_size(GRAPH_TEST.copy())
+mt_triangulation_size = MT.get_minimum_triangulation_size(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
 logging.debug("Size of minimum triangulation "+str(mt_triangulation_size))
 print("ok")
 
 # ===== Randomized Approximation Minimum Triangulation =====
 logging.info("===== TEST RANDOMIZED APPROXIMATION FOR MINIMUM TRIANGULATION =====")
 print("TEST RANDOMIZED APPROXIMATION FOR MINIMUM TRIANGULATION")
-random_approx_mt_size = len(ramt.random_search_for_minimum_triangulation(GRAPH_TEST.copy()))
+random_approx_mt_size = len(ramt.random_search_for_minimum_triangulation(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS))
 logging.debug("Size of rand. approx. for minimum triangulation "+str(random_approx_mt_size))
 print("ok")

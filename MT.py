@@ -8,12 +8,12 @@ import networkx as nx
 import graph_meta as gm
 import TriangulationAlgorithm as ta
 
-def find_minimum_triangulation(G, n=None):
+def find_minimum_triangulation(G, parameters):
 	mt = Algorithm_MinimumTriangulation(G)
 	mt.run()
 	return mt.get_triangulated()
 
-def get_minimum_triangulation_size(G, n=None):
+def get_minimum_triangulation_size(G, parameters):
 	mt = Algorithm_MinimumTriangulation(G)
 	mt.run()
 	return len(mt.edges_of_triangulation)

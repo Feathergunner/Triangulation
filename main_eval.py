@@ -60,7 +60,6 @@ def run_evaluation():
 
 #cProfile.run("gdo.construct_set_random_planar(1,40,60)")
 #construct_full_set_random_planar_graphs()
-construct_full_set_random_graphs()
+#construct_full_set_random_graphs()
 #run_evaluation()
-
 #print (rte.compute_statistics("data/eval/random"))

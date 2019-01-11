@@ -8,17 +8,17 @@ import networkx as nx
 
 import TriangulationAlgorithm as ta
 
-def triangulate_Lex_M(G, n=None):
+def triangulate_Lex_M(G, parameters):
 	algo = Algorithm_LexM(G)
 	algo.run()
 	return algo.get_triangulated()
 	
-def evaluate_LEX_M(G, n=None):
+def evaluate_LEX_M(G, parameters):
 	algo = Algorithm_LexM(G)
 	algo.run()
 	return len(algo.edges_of_triangulation)
 	
-def evaluate_randomized_LEX_M(G, n=None):
+def evaluate_randomized_LEX_M(G, parameters):
 	algo = Algorithm_LexM(G)
 	algo.run_randomized()
 	return len(algo.edges_of_triangulation)

@@ -8,17 +8,18 @@ import random
 
 import TriangulationAlgorithm as ta
 
-def elimination_game(G, n=None):
+def elimination_game(G, parameters):
 	aeg = Algorithm_EliminationGame(G)
 	return aeg.run()
 	
-def evaluate_elimination_game(G, n=None):
+def evaluate_elimination_game(G, parameters):
 	aeg = Algorithm_EliminationGame(G)
 	aeg.run()
 	return len(aeg.edges_of_triangulation)
 
-def evaluate_randomized_elimination_game(G, n=10):
+def evaluate_randomized_elimination_game(G, parameters={"n": 10}):
 	aeg = Algorithm_EliminationGame(G)
+	n = parameters["n"]
 	best_result = -1
 	for i in range(n):
 		result = len(aeg.elimination_game_triangulation(G.copy(), randomized=True))
