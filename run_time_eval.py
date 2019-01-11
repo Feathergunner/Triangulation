@@ -69,7 +69,7 @@ def run_single_experiment(evaldata):
 		The statistics of this experiment.
 	'''
 	t_start = time.time()
-	result = evaldata.algo(evaldata.input, evaldata.max_iterations)
+	result = evaldata.algo(evaldata.input, evaldata.max_iterations, evaldata.algo_parameters)
 	t_end = time.time()
 
 	t_diff = t_end - t_start

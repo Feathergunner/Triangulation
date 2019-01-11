@@ -100,8 +100,9 @@ def construct_full_set_random_maxclique_graphs():
 					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
 			
 def run_evaluation():
+	paramters = {"n": 10}
 	for algo in all_algorithms:
-		rte.run_set_of_experiments(algo, "data/eval/random_maxclique", max_number_of_iterations)
+		rte.run_set_of_experiments(algo, "data/eval/random_maxdeg", paramters)
 
 #cProfile.run("gdo.construct_set_random_planar(1,40,60)")
 #construct_full_set_random_planar_graphs()
