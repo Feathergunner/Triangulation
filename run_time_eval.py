@@ -80,7 +80,10 @@ def run_set_of_experiments(algo, datadir, algo_parameters, force_new_data=False)
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
+	logging.info("=== run_set_of_experiments ===")
 	all_datafiles = [filename for filename in os.listdir(datadir+"/input") if ".json" in filename]
+	logging.debug("all_Datafiles: "+str(all_datafiles))
+	
 	num_files = len(all_datafiles)
 	filename_sufix = ''.join(["_"+k+str(algo_parameters[k]) for k in algo_parameters])
 	i = 0
@@ -136,12 +139,15 @@ def load_evaldata_from_json(basedir, filename):
 				evaldata = EvalData(data["name"], graphdata, data["parameters"])
 			else:
 				evaldata = EvalData("generic", graphdata)
+			if "parameters" in data:
+				evaldata.parameters = data["parameters"]
 			evaldata.set_results(data["output"], data["running_time"])
 			evaldataset.append(evaldata)
 	return evaldataset	
 		
 def compute_statistics(datadir):
 	stats = {}
+	columns = ["algorithm", "avg n", "avg m", "avg time", "avg output"]
 	for file in os.listdir(datadir+"/results"):
 		if ".json" in file:
 			filename = re.split(r'\.', file)[0]
@@ -150,15 +156,19 @@ def compute_statistics(datadir):
 			avg_n = float(sum([data.n for data in evaldata])) / len(evaldata)
 			avg_m = float(sum([data.m for data in evaldata])) / len(evaldata)
 			avg_time = float(sum([data.running_time for data in evaldata])) / len(evaldata)
-			#avg_output = float(sum([data.output for data in evaldata])) / len(evaldata)
+			avg_output = float(sum([data.output for data in evaldata])) / len(evaldata)
 			if "algo" not in stats:
 				stats["algo"] = evaldata[0].algo
 			stats[graph_id] = {
 				"avg_n" : avg_n,
 				"avg_m" : avg_m, 
-				"avg_time" : avg_time, 
-				#"avg_output" : avg_output
+				"avg_time" : avg_time,
+				"avg_output" : avg_output
 			}
+			for p in evaldata["parameters"]:
+				if p not in columns:
+					columns.append(p)
+				stats[graph_id][p] = evaldata["parameters"][p]
 				
 	return stats
 			
