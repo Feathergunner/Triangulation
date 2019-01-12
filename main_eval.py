@@ -3,9 +3,10 @@
 
 import logging
 import cProfile 
-
 import sys
 import re
+import time
+from multiprocessing import Process
 
 import meta
 
@@ -22,6 +23,8 @@ import Random_Approx_MT as ramt
 #all_algorithms = [LEX_M.evaluate_LEX_M, EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]#, ramt.random_search_for_minimum_triangulation]#MT.find_minimum_triangulation,
 all_algorithms = [EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]
 max_number_of_iterations = 100
+
+max_num_threads = 10	
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
 logging.basicConfig(
@@ -42,65 +45,148 @@ def fix_filenames(datadir):
 		print ("new filename: "+new_filename)
 		os.rename(datadir+"/"+filename, datadir+"/"+new_filename)
 
-def construct_full_set_random_graphs():
+def construct_full_set_random_graphs(threaded=True):
 	logging.info("=== construct_full_set_random_graphs ===")
+	
+	if threaded:
+		threads = []
+		threadset = {}
+		
 	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"])
 	i = 0
 	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
 		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", p "+str(p))
-			meta.print_progress(i, total)
-			i += 1
-			gdo.construct_set_random_er(100, n, p)
+			if threaded:
+				process = Process(target=gdo.construct_set_random_er, args=(100,n,p))
+				threads.append(process)
+				process.start()
+				
+				threads = [p for p in threads if p.is_alive()]
+				while len(threads) >= max_num_threads:
+					#print ("thread limit reached... wait")
+					time.sleep(1.0)
+					threads = [p for p in threads if p.is_alive()]
+			else:
+				meta.print_progress(i, total)
+				i += 1
+				gdo.construct_set_random_er(100, n, p)
+				
+	if threaded:
+		# wait until all threads are finished:
+		for p in threads:
+			p.join()
 	
-def construct_full_set_random_planar_graphs():
+def construct_full_set_random_planar_graphs(threaded=True):
 	logging.info("=== construct_full_set_random_planar_graphs ===")
+	
+	if threaded:
+		threads = []
+		threadset = {}
+		
 	total = len(gs.RANDOM_PLANAR_SETTINGS["n"]) * len(gs.RANDOM_PLANAR_SETTINGS["rel_m"])
 	i = 0
 	for n in gs.RANDOM_PLANAR_SETTINGS["n"]:
 		for rel_m in gs.RANDOM_PLANAR_SETTINGS["rel_m"]:
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", rel_m "+str(rel_m))
-			meta.print_progress(i, total)
-			i += 1
-			m = n*rel_m
-			try:
-				#gdo.construct_set_random_planar_er(100,n,m)
-				gdo.construct_set_random_planar(100,n,m)
-			except gca.TooManyIterationsException:
-				logging.debug("TooManyIterationsException: No graphs constructed for this setting")
+			if threaded:
+				process = Process(target=gdo.construct_set_random_planar, args=(100,n,m))
+				threads.append(process)
+				process.start()
+				
+				threads = [p for p in threads if p.is_alive()]
+				while len(threads) >= max_num_threads:
+					#print ("thread limit reached... wait")
+					time.sleep(1.0)
+					threads = [p for p in threads if p.is_alive()]
+			else:
+				meta.print_progress(i, total)
+				i += 1
+				m = n*rel_m
+				try:
+					#gdo.construct_set_random_planar_er(100,n,m)
+					gdo.construct_set_random_planar(100,n,m)
+				except gca.TooManyIterationsException:
+					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
+					
+	if threaded:
+		# wait until all threads are finished:
+		for p in threads:
+			p.join()
 
-def construct_full_set_random_maxdegree_graphs():
+def construct_full_set_random_maxdegree_graphs(threaded=True):
 	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
 	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXDEGREE_SETTINGS)
+	
+	if threaded:
+		threads = []
+		threadset = {}
+		
 	i = 0
 	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
 		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
 			for md in gs.RANDOM_MAXDEGREE_SETTINGS:
 				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max degree: "+str(md))
-				meta.print_progress(i, total)
-				i += 1
-				try:
-					#gdo.construct_set_random_planar_er(100,n,m)
-					gdo.construct_set_random_maxdeg(100,n,p,md)
-				except gca.TooManyIterationsException:
-					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
+				if threaded:
+					process = Process(target=gdo.construct_set_random_maxdeg, args=(100,n,p,md))
+					threads.append(process)
+					process.start()
+					
+					threads = [p for p in threads if p.is_alive()]
+					while len(threads) >= max_num_threads:
+						#print ("thread limit reached... wait")
+						time.sleep(1.0)
+						threads = [p for p in threads if p.is_alive()]
+				else:
+					meta.print_progress(i, total)
+					i += 1
+					try:
+						#gdo.construct_set_random_planar_er(100,n,m)
+						gdo.construct_set_random_maxdeg(100,n,p,md)
+					except gca.TooManyIterationsException:
+						logging.debug("TooManyIterationsException: No graphs constructed for this setting")
 
+	if threaded:
+		# wait until all threads are finished:
+		for p in threads:
+			p.join()
 
-def construct_full_set_random_maxclique_graphs():
+def construct_full_set_random_maxclique_graphs(threaded=True):
 	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
 	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXCLIQUE_SETTINGS)
+	
+	if threaded:
+		threads = []
+		threadset = {}
+		
 	i = 0
 	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
 		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
 			for mc in gs.RANDOM_MAXCLIQUE_SETTINGS:
 				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max clique size: "+str(mc))
-				meta.print_progress(i, total)
-				i += 1
-				try:
-					#gdo.construct_set_random_planar_er(100,n,m)
-					gdo.construct_set_random_maxclique(100,n,p,mc)
-				except gca.TooManyIterationsException:
-					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
+				if threaded:
+					process = Process(target=gdo.construct_set_random_maxclique, args=(100,n,p,mc))
+					threads.append(process)
+					process.start()
+					
+					threads = [p for p in threads if p.is_alive()]
+					while len(threads) >= max_num_threads:
+						#print ("thread limit reached... wait")
+						time.sleep(1.0)
+						threads = [p for p in threads if p.is_alive()]
+				else:
+					meta.print_progress(i, total)
+					i += 1
+					try:
+						#gdo.construct_set_random_planar_er(100,n,m)
+						gdo.construct_set_random_maxclique(100,n,p,mc)
+					except gca.TooManyIterationsException:
+						logging.debug("TooManyIterationsException: No graphs constructed for this setting")
+			
+	if threaded:
+		# wait until all threads are finished:
+		for p in threads:
+			p.join()
 			
 def run_evaluation():
 	paramters = {"n": 10}
