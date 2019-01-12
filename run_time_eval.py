@@ -10,6 +10,7 @@ import random
 import json
 import csv
 import re
+from multiprocessing import Process
 
 import GraphDataOrganizer as gdo
 #import graph_meta as gm
@@ -69,14 +70,23 @@ def run_single_experiment(evaldata):
 		The statistics of this experiment.
 	'''
 	t_start = time.time()
-	result = evaldata.algo(evaldata.input, evaldata.max_iterations, evaldata.algo_parameters)
+	result = evaldata.algo(evaldata.input, evaldata.algo_parameters)
 	t_end = time.time()
 
 	t_diff = t_end - t_start
 	evaldata.set_results(result, t_diff)
 	return evaldata
+	
+def run_subset_of_experiments(algo, algo_parameters, datadir, filename, result_filename):
+	results = []
+	list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
+	for graphdata in list_of_graphs:
+		evaldata = EvalData(algo, graphdata, algo_parameters)
+		results.append(run_single_experiment(evaldata))
+	store_results_json(results, datadir+"/results/"+result_filename)
+	store_results_csv(results, datadir+"/results/"+result_filename)
 
-def run_set_of_experiments(algo, datadir, algo_parameters, force_new_data=False):
+def run_set_of_experiments(algo, datadir, algo_parameters, threaded=False, force_new_data=False):
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
@@ -84,23 +94,40 @@ def run_set_of_experiments(algo, datadir, algo_parameters, force_new_data=False)
 	all_datafiles = [filename for filename in os.listdir(datadir+"/input") if ".json" in filename]
 	logging.debug("all_Datafiles: "+str(all_datafiles))
 	
+	max_num_threads = 10
+	if threaded:
+		threads = []
+		threadset = {}
+	
 	num_files = len(all_datafiles)
 	filename_sufix = ''.join(["_"+k+str(algo_parameters[k]) for k in algo_parameters])
 	i = 0
 	for file in all_datafiles:
 		filename = re.split(r'\.json', file)[0]
 		result_filename = "results_"+algo.__name__+"_"+filename+filename_sufix
-		logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
-		meta.print_progress(i, num_files)
-		i += 1
+		if not threaded:
+			logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
+			meta.print_progress(i, num_files)
+			i += 1
 		if (not os.path.isfile(result_filename+".json")) or force_new_data:
-			results = []
-			list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
-			for graphdata in list_of_graphs:
-				evaldata = EvalData(algo, graphdata, algo_parameters)
-				results.append(run_single_experiment(evaldata))
-			store_results_json(results, datadir+"/results/"+result_filename)
-			store_results_csv(results, datadir+"/results/"+result_filename)
+			if threaded:
+				p = Process(target=run_subset_of_experiments, args=(algo, algo_parameters, datadir, filename, result_filename))
+				threads.append(p)
+				p.start()
+				
+				threads = [p for p in threads if p.is_alive()]
+				while len(threads) >= max_num_threads:
+					#print ("thread limit reached... wait")
+					time.sleep(1.0)
+					threads = [p for p in threads if p.is_alive()]
+
+			else:
+				run_subset_of_experiments(algo, algo_parameters, datadir, filename, result_filename)
+	
+	if threaded:
+		# wait until all threads are finished:
+		for p in threads:
+			p.join()
 				
 def store_results_json(list_of_results, filename):
 	logging.debug("Store evaluation results to json file: "+filename)

@@ -119,6 +119,7 @@ def run_evaluation():
 if __name__ == "__main__":
 	mode = "undefined"
 	set = "undefined"
+	threaded = False
 	algos = []
 	logging.info("cmd line args:")
 	logging.info(sys.argv)
@@ -133,6 +134,8 @@ if __name__ == "__main__":
 		elif arg_data[0] == "algo":
 			if arg_data[1] in ["EG", "EG_R", "LEXM", "LEXM_R", "MT", "MT_R"]:
 				algos.append(arg_data[1])
+		elif arg_data[0] == "threaded":
+			threaded = True
 				
 	if mode == "test":
 		import tests
@@ -177,6 +180,6 @@ if __name__ == "__main__":
 			
 		paramters = {"n": 10}
 		for algo in algorithms:
-			rte.run_set_of_experiments(algo, eval_dir, paramters)
+			rte.run_set_of_experiments(algo, eval_dir, paramters, threaded=threaded)
 		
 	
