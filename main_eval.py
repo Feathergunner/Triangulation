@@ -4,6 +4,9 @@
 import logging
 import cProfile 
 
+import sys
+import re
+
 import meta
 
 import GraphConstructionAlgorithms as gca
@@ -108,8 +111,72 @@ def run_evaluation():
 #construct_full_set_random_planar_graphs()
 #construct_full_set_random_graphs()
 #construct_full_set_random_maxdegree_graphs()
-construct_full_set_random_maxclique_graphs()
+#construct_full_set_random_maxclique_graphs()
 #run_evaluation()
 
 #print (rte.compute_statistics("data/eval/random"))
+
+if __name__ == "__main__":
+	mode = "undefined"
+	set = "undefined"
+	algos = []
+	logging.info("cmd line args:")
+	logging.info(sys.argv)
+	for arg in sys.argv[1:]:
+		arg_data = re.split(r'=', arg)
+		if arg_data[0] == "mode":
+			if arg_data[1] in ["build", "eval", "test"]:
+				mode = arg_data[1]
+		elif arg_data[0] == "set":
+			if arg_data[1] in ["general", "planar", "maxdeg", "maxclique"]:
+				set = arg_data[1]
+		elif arg_data[0] == "algo":
+			if arg_data[1] in ["EG", "EG_R", "LEXM", "LEXM_R", "MT", "MT_R"]:
+				algos.append(arg_data[1])
+				
+	if mode == "test":
+		import tests
+		
+	elif (mode == "undefined" or set == "undefined" or (mode == "eval" and len(algos) == 0)):
+		print ("Error! Missing parameters!")
+		
+	elif mode == "build":
+		if set == "general":
+			construct_full_set_random_graphs()
+		elif set == "planar":
+			construct_full_set_random_planar_graphs()
+		elif set == "maxdeg":
+			construct_full_set_random_maxdegree_graphs()
+		elif set == "maxclique":
+			construct_full_set_random_maxclique_graphs()
+	elif mode == "eval":
+		algorithms = []
+		for algo_code in algos:
+			if algo_code == "EG":
+				algorithms.append(EG.evaluate_elimination_game)
+			elif algo_code == "EG_R":
+				algorithms.append(EG.evaluate_randomized_elimination_game)
+			elif algo_code == "LEXM":
+				algorithms.append(LEX_M.evaluate_LEX_M)
+			elif algo_code == "LEXM_R":
+				algorithms.append(LEX_M.evaluate_randomized_LEX_M)
+			elif algo_code == "MT":
+				algorithms.append(MT.get_minimum_triangulation_size)
+			elif algo_code == "MT_R":
+				algorithms.append(ramt.random_search_for_minimum_triangulation)
+		
+		eval_dir = ""
+		if set == "general":
+			eval_dir = "data/eval/random"
+		elif set == "planar":
+			eval_dir = "data/eval/random_planar"
+		elif set == "maxdeg":
+			eval_dir = "data/eval/random_maxdeg"
+		elif set == "maxclique":
+			eval_dir = "data/eval/random_maxclique"
+			
+		paramters = {"n": 10}
+		for algo in algorithms:
+			rte.run_set_of_experiments(algo, eval_dir, paramters)
+		
 	
