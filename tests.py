@@ -13,6 +13,7 @@ import GraphConstructionAlgorithms as gca
 import GraphDataOrganizer as gdo
 
 import EG
+import SMS
 import LEX_M
 import MT
 import Random_Approx_MT as ramt
@@ -142,6 +143,13 @@ logging.info("===== TEST ELIMINATION GAME =====")
 print("TEST ELIMINATION GAME")
 eg_triangulation_size = EG.evaluate_elimination_game(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
 logging.debug("Size of triangulation by elimination game: "+str(eg_triangulation_size))
+print("ok")
+
+# ===== Saturate Minimal Separators =====
+logging.info("===== TEST SATURATE MINIMAL SEPARATORS =====")
+print ("===== TEST SATURATE MINIMAL SEPARATORS =====")
+sms_triangulation_size = SMS.evaluata_sms(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
+logging.debug("Size of triangulation by saturating minimal separators: "+str(sms_triangulation_size))
 print("ok")
 
 # ===== LEX M =====

@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import LEX_M
 import EG
 import MT
+import SMS
 import graph_meta as gm
 import run_time_eval as rte
 #import random_algos as ra
@@ -23,7 +24,7 @@ logging.basicConfig(
 	filename='logs/debug_tryout.log',
 	filemode='w',
 	format=log_format,
-	level=logging.INFO,
+	level=logging.DEBUG,
 )
 
 def test_triangulation(G, algo=LEX_M.triangulate_Lex_M):
@@ -132,13 +133,19 @@ def test_algos():
 	
 	# graph to test get_all_cycles:
 	E4 = [(0,1), (0,2), (0,3), (0,4), (1,2), (2,3), (3,4), (4,1)]
+	
+	# graph to test minimal seperator:
+	E5 = [(0,1), (1,2), (2,3), (0,4), (4,2)]
 
 	G = nx.Graph()
 	#G.add_nodes_from(V)
-	G.add_edges_from(E2)
+	G.add_edges_from(E5)
 		
 	logging.debug([n for n in G])
 	logging.debug([e for e in G.edges()])
+	sms = SMS.Algorithm_SMS(G)
+	H = sms.triangulate()
+	draw_chordal_graph(H, G.edges(), sms.edges_of_triangulation)
 	
 	#draw_chordal_graph(G)
 	
@@ -149,8 +156,8 @@ def test_algos():
 	#print(nx.is_chordal(G))
 	#G_POE = G.copy()
 	#test_poe(G_POE)
-	G_LEX = G.copy()
-	test_triangulation(G_LEX)
+	#G_LEX = G.copy()
+	#test_triangulation(G_LEX)
 	#G_MIN = G.copy()
 	#test_mt(G_MIN)
 	
@@ -164,9 +171,4 @@ def test_algos():
 	#T = nx.minimum_spanning_tree(G)
 	
 if __name__=="__main__":
-	gg = gca.GraphGenerator()
-	G = gg.construct_random_max_degree(20, 0.5, 3)
-	draw_chordal_graph(G)
-	for n in G.nodes():
-		print ("deg("+str(n)+"): "+str(G.degree(n)))
-	
+	test_algos()
