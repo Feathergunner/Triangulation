@@ -89,6 +89,7 @@ def construct_full_set_random_planar_graphs(threaded=True):
 	for n in gs.RANDOM_PLANAR_SETTINGS["n"]:
 		for rel_m in gs.RANDOM_PLANAR_SETTINGS["rel_m"]:
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", rel_m "+str(rel_m))
+			m = n*rel_m
 			if threaded:
 				process = Process(target=gdo.construct_set_random_planar, args=(100,n,m))
 				threads.append(process)
@@ -102,7 +103,6 @@ def construct_full_set_random_planar_graphs(threaded=True):
 			else:
 				meta.print_progress(i, total)
 				i += 1
-				m = n*rel_m
 				try:
 					#gdo.construct_set_random_planar_er(100,n,m)
 					gdo.construct_set_random_planar(100,n,m)
