@@ -146,11 +146,19 @@ logging.debug("Size of triangulation by elimination game: "+str(eg_triangulation
 print("ok")
 
 # ===== Saturate Minimal Separators =====
-logging.info("===== TEST SATURATE MINIMAL SEPARATORS =====")
-print ("===== TEST SATURATE MINIMAL SEPARATORS =====")
+logging.info("TEST SATURATE MINIMAL SEPARATORS")
+print ("TEST SATURATE MINIMAL SEPARATORS")
 sms_triangulation_size = SMS.evaluata_sms(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
 logging.debug("Size of triangulation by saturating minimal separators: "+str(sms_triangulation_size))
 print("ok")
+
+# ===== Randomized Saturate Minimal Separators =====
+logging.info("TEST RANDOMIZED SATURATE MINIMAL SEPARATORS")
+print ("TEST RANDOMIZED SATURATE MINIMAL SEPARATORS")
+randomized_sms_triangulation_size = SMS.evaluata_randomized_sms(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
+logging.debug("Size of triangulation by randomized saturating minimal separators: "+str(randomized_sms_triangulation_size))
+print("ok")
+
 
 # ===== LEX M =====
 logging.info("===== TEST LEX M =====")

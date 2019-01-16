@@ -245,6 +245,10 @@ if __name__ == "__main__":
 				algorithms.append(EG.evaluate_elimination_game)
 			elif algo_code == "EG_R":
 				algorithms.append(EG.evaluate_randomized_elimination_game)
+			if algo_code == "SMS":
+				algorithms.append(SMS.evaluata_sms)
+			elif algo_code == "SMS_R":
+				algorithms.append(EG.evaluata_randomized_sms)
 			elif algo_code == "LEXM":
 				algorithms.append(LEX_M.evaluate_LEX_M)
 			elif algo_code == "LEXM_R":

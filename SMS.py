@@ -13,6 +13,11 @@ def evaluata_sms(G, parameters):
 	sms.run()
 	return len(sms.edges_of_triangulation)
 
+def evaluata_randomized_sms(G, parameters):
+	sms = Algorithm_SMS(G)
+	sms.run()
+	return len(sms.edges_of_triangulation)
+	
 class Algorithm_SMS(ta.TriangulationAlgorithm):
 	def __init__(self, G):
 		logging.info("=== FMT.Algorithm_SMS.init ===")
@@ -20,6 +25,9 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 
 	def run(self):
 		self.triangulate()
+		
+	def run_randomized(self):
+		self.triangulate(randomized=True)
 
 	def get_alpha(self):
 		return self.alpha
@@ -27,7 +35,7 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 	def get_triangulated(self):
 		return self.H
 
-	def triangulate(self):
+	def triangulate(self, randomized=False):
 		'''
 		Implementation of the algorithm SMS (Saturate Minimal Seperators)
 		to construct a minimal triangulation G_prime
@@ -45,7 +53,7 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		while not finished:
 			logging.debug("Next iteration")
 			logging.debug("edges of G_prime: "+str(G_prime.edges()))
-			separator = self.get_minimal_separator(G_prime)
+			separator = self.get_minimal_separator(G_prime, randomized=randomized)
 			if separator == None:
 				finished = True
 			else:
@@ -75,15 +83,19 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		'''
 		logging.info("=== get_minimal_separator ===")
 		
-		for u in range(len(G.nodes())):
-			neighbors_of_u = [n for n in G.neighbors(u)]
-			for v in range(u+1, len(G.nodes())):
+		node_processing_order = [n for n in G.nodes()]
+		if randomized:
+			random.shuffle(node_processing_order)
+		for i in range(len(node_processing_order)):
+			u = list(G.nodes())[i]
+			neighbors_of_u = list(G.neighbors(u))#[n for n in ]
+			for v in node_processing_order[i+1:]:
 				logging.debug("Consider pair: "+str(u)+", "+str(v))
 				# construct S as set of all nodes that are neighbors of u and reachable from v:
 				S = []
 				marked = {n : False for n in G.nodes()}
 				if v in neighbors_of_u:
-					logging.debug(str(u)+" and "+str(v)+" are adjacent, no seperator exists")
+					logging.debug(str(u)+" and "+str(v)+" are adjacent, no separator exists")
 				else:
 					bfs_stack = [v]
 					marked[v] = True
@@ -93,10 +105,11 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 							if not marked[n]:
 								marked[n] = True
 								if n in neighbors_of_u:
+									logging.debug("Add "+str(n)+" to separator set")
 									S.append(n)
 								else:
 									bfs_stack.append(n)
-				
+					logging.debug("Seperator: "+str(S))
 				if len(S) > 1:
 					S_graph = G.subgraph(S)
 					logging.debug(S_graph.nodes())
