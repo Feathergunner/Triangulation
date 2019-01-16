@@ -218,7 +218,7 @@ if __name__ == "__main__":
 			if arg_data[1] in ["general", "planar", "maxdeg", "maxclique"]:
 				set = arg_data[1]
 		elif arg_data[0] == "algo":
-			if arg_data[1] in ["EG", "EG_R", "LEXM", "LEXM_R", "MT", "MT_R"]:
+			if arg_data[1] in ["EG", "EG_R", "LEXM", "LEXM_R", "MT", "MT_R", "SMS", "SMS_R"]:
 				algos.append(arg_data[1])
 		elif arg_data[0] == "threaded":
 			threaded = True
