@@ -5,6 +5,7 @@ import logging
 
 import random
 import networkx as nx
+import numpy as np
 
 import TriangulationAlgorithm as ta
 
@@ -17,13 +18,15 @@ def evaluata_randomized_sms(G, parameters={"iterations": 10}):
 	sms = Algorithm_SMS(G)
 	n = parameters["iterations"]
 	best_result = -1
+	randomized_results = []
 	for i in range(n):
 		sms = Algorithm_SMS(G.copy())
 		sms.run_randomized()
 		result = len(sms.edges_of_triangulation)
+		randomized_results.append(result)
 		if best_result < 0 or result < best_result:
 			best_result = result
-	return best_result
+	return [best_result, np.mean(randomized_results), np.var(randomized_results)]
 	
 class Algorithm_SMS(ta.TriangulationAlgorithm):
 	def __init__(self, G):

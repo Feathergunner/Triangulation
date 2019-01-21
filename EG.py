@@ -5,6 +5,7 @@ import logging
 
 import networkx as nx
 import random
+import numpy as np
 
 import TriangulationAlgorithm as ta
 
@@ -21,11 +22,13 @@ def evaluate_randomized_elimination_game(G, parameters={"iterations": 10}):
 	aeg = Algorithm_EliminationGame(G)
 	n = parameters["iterations"]
 	best_result = -1
+	randomized_results = []
 	for i in range(n):
 		result = len(aeg.elimination_game_triangulation(G.copy(), randomized=True))
+		randomized_results.append(result)
 		if best_result < 0 or result < best_result:
 			best_result = result
-	return best_result
+	return [best_result, np.mean(randomized_results), np.var(randomized_results)]
 	
 class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 	def __init__(self, G):

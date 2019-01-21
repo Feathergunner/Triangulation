@@ -5,7 +5,20 @@ import logging
 
 import random
 import networkx as nx
+import numpy as np
+
 import graph_meta as gm
+
+def evaluate_RMT(G, parameters={"iterations": 10}):
+	n = parameters["iterations"]
+	best_result = -1
+	randomized_results = []
+	for i in range(n):
+		result = len(random_search_for_minimum_triangulation(G.copy(), parameters))
+		randomized_results.append(result)
+		if best_result < 0 or result < best_result:
+			best_result = result
+	return [best_result, np.mean(randomized_results), np.var(randomized_results)]
 
 def random_search_for_minimum_triangulation(G, parameters={"iterations": 10}):
 	'''
@@ -15,6 +28,7 @@ def random_search_for_minimum_triangulation(G, parameters={"iterations": 10}):
 	'''
 
 	number_of_iterations = parameters["iterations"]
+
 	# init database of edges that are not in the graph:
 	V = G.nodes()
 	E = G.edges()
@@ -35,8 +49,9 @@ def random_search_for_minimum_triangulation(G, parameters={"iterations": 10}):
 			if nx.is_chordal(H):
 				graph_is_triangulated = True
 
-		if current_best_triangulation_size < 0 or len(used_edges_this_iteration) < current_best_triangulation_size:
-			current_best_triangulation_size = len(used_edges_this_iteration)
+		triangulation_size = len(used_edges_this_iteration)
+		if current_best_triangulation_size < 0 or triangulation_size < current_best_triangulation_size:
+			current_best_triangulation_size = triangulation_size
 			current_best_triangulation_edges = used_edges_this_iteration
 
 	return current_best_triangulation_edges
