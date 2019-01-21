@@ -288,7 +288,7 @@ if __name__ == "__main__":
 			data_dir += "random_maxclique"
 
 		(columns, stats) = rte.compute_statistics(data_dir)
-		rte.construct_output_table(columns, stats)
+		rte.construct_output_table(columns, stats, data_dir+"/out.tex")
 
 
 		

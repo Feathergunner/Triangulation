@@ -226,14 +226,14 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 	tabheadline = columns[0]
 	for i in range(1,len(columns)):
 		tabheadline += " & "+columns[i]
-	tabheadline += " \\hline \\\\\n"
+	tabheadline += " \\\\ \\hline \n"
 	texoutputstring += tabheadline
 	all_graph_ids = [key for key in dataset if not key == "algo"]
 	data_keys = [key for key in columns if not key == "algorithm" and not key == "graph id"]
 	for graph_id in all_graph_ids:
-		rowstring = dataset["algo"] + " & " + graph_id
+		rowstring = "\\verb+"+dataset["algo"] + "+ & \\verb+" + graph_id + "+"
 		for data_key in data_keys:
-			rowstring += " & {0:.2f}".format(round(dataset[graph_id][data_key],2))
+			rowstring += " & ${0:.2f}$".format(round(dataset[graph_id][data_key],2))
 		texoutputstring += rowstring+"\\\\\n"
 	texoutputstring += "\\end{tabular}\n"
 	texoutputstring += "\\end{document}\n"
