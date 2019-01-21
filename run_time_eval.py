@@ -30,6 +30,8 @@ class EvalData:
 		
 		self.measurement_finished = False
 		self.output = None
+		self.out_mean = None
+		self.out_var = None
 		self.running_time = None
 		
 	def __json__(self):
@@ -59,12 +61,22 @@ class EvalData:
 		if self.measurement_finished:
 			dict["output"] = self.output
 			dict["running_time"] = self.running_time
+			if not self.out_mean == None:
+				dict["output mean"] = self.out_mean
+			if not self.out_var == None:
+				dict["output variance"] = self.out_var
 		return dict
 		
 	def set_results(self, output, running_time):
 		self.measurement_finished = True
-		self.output = output
 		self.running_time = running_time
+		if type(output) is list:
+			self.output = output[0]
+			self.out_mean = output[1]
+			self.out_var = output[2]
+		else:
+			self.output = output
+		
 		
 def run_single_experiment(evaldata):
 	'''
