@@ -6,6 +6,7 @@ import logging
 import os
 import time
 import networkx as nx
+import numpy as np
 import random
 import json
 import csv
@@ -181,23 +182,27 @@ def load_evaldata_from_json(basedir, filename):
 def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
 	stats = {}
-	columns = ["algorithm", "graph_id", "avg n", "avg m", "avg time", "avg output"]
+	columns = ["algorithm", "graph id", "avg n", "avg m", "mean time", "var time", "mean output", "var output"]
 	for file in os.listdir(datadir+"/results"):
 		if ".json" in file:
 			filename = re.split(r'\.', file)[0]
 			evaldata = load_evaldata_from_json(datadir, filename)
 			graph_id = evaldata[0].id
-			avg_n = float(sum([data.n for data in evaldata])) / len(evaldata)
-			avg_m = float(sum([data.m for data in evaldata])) / len(evaldata)
-			avg_time = float(sum([data.running_time for data in evaldata])) / len(evaldata)
-			avg_output = float(sum([data.output for data in evaldata])) / len(evaldata)
+			avg_n = np.mean([data.n for data in evaldata])
+			avg_m = np.mean([data.m for data in evaldata])
+			mean_time = np.mean([data.running_time for data in evaldata])
+			var_time = np.var([data.running_time for data in evaldata])
+			mean_output = np.mean([data.output for data in evaldata])
+			var_output = np.var([data.output for data in evaldata])
 			if "algo" not in stats:
 				stats["algo"] = evaldata[0].algo
 			stats[graph_id] = {
-				"avg_n" : avg_n,
-				"avg_m" : avg_m, 
-				"avg_time" : avg_time,
-				"avg_output" : avg_output
+				"avg n" : avg_n,
+				"avg m" : avg_m, 
+				"mean time" : mean_time,
+				"var time" : var_time,
+				"mean output" : mean_output,
+				"var output" : var_output
 			}
 			for p in evaldata[0].parameters:
 				if p not in columns:
@@ -224,10 +229,11 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 	tabheadline += " \\hline \\\\\n"
 	texoutputstring += tabheadline
 	all_graph_ids = [key for key in dataset if not key == "algo"]
+	data_keys = [key for key in columns if not key == "algorithm" and not key == "graph id"]
 	for graph_id in all_graph_ids:
 		rowstring = dataset["algo"] + " & " + graph_id
-		for data_key in dataset[graph_id]:
-			rowstring += " & " + str(dataset[graph_id][data_key])
+		for data_key in data_keys:
+			rowstring += " & {0:.2f}".format(round(dataset[graph_id][data_key],2))
 		texoutputstring += rowstring+"\\\\\n"
 	texoutputstring += "\\end{tabular}\n"
 	texoutputstring += "\\end{document}\n"
