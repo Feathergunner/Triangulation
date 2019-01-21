@@ -13,10 +13,17 @@ def evaluata_sms(G, parameters):
 	sms.run()
 	return len(sms.edges_of_triangulation)
 
-def evaluata_randomized_sms(G, parameters):
+def evaluata_randomized_sms(G, parameters={"iterations": 10}):
 	sms = Algorithm_SMS(G)
-	sms.run()
-	return len(sms.edges_of_triangulation)
+	n = parameters["iterations"]
+	best_result = -1
+	for i in range(n):
+		sms = Algorithm_SMS(G.copy())
+		sms.run_randomized()
+		result = len(sms.edges_of_triangulation)
+		if best_result < 0 or result < best_result:
+			best_result = result
+	return best_result
 	
 class Algorithm_SMS(ta.TriangulationAlgorithm):
 	def __init__(self, G):

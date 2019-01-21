@@ -7,14 +7,14 @@ import random
 import networkx as nx
 import graph_meta as gm
 
-def random_search_for_minimum_triangulation(G, parameters={"n": 10}):
+def random_search_for_minimum_triangulation(G, parameters={"iterations": 10}):
 	'''
 	A randomized algorithm that searches for the minimum triangulation.
 	Returns the best approximation that was found within a specified number of iterations
 	In each iteration: randomly add new edges to the original graph until it is triangulated.
 	'''
 
-	number_of_iterations = parameters["n"]
+	number_of_iterations = parameters["iterations"]
 	# init database of edges that are not in the graph:
 	V = G.nodes()
 	E = G.edges()

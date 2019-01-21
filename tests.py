@@ -35,7 +35,7 @@ TEST_FILEPATH = "test/testgraph.json"
 GRAPH_TEST_EDGES = [(0,1), (1,2), (2,3),(3,0)]
 GRAPH_TEST = nx.Graph()
 GRAPH_TEST.add_edges_from(GRAPH_TEST_EDGES)
-GRAPH_TEST_ADDITIONAL_PARAMETERS = {"n": 10}
+GRAPH_TEST_ADDITIONAL_PARAMETERS = {"iterations": 10}
 logging.info("Graph for testing:")
 logging.info(GRAPH_TEST)
 logging.info("with additional parameters:")
