@@ -35,7 +35,10 @@ class EvalData:
 		return self.to_dict()
 
 	def __str__(self):
-		string =      "ALGO_NAME:    "+self.algo.__name__+"\n"
+		if type(self.algo) is str:
+			string =      "ALGO_NAME:    "+self.algo+"\n"
+		else:
+			string =      "ALGO_NAME:    "+self.algo.__name__+"\n"
 		string +=     "INPUT_ID:     "+self.id+"\n"
 		if isinstance(self.input, list):
 			string += "INPUT:        "+str([str(item) for item in self.input])+"\n";
@@ -49,9 +52,9 @@ class EvalData:
 	def to_dict(self):
 		dict = {"input_id": self.id, "n": self.n, "m": self.m, "parameters": self.algo_parameters}
 		if type(self.algo) is str:
-			{"name" : self.algo}
+			dict["algo"] = self.algo
 		else:
-			{"name" : self.algo.__name__}
+			dict["algo"] = self.algo.__name__
 		if self.measurement_finished:
 			dict["output"] = self.output
 			dict["running_time"] = self.running_time
@@ -108,11 +111,11 @@ def run_set_of_experiments(algo, datadir, algo_parameters, threaded=False, force
 	for file in all_datafiles:
 		filename = re.split(r'\.json', file)[0]
 		result_filename = "results_"+algo.__name__+"_"+filename+filename_sufix
-		if not threaded:
-			logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
-			meta.print_progress(i, num_files)
-			i += 1
 		if (not os.path.isfile(result_filename+".json")) or force_new_data:
+			if not threaded:
+				logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
+				meta.print_progress(i, num_files)
+				i += 1
 			if threaded:
 				p = Process(target=run_subset_of_experiments, args=(algo, algo_parameters, datadir, filename, result_filename))
 				threads.append(p)
@@ -165,8 +168,8 @@ def load_evaldata_from_json(basedir, filename):
 				if gd.id == graph_id:
 					graphdata = gd
 					break
-			if "name" in data:
-				evaldata = EvalData(data["name"], graphdata, data["parameters"])
+			if "algo" in data:
+				evaldata = EvalData(data["algo"], graphdata, data["parameters"])
 			else:
 				evaldata = EvalData("generic", graphdata)
 			if "parameters" in data:
@@ -176,8 +179,9 @@ def load_evaldata_from_json(basedir, filename):
 	return evaldataset	
 		
 def compute_statistics(datadir):
+	logging.debug("Compute statistics for results in "+datadir)
 	stats = {}
-	columns = ["algorithm", "avg n", "avg m", "avg time", "avg output"]
+	columns = ["algorithm", "graph_id", "avg n", "avg m", "avg time", "avg output"]
 	for file in os.listdir(datadir+"/results"):
 		if ".json" in file:
 			filename = re.split(r'\.', file)[0]
@@ -195,10 +199,38 @@ def compute_statistics(datadir):
 				"avg_time" : avg_time,
 				"avg_output" : avg_output
 			}
-			for p in evaldata["parameters"]:
+			for p in evaldata[0].parameters:
 				if p not in columns:
 					columns.append(p)
-				stats[graph_id][p] = evaldata["parameters"][p]
+				stats[graph_id][p] = evaldata[0].parameters[p]
 				
-	return stats
+	return (columns, stats)
 			
+def construct_output_table(columns, dataset, outputfilename="out.tex"):
+	texoutputstring = ""
+	with open("tex_template.txt", "r") as tex_template:
+		for line in tex_template:
+			texoutputstring += line
+
+	tabulardefline = "\\begin{tabular}{"
+	for c in columns:
+		tabulardefline += "c"
+	tabulardefline += "}"
+	texoutputstring += tabulardefline+"\n"
+
+	tabheadline = columns[0]
+	for i in range(1,len(columns)):
+		tabheadline += " & "+columns[i]
+	tabheadline += " \\hline \\\\\n"
+	texoutputstring += tabheadline
+	all_graph_ids = [key for key in dataset if not key == "algo"]
+	for graph_id in all_graph_ids:
+		rowstring = dataset["algo"] + " & " + graph_id
+		for data_key in dataset[graph_id]:
+			rowstring += " & " + str(dataset[graph_id][data_key])
+		texoutputstring += rowstring+"\\\\\n"
+	texoutputstring += "\\end{tabular}\n"
+	texoutputstring += "\\end{document}\n"
+
+	with open(outputfilename, "w") as tex_output:
+		tex_output.write(texoutputstring)

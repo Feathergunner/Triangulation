@@ -31,7 +31,7 @@ logging.basicConfig(
 	filename='logs/debug_eval.log',
 	filemode='w',
 	format=log_format,
-	level=logging.DEBUG,
+	level=logging.INFO,
 )
 
 def fix_filenames(datadir):
@@ -204,7 +204,7 @@ def run_evaluation():
 
 if __name__ == "__main__":
 	mode = "undefined"
-	set = "undefined"
+	dataset = "undefined"
 	threaded = False
 	algos = []
 	logging.info("cmd line args:")
@@ -212,11 +212,11 @@ if __name__ == "__main__":
 	for arg in sys.argv[1:]:
 		arg_data = re.split(r'=', arg)
 		if arg_data[0] == "mode":
-			if arg_data[1] in ["build", "eval", "test"]:
+			if arg_data[1] in ["build", "eval", "test", "output"]:
 				mode = arg_data[1]
 		elif arg_data[0] == "set":
 			if arg_data[1] in ["general", "planar", "maxdeg", "maxclique"]:
-				set = arg_data[1]
+				dataset = arg_data[1]
 		elif arg_data[0] == "algo":
 			if arg_data[1] in ["EG", "EG_R", "LEXM", "LEXM_R", "MT", "MT_R", "SMS", "SMS_R"]:
 				algos.append(arg_data[1])
@@ -226,50 +226,70 @@ if __name__ == "__main__":
 	if mode == "test":
 		import tests
 		
-	elif (mode == "undefined" or set == "undefined" or (mode == "eval" and len(algos) == 0)):
+	elif (mode == "undefined" or dataset == "undefined" or (mode == "eval" and len(algos) == 0)):
 		print ("Error! Missing parameters!")
 		
 	elif mode == "build":
-		if set == "general":
+		if dataset == "general":
 			construct_full_set_random_graphs()
-		elif set == "planar":
+		elif dataset == "planar":
 			construct_full_set_random_planar_graphs()
-		elif set == "maxdeg":
+		elif dataset == "maxdeg":
 			construct_full_set_random_maxdegree_graphs()
-		elif set == "maxclique":
+		elif dataset == "maxclique":
 			construct_full_set_random_maxclique_graphs()
 	elif mode == "eval":
 		algorithms = []
+		paramters = {}
 		for algo_code in algos:
 			if algo_code == "EG":
 				algorithms.append(EG.evaluate_elimination_game)
 			elif algo_code == "EG_R":
 				algorithms.append(EG.evaluate_randomized_elimination_game)
+				paramters["iterations"] = 10
 			if algo_code == "SMS":
 				algorithms.append(SMS.evaluata_sms)
 			elif algo_code == "SMS_R":
 				algorithms.append(EG.evaluata_randomized_sms)
+				paramters["iterations"] = 10
 			elif algo_code == "LEXM":
 				algorithms.append(LEX_M.evaluate_LEX_M)
 			elif algo_code == "LEXM_R":
 				algorithms.append(LEX_M.evaluate_randomized_LEX_M)
+				paramters["iterations"] = 10
 			elif algo_code == "MT":
 				algorithms.append(MT.get_minimum_triangulation_size)
 			elif algo_code == "MT_R":
 				algorithms.append(ramt.random_search_for_minimum_triangulation)
+				paramters["iterations"] = 10
 		
 		eval_dir = ""
-		if set == "general":
+		if dataset == "general":
 			eval_dir = "data/eval/random"
-		elif set == "planar":
+		elif dataset == "planar":
 			eval_dir = "data/eval/random_planar"
-		elif set == "maxdeg":
+		elif dataset == "maxdeg":
 			eval_dir = "data/eval/random_maxdeg"
-		elif set == "maxclique":
+		elif dataset == "maxclique":
 			eval_dir = "data/eval/random_maxclique"
-			
-		paramters = {"n": 10}
+		
 		for algo in algorithms:
 			rte.run_set_of_experiments(algo, eval_dir, paramters, threaded=threaded)
+
+	elif mode == "output":
+		data_dir = "data/eval/"
+		if dataset == "general":
+			data_dir += "random"
+		elif dataset == "planar":
+			data_dir += "random_planar"
+		elif dataset == "maxdeg":
+			data_dir += "random_maxdeg"
+		elif dataset == "maxclique":
+			data_dir += "random_maxclique"
+
+		(columns, stats) = rte.compute_statistics(data_dir)
+		rte.construct_output_table(columns, stats)
+
+
 		
 	
