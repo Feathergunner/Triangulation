@@ -9,13 +9,13 @@ import numpy as np
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def triangulate_RAMT(G, repeats=1):
+def triangulate_RAMT(G, repetitions=1):
 	algo = Algorithm_RAMT(G)
 	
 	H_opt = None
 	size_opt = None
 	all_sizes = []
-	for i in range(repeats):
+	for i in range(repetitions):
 		algo.run()
 		all_sizes.append(len(algo.get_triangulation_edges()))
 		if H_opt == None or len(algo.get_triangulation_edges()) < size_opt:
@@ -26,7 +26,7 @@ def triangulate_RAMT(G, repeats=1):
 		"size" : size_opt,
 		"mean" : np.mean(all_sizes),
 		"variance" : np.var(all_sizes),
-		"repeats" : repeats
+		"repetitions" : repetitions
 		}
 
 class Algorithm_RAMT(ta.TriangulationAlgorithm):

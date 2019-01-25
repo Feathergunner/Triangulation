@@ -13,19 +13,20 @@ import re
 from multiprocessing import Process
 
 from MetaScripts import meta
-import GraphDataOrganizer as gdo
+from Evaluation import GraphDataOrganizer as gdo
 
 class EvalData:
 	'''
 	Data structure to organize test and evaluation results
 	'''
-	def __init__(self, algo, input_graph_data, -={}):
+	def __init__(self, algo, input_graph_data, is_randomized, repetitions):
 		self.algo = algo
 		self.input = input_graph_data.G
 		self.n = len(input_graph_data.G.nodes())
 		self.m = len(input_graph_data.G.edges())
 		self.id = input_graph_data.id
-		self.algo_parameters = algo_parameters
+		self.is_randomized = is_randomized
+		self.repetitions = repetitions
 		
 		self.measurement_finished = False
 		self.output = None
@@ -38,21 +39,30 @@ class EvalData:
 
 	def __str__(self):
 		if type(self.algo) is str:
-			string =      "ALGO_NAME:    "+self.algo+"\n"
+			string =  "ALGO_NAME:    "+self.algo+"\n"
 		else:
-			string =      "ALGO_NAME:    "+self.algo.__name__+"\n"
+			string =  "ALGO_NAME:    "+self.algo.__name__+"\n"
 		string +=     "INPUT_ID:     "+self.id+"\n"
 		if isinstance(self.input, list):
 			string += "INPUT:        "+str([str(item) for item in self.input])+"\n";
 		else:
 			string += "INPUT:        "+str(self.input)+"\n"
+		if self.is_randomized:
+			string += "#RAND. REP.:  "+str(self.repetitions)+"\n"
 		if self.measurement_finished:
 			string += "OUTPUT:       "+str(self.output)+"\n"
 			string += "RUNNING TIME: "+str(self.running_time)+" sec."
 		return string
 		
 	def to_dict(self):
-		dict = {"input_id": self.id, "n": self.n, "m": self.m, "parameters": self.algo_parameters}
+		dict = {
+			"input_id": self.id,
+			"n": self.n,
+			"m": self.m,
+			"randomized": self.is_randomized,
+			"repetitions": self.repetitions
+		}
+		
 		if type(self.algo) is str:
 			dict["algo"] = self.algo
 		else:
@@ -76,9 +86,7 @@ class EvalData:
 		else:
 			self.output = output
 		
-class ExperimentManager:
-
-		
+#class ExperimentManager:
 def run_single_experiment(evaldata):
 	'''
 	Run a single experiment and measure the running time.
@@ -87,33 +95,33 @@ def run_single_experiment(evaldata):
 		The statistics of this experiment.
 	'''
 	t_start = time.time()
-	result = evaldata.algo(evaldata.input, evaldata.algo_parameters)
+	result = evaldata.algo(evaldata.input, evaldata.is_randomized, evaldata.repetitions)
 	t_end = time.time()
 
 	t_diff = t_end - t_start
 	evaldata.set_results(result, t_diff)
 	return evaldata
 	
-def run_subset_of_experiments(algo, algo_parameters, datadir, filename, result_filename):
+def run_subset_of_experiments(algo, randomized, repetitions, datadir, filename, result_filename):
 	'''
 	Run a specified algorithm on all graphs of a single dataset-file
 	'''
 	results = []
 	list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
 	for graphdata in list_of_graphs:
-		evaldata = EvalData(algo, graphdata, algo_parameters)
+		evaldata = EvalData(algo, graphdata, randomized, repetitions)
 		results.append(run_single_experiment(evaldata))
 	store_results_json(results, datadir+"/results/"+result_filename)
 	store_results_csv(results, datadir+"/results/"+result_filename)
 
-def run_set_of_experiments(algo, datadir, algo_parameters, threaded=False, force_new_data=False):
+def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=False, force_new_data=False):
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
 	logging.info("=== run_set_of_experiments ===")
 	logging.debug("datadir: "+datadir)
-	logging.debug("parameters: ")
-	logging.debug(algo_parameters)
+	logging.debug("repetitions: ")
+	logging.debug(repetitions)
 	all_datafiles = [filename for filename in os.listdir(datadir+"/input") if ".json" in filename]
 	logging.debug("all_Datafiles: "+str(all_datafiles))
 	
@@ -123,7 +131,9 @@ def run_set_of_experiments(algo, datadir, algo_parameters, threaded=False, force
 		threadset = {}
 	
 	num_files = len(all_datafiles)
-	filename_sufix = ''.join(["_"+k+str(algo_parameters[k]) for k in algo_parameters])
+	filename_sufix = ""
+	if randomized:
+		filename_sufix += "_r"+str(repetitions)
 	i = 0
 	for file in all_datafiles:
 		filename = re.split(r'\.json', file)[0]
@@ -134,7 +144,7 @@ def run_set_of_experiments(algo, datadir, algo_parameters, threaded=False, force
 				meta.print_progress(i, num_files)
 				i += 1
 			if threaded:
-				p = Process(target=run_subset_of_experiments, args=(algo, algo_parameters, datadir, filename, result_filename))
+				p = Process(target=run_subset_of_experiments, args=(algo, randomized, repetitions, datadir, filename, result_filename))
 				threads.append(p)
 				p.start()
 				
@@ -145,7 +155,7 @@ def run_set_of_experiments(algo, datadir, algo_parameters, threaded=False, force
 					threads = [p for p in threads if p.is_alive()]
 
 			else:
-				run_subset_of_experiments(algo, algo_parameters, datadir, filename, result_filename)
+				run_subset_of_experiments(algo, randomized, repetitions, datadir, filename, result_filename)
 	
 	if threaded:
 		# wait until all threads are finished:

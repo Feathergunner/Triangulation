@@ -9,7 +9,7 @@ import numpy as np
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def triangulate_SMS(G, randomized=False, repeats=1):
+def triangulate_SMS(G, randomized=False, repetitions=1):
 	algo = Algorithm_SMS(G)
 	if not randomized:
 		algo.run()
@@ -18,13 +18,13 @@ def triangulate_SMS(G, randomized=False, repeats=1):
 			"size" : len(algo.get_triangulation_edges()),
 			"mean" : len(algo.get_triangulation_edges()),
 			"variance" : 0,
-			"repeats" : 1
+			"repetitions" : 1
 			}
 	else:
 		H_opt = None
 		size_opt = None
 		all_sizes = []
-		for i in range(repeats):
+		for i in range(repetitions):
 			algo.run_randomized()
 			all_sizes.append(len(algo.get_triangulation_edges()))
 			if H_opt == None or len(algo.get_triangulation_edges()) < size_opt:
@@ -35,7 +35,7 @@ def triangulate_SMS(G, randomized=False, repeats=1):
 			"size" : size_opt,
 			"mean" : np.mean(all_sizes),
 			"variance" : np.var(all_sizes),
-			"repeats" : repeats
+			"repetitions" : repetitions
 			}
 	
 class Algorithm_SMS(ta.TriangulationAlgorithm):

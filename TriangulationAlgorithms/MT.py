@@ -16,7 +16,7 @@ def triangulate_MT(G):
 		"size" : len(algo.get_triangulation_edges()),
 		"mean" : len(algo.get_triangulation_edges()),
 		"variance" : 0,
-		"repeats" : 1
+		"repetitions" : 1
 		}
 
 class MT_TooLargeCycleError(Exception):
