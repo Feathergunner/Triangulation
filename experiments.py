@@ -43,7 +43,7 @@ logging.basicConfig(
 	filename='logs/debug_experiments.log',
 	filemode='w',
 	format=log_format,
-	level=logging.DEBUG,
+	level=logging.ERROR,
 )
 
 VALID_MODES = ["build", "eval", "test", "output"]

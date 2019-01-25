@@ -196,19 +196,21 @@ def load_evaldata_from_json(basedir, filename):
 					graphdata = gd
 					break
 			if "algo" in data:
-				evaldata = EvalData(data["algo"], graphdata, data["parameters"])
+				evaldata = EvalData(data["algo"], graphdata, data["randomized"], data["repetitions"])
 			else:
 				evaldata = EvalData("generic", graphdata)
-			if "parameters" in data:
-				evaldata.parameters = data["parameters"]
 			evaldata.set_results(data["output"], data["running_time"])
+			if "output mean" in data:
+				evaldata.out_mean = data["output mean"]
+			if "output variance" in data:
+				evaldata.out_var = data["output variance"]
 			evaldataset.append(evaldata)
 	return evaldataset	
 		
 def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
 	stats = {}
-	columns = ["algorithm", "graph id", "avg n", "avg m", "mean time", "var time", "mean output", "var output"]
+	columns = ["algorithm", "graph id", "avg n", "avg m", "mean time", "var time", "moo", "voo", "mmo", "mvo"]
 	for file in os.listdir(datadir+"/results"):
 		if ".json" in file:
 			filename = re.split(r'\.', file)[0]
@@ -220,6 +222,8 @@ def compute_statistics(datadir):
 			var_time = np.var([data.running_time for data in evaldata])
 			mean_output = np.mean([data.output for data in evaldata])
 			var_output = np.var([data.output for data in evaldata])
+			mmo = np.mean([data.out_mean for data in evaldata])
+			mvo = np.mean([data.out_var for data in evaldata])
 			if "algo" not in stats:
 				stats["algo"] = evaldata[0].algo
 			stats[graph_id] = {
@@ -227,13 +231,17 @@ def compute_statistics(datadir):
 				"avg m" : avg_m, 
 				"mean time" : mean_time,
 				"var time" : var_time,
-				"mean output" : mean_output,
-				"var output" : var_output
+				"moo" : mean_output,
+				"voo" : var_output,
+				"mmo" : mmo,
+				"mvo" : mvo
 			}
+			'''
 			for p in evaldata[0].parameters:
 				if p not in columns:
 					columns.append(p)
 				stats[graph_id][p] = evaldata[0].parameters[p]
+			'''
 				
 	return (columns, stats)
 			
