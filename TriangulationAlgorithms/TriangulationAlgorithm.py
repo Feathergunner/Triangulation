@@ -6,8 +6,6 @@ import logging
 import networkx as nx
 import matplotlib.pyplot as plt
 
-import graph_meta as gm
-
 class TriangulationNotSuccessfulException(Exception):
 	'''
 	Custom error type that gets thrown
@@ -27,15 +25,17 @@ class TriangulationAlgorithm:
 		H : the triangulated graph
 		edges_of_triangulation = the set of edges that are added to G to achieve H
 	'''
-	def __init__(self, G, parameters={}):
+	def __init__(self, G):
 		self.G = G
-		self.parameters = parameters
 		self.H = None
 		self.edges_of_triangulation = []
 
 	def run(self):
 		pass
-
+		
+	def get_triangulated(self):
+		return self.H
+		
 	def get_triangulation_edges(self):
 		return self.edges_of_triangulation
 

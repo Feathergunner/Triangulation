@@ -8,12 +8,12 @@ import re
 import time
 from multiprocessing import Process
 
-import meta
+from MetaScripts import meta
+from MetaScripts import global_settings as gs
 
-import GraphConstructionAlgorithms as gca
-import GraphDataOrganizer as gdo
-import global_settings as gs
-import run_time_eval as rte
+from Evaluation import GraphConstructionAlgorithms as gca
+from Evaluation import GraphDataOrganizer as gdo
+from Evaluation import ExperimentManager as em
 
 import LEX_M
 import MT
@@ -28,10 +28,10 @@ max_num_threads = 10
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
 logging.basicConfig(
-	filename='logs/debug_eval.log',
+	filename='logs/debug_experiments.log',
 	filemode='w',
 	format=log_format,
-	level=logging.INFO,
+	level=logging.ERROR,
 )
 
 def fix_filenames(datadir):
@@ -45,153 +45,10 @@ def fix_filenames(datadir):
 		print ("new filename: "+new_filename)
 		os.rename(datadir+"/"+filename, datadir+"/"+new_filename)
 
-def construct_full_set_random_graphs(threaded=True):
-	logging.info("=== construct_full_set_random_graphs ===")
-	
-	if threaded:
-		threads = []
-		threadset = {}
-		
-	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"])
-	i = 0
-	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
-		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
-			logging.debug("Constructing graphs with parameters n: "+str(n)+", p "+str(p))
-			if threaded:
-				process = Process(target=gdo.construct_set_random_er, args=(100,n,p))
-				threads.append(process)
-				process.start()
-				
-				threads = [p for p in threads if p.is_alive()]
-				while len(threads) >= max_num_threads:
-					#print ("thread limit reached... wait")
-					time.sleep(1.0)
-					threads = [p for p in threads if p.is_alive()]
-			else:
-				meta.print_progress(i, total)
-				i += 1
-				gdo.construct_set_random_er(100, n, p)
-				
-	if threaded:
-		# wait until all threads are finished:
-		for p in threads:
-			p.join()
-	
-def construct_full_set_random_planar_graphs(threaded=True):
-	logging.info("=== construct_full_set_random_planar_graphs ===")
-	
-	if threaded:
-		threads = []
-		threadset = {}
-		
-	total = len(gs.RANDOM_PLANAR_SETTINGS["n"]) * len(gs.RANDOM_PLANAR_SETTINGS["rel_m"])
-	i = 0
-	for n in gs.RANDOM_PLANAR_SETTINGS["n"]:
-		for rel_m in gs.RANDOM_PLANAR_SETTINGS["rel_m"]:
-			logging.debug("Constructing graphs with parameters n: "+str(n)+", rel_m "+str(rel_m))
-			m = n*rel_m
-			if threaded:
-				process = Process(target=gdo.construct_set_random_planar, args=(100,n,m))
-				threads.append(process)
-				process.start()
-				
-				threads = [p for p in threads if p.is_alive()]
-				while len(threads) >= max_num_threads:
-					#print ("thread limit reached... wait")
-					time.sleep(1.0)
-					threads = [p for p in threads if p.is_alive()]
-			else:
-				meta.print_progress(i, total)
-				i += 1
-				try:
-					#gdo.construct_set_random_planar_er(100,n,m)
-					gdo.construct_set_random_planar(100,n,m)
-				except gca.TooManyIterationsException:
-					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
-					
-	if threaded:
-		# wait until all threads are finished:
-		for p in threads:
-			p.join()
-
-def construct_full_set_random_maxdegree_graphs(threaded=True):
-	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
-	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXDEGREE_SETTINGS)
-	
-	if threaded:
-		threads = []
-		threadset = {}
-		
-	i = 0
-	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
-		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
-			for md in gs.RANDOM_MAXDEGREE_SETTINGS:
-				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max degree: "+str(md))
-				if threaded:
-					process = Process(target=gdo.construct_set_random_maxdeg, args=(100,n,p,md))
-					threads.append(process)
-					process.start()
-					
-					threads = [p for p in threads if p.is_alive()]
-					while len(threads) >= max_num_threads:
-						#print ("thread limit reached... wait")
-						time.sleep(1.0)
-						threads = [p for p in threads if p.is_alive()]
-				else:
-					meta.print_progress(i, total)
-					i += 1
-					try:
-						#gdo.construct_set_random_planar_er(100,n,m)
-						gdo.construct_set_random_maxdeg(100,n,p,md)
-					except gca.TooManyIterationsException:
-						logging.debug("TooManyIterationsException: No graphs constructed for this setting")
-
-	if threaded:
-		# wait until all threads are finished:
-		for p in threads:
-			p.join()
-
-def construct_full_set_random_maxclique_graphs(threaded=True):
-	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
-	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXCLIQUE_SETTINGS)
-	
-	if threaded:
-		threads = []
-		threadset = {}
-		
-	i = 0
-	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
-		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
-			for mc in gs.RANDOM_MAXCLIQUE_SETTINGS:
-				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max clique size: "+str(mc))
-				if threaded:
-					process = Process(target=gdo.construct_set_random_maxclique, args=(100,n,p,mc))
-					threads.append(process)
-					process.start()
-					
-					threads = [p for p in threads if p.is_alive()]
-					while len(threads) >= max_num_threads:
-						#print ("thread limit reached... wait")
-						time.sleep(1.0)
-						threads = [p for p in threads if p.is_alive()]
-				else:
-					meta.print_progress(i, total)
-					i += 1
-					try:
-						#gdo.construct_set_random_planar_er(100,n,m)
-						gdo.construct_set_random_maxclique(100,n,p,mc)
-					except gca.TooManyIterationsException:
-						logging.debug("TooManyIterationsException: No graphs constructed for this setting")
-			
-	if threaded:
-		# wait until all threads are finished:
-		for p in threads:
-			p.join()
-			
 def run_evaluation():
 	paramters = {"n": 10}
 	for algo in all_algorithms:
-		rte.run_set_of_experiments(algo, "data/eval/random_maxdeg", paramters)
+		me.run_set_of_experiments(algo, "data/eval/random_maxdeg", paramters)
 
 #cProfile.run("gdo.construct_set_random_planar(1,40,60)")
 #construct_full_set_random_planar_graphs()
@@ -200,7 +57,7 @@ def run_evaluation():
 #construct_full_set_random_maxclique_graphs()
 #run_evaluation()
 
-#print (rte.compute_statistics("data/eval/random"))
+#print (me.compute_statistics("data/eval/random"))
 
 if __name__ == "__main__":
 	mode = "undefined"
@@ -220,6 +77,14 @@ if __name__ == "__main__":
 		elif arg_data[0] == "algo":
 			if arg_data[1] in ["EG", "EG_R", "LEXM", "LEXM_R", "MT", "MT_R", "SMS", "SMS_R"]:
 				algos.append(arg_data[1])
+		elif arg_data[0] == "loglevel":
+			if arg_data[1] >= 0 && arg_data[1] <= 50:
+				logging.basicConfig(
+					filename='logs/debug_experiments.log',
+					filemode='w',
+					format=log_format,
+					level=arg_data[1]
+				)
 		elif arg_data[0] == "threaded":
 			threaded = True
 				
@@ -231,13 +96,13 @@ if __name__ == "__main__":
 		
 	elif mode == "build":
 		if dataset == "general":
-			construct_full_set_random_graphs()
+			gdo.construct_full_set_random_graphs()
 		elif dataset == "planar":
-			construct_full_set_random_planar_graphs()
+			gdo.construct_full_set_random_planar_graphs()
 		elif dataset == "maxdeg":
-			construct_full_set_random_maxdegree_graphs()
+			gdo.construct_full_set_random_maxdegree_graphs()
 		elif dataset == "maxclique":
-			construct_full_set_random_maxclique_graphs()
+			gdo.construct_full_set_random_maxclique_graphs()
 	elif mode == "eval":
 		algorithms = []
 		paramters = {}
@@ -274,7 +139,7 @@ if __name__ == "__main__":
 			eval_dir = "data/eval/random_maxclique"
 		
 		for algo in algorithms:
-			rte.run_set_of_experiments(algo, eval_dir, paramters, threaded=threaded)
+			me.run_set_of_experiments(algo, eval_dir, paramters, threaded=threaded)
 
 	elif mode == "output":
 		data_dir = "data/eval/"
@@ -287,8 +152,8 @@ if __name__ == "__main__":
 		elif dataset == "maxclique":
 			data_dir += "random_maxclique"
 
-		(columns, stats) = rte.compute_statistics(data_dir)
-		rte.construct_output_table(columns, stats, data_dir+"/out.tex")
+		(columns, stats) = me.compute_statistics(data_dir)
+		me.construct_output_table(columns, stats, data_dir+"/out.tex")
 
 
 		

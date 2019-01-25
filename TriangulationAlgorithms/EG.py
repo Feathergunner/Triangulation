@@ -7,31 +7,40 @@ import networkx as nx
 import random
 import numpy as np
 
-import TriangulationAlgorithm as ta
+from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def elimination_game(G, parameters):
-	aeg = Algorithm_EliminationGame(G)
-	return aeg.run()
-
-def evaluate_elimination_game(G, parameters):
-	aeg = Algorithm_EliminationGame(G)
-	aeg.run()
-	return len(aeg.edges_of_triangulation)
-
-def evaluate_randomized_elimination_game(G, parameters={"iterations": 10}):
-	aeg = Algorithm_EliminationGame(G)
-	n = parameters["iterations"]
-	best_result = -1
-	randomized_results = []
-	for i in range(n):
-		result = len(aeg.elimination_game_triangulation(G.copy(), randomized=True))
-		randomized_results.append(result)
-		if best_result < 0 or result < best_result:
-			best_result = result
-	return [best_result, np.mean(randomized_results), np.var(randomized_results)]
+def triangulate_EG(G, randomized=False, repeats=1):
+	algo = Algorithm_EliminationGame(G)
+	if not randomized:
+		algo.run()
+		return {
+			"H" : algo.get_triangulated(),
+			"size" : len(algo.get_triangulation_edges()),
+			"mean" : len(algo.get_triangulation_edges()),
+			"variance" : 0,
+			"repeats" : 1
+			}
+	else:
+		H_opt = None
+		size_opt = None
+		all_sizes = []
+		for i in range(repeats):
+			algo.run_randomized()
+			all_sizes.append(len(algo.get_triangulation_edges()))
+			if H_opt == None or len(algo.get_triangulation_edges()) < size_opt:
+				H_opt = algo.get_triangulated()
+				size_opt = len(algo.get_triangulation_edges())
+		return {
+			"H" : H_opt,
+			"size" : size_opt,
+			"mean" : np.mean(all_sizes),
+			"variance" : np.var(all_sizes),
+			"repeats" : repeats
+			}
 	
 class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 	def __init__(self, G):
+		logging.info("=== EG.Algorithm_EliminationGame.init ===")
 		super().__init__(G)
 		
 	def run(self):
@@ -46,7 +55,7 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 		
 		Args:
 			G : the input graph in networkx format
-			alpha : an ordering of the nodes that defines the order in which the nodes are processed
+			alpha : an ordering of the nodes that defines the order in which the nodes are processed, as a dict {node: position}
 			randomized : if no ordering alpha is specified and randomized is set to True, the order of the nodes is shuffled
 	
 		Returns:

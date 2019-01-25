@@ -5,18 +5,19 @@ import logging
 
 import networkx as nx
 
-import graph_meta as gm
-import TriangulationAlgorithm as ta
+from TriangulationAlgorithms import graph_meta as gm
+from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def find_minimum_triangulation(G, parameters):
-	mt = Algorithm_MinimumTriangulation(G)
-	mt.run()
-	return mt.get_triangulated()
-
-def get_minimum_triangulation_size(G, parameters):
-	mt = Algorithm_MinimumTriangulation(G)
-	mt.run()
-	return len(mt.edges_of_triangulation)
+def triangulate_MT(G):
+	algo = Algorithm_MinimumTriangulation(G)
+	algo.run()
+	return {
+		"H" : algo.get_triangulated(),
+		"size" : len(algo.get_triangulation_edges()),
+		"mean" : len(algo.get_triangulation_edges()),
+		"variance" : 0,
+		"repeats" : 1
+		}
 
 class MT_TooLargeCycleError(Exception):
 	'''

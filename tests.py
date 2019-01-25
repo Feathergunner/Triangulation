@@ -9,14 +9,14 @@ import logging
 
 import networkx as nx
 
-import GraphConstructionAlgorithms as gca
-import GraphDataOrganizer as gdo
+from Evaluation import GraphConstructionAlgorithms as gca
+from Evaluation import GraphDataOrganizer as gdo
 
-import EG
-import SMS
-import LEX_M
-import MT
-import Random_Approx_MT as ramt
+from TriangulationAlgorithms import EG
+from TriangulationAlgorithms import SMS
+from TriangulationAlgorithms import LEX_M
+from TriangulationAlgorithms import MT
+from TriangulationAlgorithms import RAMT
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
 logging.basicConfig(
@@ -35,11 +35,8 @@ TEST_FILEPATH = "test/testgraph.json"
 GRAPH_TEST_EDGES = [(0,1), (1,2), (2,3),(3,0)]
 GRAPH_TEST = nx.Graph()
 GRAPH_TEST.add_edges_from(GRAPH_TEST_EDGES)
-GRAPH_TEST_ADDITIONAL_PARAMETERS = {"iterations": 10}
 logging.info("Graph for testing:")
 logging.info(GRAPH_TEST)
-logging.info("with additional parameters:")
-logging.info(GRAPH_TEST_ADDITIONAL_PARAMETERS)
 
 # parameters for testing graph construction algorithms:
 NUM_NODES = 50
@@ -141,49 +138,55 @@ print("TEST TRIANGULATION ALGORITHMS")
 # ===== Elimination Game =====
 logging.info("===== TEST ELIMINATION GAME =====")
 print("TEST ELIMINATION GAME")
-eg_triangulation_size = EG.evaluate_elimination_game(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
-logging.debug("Size of triangulation by elimination game: "+str(eg_triangulation_size))
+triangulation_eg = EG.triangulate_EG(GRAPH_TEST.copy())
+logging.debug("Size of triangulation by elimination game: "+str(triangulation_eg["size"]))
+print("ok")
+
+logging.info("===== TEST RANDOMIZED ELIMINATION GAME =====")
+print("TEST RANDOMIZED ELIMINATION GAME")
+triangulation_eg_r = EG.triangulate_EG(GRAPH_TEST.copy(), randomized=True)
+logging.debug("Size of triangulation by randomized elimination game: "+str(triangulation_eg_r["size"]))
 print("ok")
 
 # ===== Saturate Minimal Separators =====
 logging.info("TEST SATURATE MINIMAL SEPARATORS")
 print ("TEST SATURATE MINIMAL SEPARATORS")
-sms_triangulation_size = SMS.evaluata_sms(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
-logging.debug("Size of triangulation by saturating minimal separators: "+str(sms_triangulation_size))
+triangulation_sms = SMS.triangulate_SMS(GRAPH_TEST.copy())
+logging.debug("Size of triangulation by saturating minimal separators: "+str(triangulation_sms["size"]))
 print("ok")
 
 # ===== Randomized Saturate Minimal Separators =====
 logging.info("TEST RANDOMIZED SATURATE MINIMAL SEPARATORS")
 print ("TEST RANDOMIZED SATURATE MINIMAL SEPARATORS")
-randomized_sms_triangulation_size = SMS.evaluata_randomized_sms(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
-logging.debug("Size of triangulation by randomized saturating minimal separators: "+str(randomized_sms_triangulation_size))
+triangulation_sms_r = SMS.triangulate_SMS(GRAPH_TEST.copy(), randomized=True)
+logging.debug("Size of triangulation by randomized saturating minimal separators: "+str(triangulation_sms_r["size"]))
 print("ok")
 
 
 # ===== LEX M =====
 logging.info("===== TEST LEX M =====")
 print("TEST LEX M")
-lexm_triangulation_size = LEX_M.evaluate_LEX_M(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
-logging.debug("Size of triangulation by Lex M: "+str(lexm_triangulation_size))
+triangulation_lexm = LEX_M.triangulate_LexM(GRAPH_TEST.copy())
+logging.debug("Size of triangulation by Lex M: "+str(triangulation_lexm["size"]))
 print("ok")
 
 # ===== Randomized LEX M =====
 logging.info("===== TEST RANDOMIZED LEX M =====")
 print("TEST RANDOMIZED LEX M")
-randomized_lexm_triangulation_size = LEX_M.evaluate_randomized_LEX_M(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
-logging.debug("Size of triangulation by randomized Lex M: "+str(randomized_lexm_triangulation_size))
+triangulation_lexm_r = LEX_M.triangulate_LexM(GRAPH_TEST.copy(), randomized=True)
+logging.debug("Size of triangulation by randomized Lex M: "+str(triangulation_lexm_r["size"]))
 print("ok")
 
 # ===== Minimum Triangulation =====
 logging.info("===== TEST MINIMUM TRIANGULATION =====")
 print("TEST MINIMUM TRIANGULATION")
-mt_triangulation_size = MT.get_minimum_triangulation_size(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS)
-logging.debug("Size of minimum triangulation "+str(mt_triangulation_size))
+triangulation_mt = MT.triangulate_MT(GRAPH_TEST.copy())
+logging.debug("Size of minimum triangulation "+str(triangulation_mt["size"]))
 print("ok")
 
 # ===== Randomized Approximation Minimum Triangulation =====
 logging.info("===== TEST RANDOMIZED APPROXIMATION FOR MINIMUM TRIANGULATION =====")
 print("TEST RANDOMIZED APPROXIMATION FOR MINIMUM TRIANGULATION")
-random_approx_mt_size = len(ramt.random_search_for_minimum_triangulation(GRAPH_TEST.copy(), GRAPH_TEST_ADDITIONAL_PARAMETERS))
-logging.debug("Size of rand. approx. for minimum triangulation "+str(random_approx_mt_size))
+triangulation_ramt = RAMT.triangulate_RAMT(GRAPH_TEST.copy())
+logging.debug("Size of rand. approx. for minimum triangulation "+str(triangulation_ramt["size"]))
 print("ok")

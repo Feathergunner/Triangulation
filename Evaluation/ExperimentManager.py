@@ -1,7 +1,6 @@
 #!usr/bin/python
 # -*- coding: utf-8 -*-
 
-import meta
 import logging
 import os
 import time
@@ -13,14 +12,14 @@ import csv
 import re
 from multiprocessing import Process
 
+from MetaScripts import meta
 import GraphDataOrganizer as gdo
-#import graph_meta as gm
 
 class EvalData:
 	'''
 	Data structure to organize test and evaluation results
 	'''
-	def __init__(self, algo, input_graph_data, algo_parameters={}):
+	def __init__(self, algo, input_graph_data, -={}):
 		self.algo = algo
 		self.input = input_graph_data.G
 		self.n = len(input_graph_data.G.nodes())
@@ -70,13 +69,15 @@ class EvalData:
 	def set_results(self, output, running_time):
 		self.measurement_finished = True
 		self.running_time = running_time
-		if type(output) is list:
-			self.output = output[0]
-			self.out_mean = output[1]
-			self.out_var = output[2]
+		if type(output) is dict:
+			self.output = output["size"]
+			self.out_mean = output["mean"]
+			self.out_var = output["variance"]
 		else:
 			self.output = output
 		
+class ExperimentManager:
+
 		
 def run_single_experiment(evaldata):
 	'''
@@ -94,6 +95,9 @@ def run_single_experiment(evaldata):
 	return evaldata
 	
 def run_subset_of_experiments(algo, algo_parameters, datadir, filename, result_filename):
+	'''
+	Run a specified algorithm on all graphs of a single dataset-file
+	'''
 	results = []
 	list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
 	for graphdata in list_of_graphs:

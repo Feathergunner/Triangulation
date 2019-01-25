@@ -3,34 +3,44 @@
 
 import logging
 
-import random
 import networkx as nx
+import random
 import numpy as np
 
-import TriangulationAlgorithm as ta
+from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def evaluata_sms(G, parameters):
-	sms = Algorithm_SMS(G)
-	sms.run()
-	return len(sms.edges_of_triangulation)
-
-def evaluata_randomized_sms(G, parameters={"iterations": 10}):
-	sms = Algorithm_SMS(G)
-	n = parameters["iterations"]
-	best_result = -1
-	randomized_results = []
-	for i in range(n):
-		sms = Algorithm_SMS(G.copy())
-		sms.run_randomized()
-		result = len(sms.edges_of_triangulation)
-		randomized_results.append(result)
-		if best_result < 0 or result < best_result:
-			best_result = result
-	return [best_result, np.mean(randomized_results), np.var(randomized_results)]
+def triangulate_SMS(G, randomized=False, repeats=1):
+	algo = Algorithm_SMS(G)
+	if not randomized:
+		algo.run()
+		return {
+			"H" : algo.get_triangulated(),
+			"size" : len(algo.get_triangulation_edges()),
+			"mean" : len(algo.get_triangulation_edges()),
+			"variance" : 0,
+			"repeats" : 1
+			}
+	else:
+		H_opt = None
+		size_opt = None
+		all_sizes = []
+		for i in range(repeats):
+			algo.run_randomized()
+			all_sizes.append(len(algo.get_triangulation_edges()))
+			if H_opt == None or len(algo.get_triangulation_edges()) < size_opt:
+				H_opt = algo.get_triangulated()
+				size_opt = len(algo.get_triangulation_edges())
+		return {
+			"H" : H_opt,
+			"size" : size_opt,
+			"mean" : np.mean(all_sizes),
+			"variance" : np.var(all_sizes),
+			"repeats" : repeats
+			}
 	
 class Algorithm_SMS(ta.TriangulationAlgorithm):
 	def __init__(self, G):
-		logging.info("=== FMT.Algorithm_SMS.init ===")
+		logging.info("=== SMS.Algorithm_SMS.init ===")
 		super().__init__(G)
 
 	def run(self):
@@ -38,12 +48,6 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		
 	def run_randomized(self):
 		self.triangulate(randomized=True)
-
-	def get_alpha(self):
-		return self.alpha
-
-	def get_triangulated(self):
-		return self.H
 
 	def triangulate(self, randomized=False):
 		'''
