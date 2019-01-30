@@ -16,6 +16,7 @@ from TriangulationAlgorithms import EG
 from TriangulationAlgorithms import SMS
 from TriangulationAlgorithms import LEX_M
 from TriangulationAlgorithms import MT
+from TriangulationAlgorithms import MTA
 from TriangulationAlgorithms import RAMT
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
@@ -182,6 +183,13 @@ logging.info("===== TEST MINIMUM TRIANGULATION =====")
 print("TEST MINIMUM TRIANGULATION")
 triangulation_mt = MT.triangulate_MT(GRAPH_TEST.copy())
 logging.debug("Size of minimum triangulation "+str(triangulation_mt["size"]))
+print("ok")
+
+# ===== Approximative Minimum Triangulation =====
+logging.info("===== TEST APPROX MINIMUM TRIANGULATION =====")
+print("TEST APPROX MINIMUM TRIANGULATION")
+triangulation_mta = MTA.triangulate_MTA(GRAPH_TEST.copy())
+logging.debug("Size of approximative minimum triangulation "+str(triangulation_mta["size"]))
 print("ok")
 
 # ===== Randomized Approximation Minimum Triangulation =====
