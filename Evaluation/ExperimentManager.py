@@ -251,7 +251,7 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 		for line in tex_template:
 			texoutputstring += line
 
-	tabulardefline = "\\begin{tabular}{"
+	tabulardefline = "\\begin{longtable}{"
 	for c in columns:
 		tabulardefline += "c"
 	tabulardefline += "}"
@@ -269,7 +269,7 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 		for data_key in data_keys:
 			rowstring += " & ${0:.2f}$".format(round(dataset[graph_id][data_key],2))
 		texoutputstring += rowstring+"\\\\\n"
-	texoutputstring += "\\end{tabular}\n"
+	texoutputstring += "\\end{longtable}\n"
 	texoutputstring += "\\end{document}\n"
 
 	with open(outputfilename, "w") as tex_output:
