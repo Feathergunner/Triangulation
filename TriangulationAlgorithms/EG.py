@@ -8,6 +8,7 @@ import random
 import numpy as np
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
+from TriangulationAlgorithms import CMT
 
 def triangulate_EG(G, randomized=False, repetitions=1):
 	algo = Algorithm_EliminationGame(G)
@@ -30,6 +31,41 @@ def triangulate_EG(G, randomized=False, repetitions=1):
 			if H_opt == None or len(algo.get_triangulation_edges()) < size_opt:
 				H_opt = algo.get_triangulated()
 				size_opt = len(algo.get_triangulation_edges())
+		return {
+			"H" : H_opt,
+			"size" : size_opt,
+			"mean" : np.mean(all_sizes),
+			"variance" : np.var(all_sizes),
+			"repetitions" : repetitions
+			}
+	
+def triangulate_EGPLUS(G, randomized=False, repetitions=1):
+	'''
+	run Elimination Game, but minimize the result using CMT
+	'''
+	algo = Algorithm_EliminationGame(G)
+	minimizer = CMT.Algorithm_CMT(G)
+	if not randomized:
+		algo.run()
+		minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), False)
+		return {
+			"H" : minimizer.get_triangulated(),
+			"size" : len(minimizer.get_triangulation_edges()),
+			"mean" : len(minimizer.get_triangulation_edges()),
+			"variance" : 0,
+			"repetitions" : 1
+			}
+	else:
+		H_opt = None
+		size_opt = None
+		all_sizes = []
+		for i in range(repetitions):
+			algo.run_randomized()
+			minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True)
+			all_sizes.append(len(minimizer.get_triangulation_edges()))
+			if H_opt == None or len(minimizer.get_triangulation_edges()) < size_opt:
+				H_opt = minimizer.get_triangulated()
+				size_opt = len(minimizer.get_triangulation_edges())
 		return {
 			"H" : H_opt,
 			"size" : size_opt,
