@@ -38,7 +38,7 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		from TriangulationAlgorithms import LEX_M
 		lexm_triang = LEX_M.triangulate_LexM(self.G)
 		size_minimal = lexm_triang["size"]
-		print ("size of minimal: "+str(size_minimal))
+		logging.debug("size of minimal: "+str(size_minimal))
 		
 		# construct set of possible chord edges:
 		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
