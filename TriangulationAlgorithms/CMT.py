@@ -39,6 +39,12 @@ def triangulate_CMT(G, randomized=False, repetitions=1):
 			}
 
 class Algorithm_CMT(ta.TriangulationAlgorithm):
+	'''
+	Implementation of the algorithm "Clique Minimal Triangulation" 
+		Mezzini, Moscarini: Simple algorithms for minimal triangulation of a graph and backward selection of a decomposable Markov network
+		https://www.sciencedirect.com/science/article/pii/S030439750900735X
+	to construct a minimal triangulation H of a graph G
+	'''
 	def __init__(self, G):
 		logging.info("=== CMT.Algorithm_CMT.init ===")
 		super().__init__(G)
@@ -51,11 +57,6 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 
 	def triangulate(self, randomized=False):
 		'''
-		Implementation of the algorithm "Clique Minimal Triangulation" 
-			Mezzini, Moscarini: Simple algorithms for minimal triangulation of a graph and backward selection of a decomposable Markov network
-			https://www.sciencedirect.com/science/article/pii/S030439750900735X
-		to construct a minimal triangulation H of a graph G
-		
 		Args:
 			G : a graph in netwokx format
 			randomize : if set to True, the order in which the nodes are processed is randomized
@@ -67,8 +68,22 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		
 		self.H = self.G.copy()
 		F = self.get_edges_of_inverse_graph(self.G)
+		F_prime = self.minimize_triangulation(self.G, F, randomized)
+		self.H.add_edges_from(F_prime)
+		return self.H
+
+	def minimize_triangulation(self, G, F, randomized):
+		'''
+		Args:
+			G : a graph
+			F : a set of edges, s.t. G + F is chordal
+			
+		Returns:
+			F_prime : a subset of F, s.t. G + F_prime is minimal chordal
+		'''
 		F_prime = F
-		self.H.add_edges_from(F)
+		H = G.copy()
+		H.add_edges_from(F)
 
 		# initialize set V_F of all nodes that are endpoint of some edge in F:
 		V_F = list(set([v for e in F for v in e]))
@@ -86,10 +101,10 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			for edge_rs in T:
 				r = edge_rs[0]
 				s = edge_rs[1]
-				cn_of_rs_cap_VF = [n for n in self.get_combined_neighborhood(self.H,[r,s]) if n in V_F]
+				cn_of_rs_cap_VF = [n for n in self.get_combined_neighborhood(H,[r,s]) if n in V_F]
 				if u in cn_of_rs_cap_VF and v in cn_of_rs_cap_VF:
 					T[edge_rs].add(edge_uv)
-			cn_of_uv_cap_VF = [n for n in self.get_combined_neighborhood(self.H,[u,v]) if n in V_F]
+			cn_of_uv_cap_VF = [n for n in self.get_combined_neighborhood(H,[u,v]) if n in V_F]
 			for x in cn_of_uv_cap_VF:
 				if (u,x) in F_prime:
 					for e in [e for e in T[(u,x)] if v in e]:
@@ -98,11 +113,12 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 					for e in [e for e in T[(v,x)] if u in e]:
 						T[(v,x)].discard(e)
 			F_prime.remove(edge_uv)
-			self.H.remove_edges_from([edge_uv])
+			H.remove_edges_from([edge_uv])
 			edge_uv = self.get_removeable_edge(F_prime, T, randomized)
 		self.edges_of_triangulation = F_prime
-		return self.H
-
+		
+		return F_prime
+		
 	def get_edges_of_inverse_graph(self, G):
 		'''
 		computes all edges that are not in G
