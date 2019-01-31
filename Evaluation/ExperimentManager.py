@@ -85,6 +85,21 @@ class EvalData:
 			self.out_var = output["variance"]
 		else:
 			self.output = output
+			
+	def __lt__(self,other):
+		if not self.algo == other.algo:
+			return self.algo < other.algo
+		elif not self.n == other.n:
+			return self.n < other.n
+		elif not self.is_randomized == other.is_randomized:
+			if self.is_randomized:
+				return False
+			else:
+				return True
+		elif not self.repetitions == other.repetitions:
+			return self.repetitions < other.repetitions
+		else:
+			return self.id < other.id
 		
 #class ExperimentManager:
 def run_single_experiment(evaldata):
@@ -137,7 +152,10 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 	i = 0
 	for file in all_datafiles:
 		filename = re.split(r'\.json', file)[0]
-		result_filename = "results_"+algo.__name__+"_"+filename+filename_sufix
+		if randomized:
+			result_filename = "results_"+algo.__name__+"_R"+str(repetitions)+"_"+filename+filename_sufix
+		else:
+			result_filename = "results_"+algo.__name__+"_"+filename+filename_sufix
 		if (not os.path.isfile(result_filename+".json")) or force_new_data:
 			if not threaded:
 				logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
@@ -209,8 +227,8 @@ def load_evaldata_from_json(basedir, filename):
 		
 def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
-	stats = {}
-	columns = ["algorithm", "graph id", "avg n", "avg m", "mean time", "var time", "moo", "voo", "mmo", "mvo"]
+	stats = []
+	columns = ["graph id", "avg n", "avg m", "algorithm", "repeats", "mean time", "var time", "moo", "voo", "mmo", "mvo"]
 	for file in os.listdir(datadir+"/results"):
 		if ".json" in file:
 			filename = re.split(r'\.', file)[0]
@@ -222,20 +240,27 @@ def compute_statistics(datadir):
 			var_time = np.var([data.running_time for data in evaldata])
 			mean_output = np.mean([data.output for data in evaldata])
 			var_output = np.var([data.output for data in evaldata])
+			repeats = evaldata[0].repetitions
 			mmo = np.mean([data.out_mean for data in evaldata])
 			mvo = np.mean([data.out_var for data in evaldata])
-			if "algo" not in stats:
-				stats["algo"] = evaldata[0].algo
-			stats[graph_id] = {
+			algo_name = evaldata[0].algo
+			if evaldata[0].is_randomized:
+				algo_name += " (R)"
+				
+			#stats[graph_id] = 
+			stats.append({
+				"algorithm" : algo_name,
+				"graph id" : graph_id,
 				"avg n" : avg_n,
 				"avg m" : avg_m, 
 				"mean time" : mean_time,
 				"var time" : var_time,
 				"moo" : mean_output,
 				"voo" : var_output,
+				"repeats" : repeats,
 				"mmo" : mmo,
 				"mvo" : mvo
-			}
+			})
 			'''
 			for p in evaldata[0].parameters:
 				if p not in columns:
@@ -246,6 +271,10 @@ def compute_statistics(datadir):
 	return (columns, stats)
 			
 def construct_output_table(columns, dataset, outputfilename="out.tex"):
+
+	# sort dataset:
+	sorteddataset = sorted(dataset, key=lambda data: (data["avg n"], data["graph id"], data["algorithm"], data["repeats"]))
+
 	texoutputstring = ""
 	with open("tex_template.txt", "r") as tex_template:
 		for line in tex_template:
@@ -262,15 +291,20 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 		tabheadline += " & "+columns[i]
 	tabheadline += " \\\\ \\hline \n"
 	texoutputstring += tabheadline
-	all_graph_ids = [key for key in dataset if not key == "algo"]
-	data_keys = [key for key in columns if not key == "algorithm" and not key == "graph id"]
-	for graph_id in all_graph_ids:
-		rowstring = "\\verb+"+dataset["algo"] + "+ & \\verb+" + graph_id + "+"
+	#all_graph_ids = [key for key in dataset if not key == "algo"]
+	data_keys = [key for key in columns] #if not key == "algorithm" and not key == "graph id"]
+	for data in sorteddataset:
+		rowstring = "\\verb+"+data["graph id"]+ "+"
+		#rowstring = "\\verb+"+data["algo"] + "+ & \\verb+" + data["graph_id"] + "+"
 		for data_key in data_keys:
-			rowstring += " & ${0:.2f}$".format(round(dataset[graph_id][data_key],2))
+			if not data_key == "algorithm" and not data_key == "graph id":
+				rowstring += " & ${0:.2f}$".format(round(data[data_key],2))
+			elif data_key == "algorithm":
+				rowstring += " & \\verb+"+data[data_key]+"+"
 		texoutputstring += rowstring+"\\\\\n"
 	texoutputstring += "\\end{longtable}\n"
 	texoutputstring += "\\end{document}\n"
 
 	with open(outputfilename, "w") as tex_output:
 		tex_output.write(texoutputstring)
+	

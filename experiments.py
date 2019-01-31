@@ -3,10 +3,12 @@
 
 import logging
 #import cProfile 
+import os
 import sys
 import re
 import time
 from multiprocessing import Process
+from subprocess import call
 
 from MetaScripts import meta
 from MetaScripts import global_settings as gs
@@ -101,7 +103,7 @@ if __name__ == "__main__":
 		elif arg_data[0] == "threaded":
 			threaded = True
 		elif arg_data[0] == "iterations":
-			num_iter = arg_data[1]
+			num_iter = int(arg_data[1])
 				
 	logging.info("cmd line args:")
 	logging.info(sys.argv)
@@ -128,13 +130,15 @@ if __name__ == "__main__":
 		algo = ALGORITHMS[algo_code]
 		if "_R" in algo_code:
 			randomized = True
-			num_iter = 10
 		
 		em.run_set_of_experiments(algo, data_dir, randomized=randomized, repetitions=num_iter, threaded=threaded)
 
 	elif mode == "output":
 		(columns, stats) = em.compute_statistics(data_dir)
 		em.construct_output_table(columns, stats, data_dir+"/out.tex")
+		
+		os.chdir(data_dir)
+		call(["pdflatex","out.tex"])
 
 
 		
