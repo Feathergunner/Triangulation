@@ -166,6 +166,19 @@ if DO_TEST_ALGO:
 	triangulation_eg_r = EG.triangulate_EG(GRAPH_TEST.copy(), randomized=True)
 	logging.debug("Size of triangulation by randomized elimination game: "+str(triangulation_eg_r["size"]))
 	print("ok")
+	
+	# ===== Elimination Game Plus =====
+	logging.info("===== TEST ELIMINATION GAME PLUS =====")
+	print("TEST ELIMINATION GAME PLUS")
+	triangulation_egp = EG.triangulate_EGPLUS(GRAPH_TEST.copy())
+	logging.debug("Size of triangulation by elimination game plus: "+str(triangulation_egp["size"]))
+	print("ok")
+
+	logging.info("===== TEST RANDOMIZED ELIMINATION GAME PLUS =====")
+	print("TEST RANDOMIZED ELIMINATION GAME PLUS")
+	triangulation_egp_r = EG.triangulate_EGPLUS(GRAPH_TEST.copy(), randomized=True)
+	logging.debug("Size of triangulation by randomized elimination game plus: "+str(triangulation_egp_r["size"]))
+	print("ok")
 
 	# ===== Saturate Minimal Separators =====
 	logging.info("TEST SATURATE MINIMAL SEPARATORS")

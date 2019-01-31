@@ -36,7 +36,9 @@ ALGORITHMS = {
 	"SMS"		: SMS.triangulate_SMS,
 	"SMS_R"		: SMS.triangulate_SMS,
 	"CMT"		: CMT.triangulate_CMT,
-	"CMT_R"		: CMT.triangulate_CMT
+	"CMT_R"		: CMT.triangulate_CMT,
+	"EGP"		: EG.triangulate_EGPLUS,
+	"EGP_R"		: EG.triangulate_EGPLUS
 	}
 	
 #all_algorithms = [LEX_M.evaluate_LEX_M, EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]#, ramt.random_search_for_minimum_triangulation]#MT.find_minimum_triangulation,
