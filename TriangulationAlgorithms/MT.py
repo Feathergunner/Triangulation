@@ -33,6 +33,12 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 			self.H = self.G
 			self.edges_of_triangulation = []
 			return
+			
+		# use LEX-M to determine the size of a minimal triangulation to have an upper bound for the minimum triangulation
+		from TriangulationAlgorithms import LEX_M
+		lexm_triang = LEX_M.triangulate_LexM(self.G)
+		size_minimal = lexm_triang["size"]
+		print ("size of minimal: "+str(size_minimal))
 		
 		# construct set of possible chord edges:
 		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
@@ -47,6 +53,11 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		# for each subset, check if self.G + additional edges is chordal
 		# return first set of edges that makes self.G chordal. this is a minimum triangulation.
 		for k in range(1, len(chord_edges)+1):
+			if k == size_minimal:
+				self.H = lexm_triang["H"]
+				self.edges_of_triangulation = [e for e in self.H.edges() if e not in self.G.edges()]
+				return
+			logging.debug("Current iteration: consider edgesets of size "+str(k))
 			edgesets_size_k = itertools.combinations(chord_edges, k)
 			for edgeset in edgesets_size_k:
 				H = self.G.copy()
