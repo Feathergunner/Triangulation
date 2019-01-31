@@ -15,6 +15,7 @@ from Evaluation import GraphDataOrganizer as gdo
 from TriangulationAlgorithms import EG
 from TriangulationAlgorithms import SMS
 from TriangulationAlgorithms import LEX_M
+from TriangulationAlgorithms import CMT
 from TriangulationAlgorithms import MT
 from TriangulationAlgorithms import MTA
 from TriangulationAlgorithms import RAMT
@@ -163,7 +164,6 @@ triangulation_sms_r = SMS.triangulate_SMS(GRAPH_TEST.copy(), randomized=True)
 logging.debug("Size of triangulation by randomized saturating minimal separators: "+str(triangulation_sms_r["size"]))
 print("ok")
 
-
 # ===== LEX M =====
 logging.info("===== TEST LEX M =====")
 print("TEST LEX M")
@@ -176,6 +176,13 @@ logging.info("===== TEST RANDOMIZED LEX M =====")
 print("TEST RANDOMIZED LEX M")
 triangulation_lexm_r = LEX_M.triangulate_LexM(GRAPH_TEST.copy(), randomized=True)
 logging.debug("Size of triangulation by randomized Lex M: "+str(triangulation_lexm_r["size"]))
+print("ok")
+
+# ===== CMT =====
+logging.info("===== TEST CMT =====")
+print("TEST CMT")
+triangulation_cmt = CMT.triangulate_CMT(GRAPH_TEST.copy())
+logging.debug("Size of triangulation by CMT: "+str(triangulation_cmt["size"]))
 print("ok")
 
 # ===== Minimum Triangulation =====
