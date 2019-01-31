@@ -202,6 +202,13 @@ if DO_TEST_ALGO:
 	logging.debug("Size of triangulation by CMT: "+str(triangulation_cmt["size"]))
 	print("ok")
 
+	# ===== Randomized CMT =====
+	logging.info("===== TEST RANDOMIZED CMT =====")
+	print("TEST RANDOMIZED CMT")
+	triangulation_cmt_r = CMT.triangulate_CMT(GRAPH_TEST.copy(), randomized=True)
+	logging.debug("Size of triangulation by randomized CMT: "+str(triangulation_cmt_r["size"]))
+	print("ok")
+
 	# ===== Minimum Triangulation =====
 	logging.info("===== TEST MINIMUM TRIANGULATION =====")
 	print("TEST MINIMUM TRIANGULATION")

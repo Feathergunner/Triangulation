@@ -20,6 +20,23 @@ def triangulate_CMT(G, randomized=False, repetitions=1):
 			"variance" : 0,
 			"repetitions" : 1
 			}
+	else:
+		H_opt = None
+		size_opt = None
+		all_sizes = []
+		for i in range(repetitions):
+			algo.run_randomized()
+			all_sizes.append(len(algo.get_triangulation_edges()))
+			if H_opt == None or len(algo.get_triangulation_edges()) < size_opt:
+				H_opt = algo.get_triangulated()
+				size_opt = len(algo.get_triangulation_edges())
+		return {
+			"H" : H_opt,
+			"size" : size_opt,
+			"mean" : np.mean(all_sizes),
+			"variance" : np.var(all_sizes),
+			"repetitions" : repetitions
+			}
 
 class Algorithm_CMT(ta.TriangulationAlgorithm):
 	def __init__(self, G):
@@ -27,12 +44,12 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		super().__init__(G)
 
 	def run(self):
-		self.triangulate(self.G)
+		self.triangulate()
 
 	def run_randomized(self):
-		pass
+		self.triangulate(randomized=True)
 
-	def triangulate(self, randomize=False):
+	def triangulate(self, randomized=False):
 		'''
 		Implementation of the algorithm "Clique Minimal Triangulation" 
 			Mezzini, Moscarini: Simple algorithms for minimal triangulation of a graph and backward selection of a decomposable Markov network
@@ -61,7 +78,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		for edge in F_prime:
 			T[edge] = set()
 
-		edge_uv = self.get_removeable_edge(F_prime, T)
+		edge_uv = self.get_removeable_edge(F_prime, T, randomized)
 		# while there are removeable edges:
 		while (not edge_uv == None):
 			u = edge_uv[0]
@@ -82,7 +99,8 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 						T[(v,x)].discard(e)
 			F_prime.remove(edge_uv)
 			self.H.remove_edges_from([edge_uv])
-			edge_uv = self.get_removeable_edge(F_prime, T)
+			edge_uv = self.get_removeable_edge(F_prime, T, randomized)
+		self.edges_of_triangulation = F_prime
 		return self.H
 
 	def get_edges_of_inverse_graph(self, G):
@@ -106,13 +124,16 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 					F.append(e)
 		return F
 
-	def get_removeable_edge(self, F, T):
+	def get_removeable_edge(self, F, T, randomized):
 		'''
 		finds and returns an edge e form the set F with T[e] = {}
 		'''
 		removeable_edges = [e for e in F if len(T[e]) == 0]
 		if len(removeable_edges) > 0:
-			return removeable_edges[0]
+			if not randomized:
+				return removeable_edges[0]
+			else:
+				return random.choice(removeable_edges)
 		else:
 			return None
 

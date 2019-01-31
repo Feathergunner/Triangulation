@@ -23,6 +23,7 @@ from TriangulationAlgorithms import MTA
 from TriangulationAlgorithms import EG
 from TriangulationAlgorithms import RAMT
 from TriangulationAlgorithms import SMS
+from TriangulationAlgorithms import CMT
 
 ALGORITHMS = {
 	"EG"		: EG.triangulate_EG,
@@ -33,7 +34,9 @@ ALGORITHMS = {
 	"MTA"		: MTA.triangulate_MTA, 
 	"MT_R"		: RAMT.triangulate_RAMT, 
 	"SMS"		: SMS.triangulate_SMS,
-	"SMS_R"		: SMS.triangulate_SMS
+	"SMS_R"		: SMS.triangulate_SMS,
+	"CMT"		: CMT.triangulate_CMT,
+	"CMT_R"		: CMT.triangulate_CMT
 	}
 	
 #all_algorithms = [LEX_M.evaluate_LEX_M, EG.evaluate_elimination_game, EG.evaluate_randomized_elimination_game]#, ramt.random_search_for_minimum_triangulation]#MT.find_minimum_triangulation,
