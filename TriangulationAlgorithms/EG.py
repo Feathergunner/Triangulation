@@ -61,17 +61,18 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1):
 		all_sizes = []
 		for i in range(repetitions):
 			algo.run_randomized()
-			minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True)
-			all_sizes.append(len(minimizer.get_triangulation_edges()))
-			if H_opt == None or len(minimizer.get_triangulation_edges()) < size_opt:
-				H_opt = minimizer.get_triangulated()
-				size_opt = len(minimizer.get_triangulation_edges())
+			for j in range(repetitions):
+				minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True)
+				all_sizes.append(len(minimizer.get_triangulation_edges()))
+				if H_opt == None or len(minimizer.get_triangulation_edges()) < size_opt:
+					H_opt = minimizer.get_triangulated()
+					size_opt = len(minimizer.get_triangulation_edges())
 		return {
 			"H" : H_opt,
 			"size" : size_opt,
 			"mean" : np.mean(all_sizes),
 			"variance" : np.var(all_sizes),
-			"repetitions" : repetitions
+			"repetitions" : repetitions*repetitions
 			}
 	
 class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
