@@ -67,7 +67,10 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		logging.info("=== triangulate_CMT ===")
 		
 		self.H = self.G.copy()
-		F = self.get_edges_of_inverse_graph(self.G)
+		F = self.get_possible_triangulation_edges(self.G)
+		#F = self.get_edges_of_inverse_graph(self.G)
+		logging.info("size of F: "+str(len(F)))
+		
 		F_prime = self.minimize_triangulation(self.G, F, randomized)
 		self.H.add_edges_from(F_prime)
 		return self.H
@@ -118,6 +121,20 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		self.edges_of_triangulation = F_prime
 		
 		return F_prime
+		
+	def get_possible_triangulation_edges(self, G):
+		'''
+		computes set of edges that are possible chord edges, ie
+		all edges between nodes that are part of a cycle and that are not contained in G
+		'''
+		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
+		F = []
+		for i in range(len(cycle_nodes)):
+			for j in range(i+1, len(cycle_nodes)):
+				chord_edge = (cycle_nodes[i], cycle_nodes[j])
+				if chord_edge not in self.G.edges():
+					F.append(chord_edge)
+		return F
 		
 	def get_edges_of_inverse_graph(self, G):
 		'''
