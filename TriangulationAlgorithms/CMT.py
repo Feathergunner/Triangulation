@@ -44,7 +44,11 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		Mezzini, Moscarini: Simple algorithms for minimal triangulation of a graph and backward selection of a decomposable Markov network
 		https://www.sciencedirect.com/science/article/pii/S030439750900735X
 	to construct a minimal triangulation H of a graph G
+	
+	Args:
+		G : a graph in netwokx format
 	'''
+	
 	def __init__(self, G):
 		logging.info("=== CMT.Algorithm_CMT.init ===")
 		super().__init__(G)
@@ -58,7 +62,6 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 	def triangulate(self, randomized=False):
 		'''
 		Args:
-			G : a graph in netwokx format
 			randomize : if set to True, the order in which the nodes are processed is randomized
 		
 		Returns:
@@ -77,13 +80,21 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 
 	def minimize_triangulation(self, G, F, randomized):
 		'''
+		Minimize a given triangulation.
+		
+		Following the pseudocode given in:
+		Mezzini, Moscarini: Simple algorithms for minimal triangulation of a graph and backward selection of a decomposable Markov network (see above)
+		
 		Args:
 			G : a graph
 			F : a set of edges, s.t. G + F is chordal
+			randomized : if set to True, get_removeable_edge is randomized
 			
 		Returns:
 			F_prime : a subset of F, s.t. G + F_prime is minimal chordal
 		'''
+		logging.info("=== CMT.minimize_triangulation ===")
+		
 		F_prime = F
 		H = G.copy()
 		H.add_edges_from(F)
@@ -91,7 +102,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		# initialize set V_F of all nodes that are endpoint of some edge in F:
 		V_F = list(set([v for e in F for v in e]))
 		
-		# init T: all edges e with len(T[e]) == 0 are removeable
+		# initialize T: all edges e with len(T[e]) == 0 are removeable
 		T  = {}
 		for edge in F_prime:
 			T[edge] = set()
@@ -120,12 +131,20 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			edge_uv = self.get_removeable_edge(F_prime, T, randomized)
 		self.edges_of_triangulation = F_prime
 		
+		if self.H == None:
+			self.H = H
 		return F_prime
 		
 	def get_possible_triangulation_edges(self, G):
 		'''
-		computes set of edges that are possible chord edges, ie
+		Computes set of edges that are possible chord edges, ie
 		all edges between nodes that are part of a cycle and that are not contained in G
+		
+		Args:
+			G : a graph in networkx format
+
+		Returns:
+			F : a set of edges s.t. no edge from F is in G and every cycle in G is a clique in G + F
 		'''
 		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
 		F = []
@@ -159,9 +178,22 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 
 	def get_removeable_edge(self, F, T, randomized):
 		'''
-		finds and returns an edge e form the set F with T[e] = {}
+		Finds and returns an edge e form the set F with T[e] = {}
+		
+		Args:
+			F : A set of edges
+			T : The dictionary that tracks removeability for all edges
+			randomized : if set to True, in each iteration the next removeable edge is chosen randomly.
+							Otherwise, the first edge of F that satisfies the requirements is returned.
+		
+		Return:
+			A removeable edge (i.e. T[e] is empty), if one exists. Otherwise None.
+		
 		'''
+		logging.info("=== CMT.get_removeable_edge ===")
+		
 		removeable_edges = [e for e in F if len(T[e]) == 0]
+		logging.debug("Number of removable edges: "+str(len(removeable_edges)))
 		if len(removeable_edges) > 0:
 			if not randomized:
 				return removeable_edges[0]
@@ -172,7 +204,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 
 	def get_combined_neighborhood(self, G, V):
 		'''
-		computes the combined neighborhood of V in G, that is:
+		Computes the combined neighborhood of V in G, that is:
 			NC(V) = {w in V(G) | exists v in V: w in N(w) and not w in V}
 		'''
 		NC = []
