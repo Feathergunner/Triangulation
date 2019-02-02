@@ -41,13 +41,24 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		logging.debug("size of minimal: "+str(size_minimal))
 		
 		# construct set of possible chord edges:
+		# only consider subgraphs after all separators of size 1 have been removed from graph:
 		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
+		single_node_separators = [n for n in self.G.nodes() if n not in cylce_nodes]
+		G_c = G.subgraph(single_node_separators)
 		chord_edges = []
+		for c in nx.connected_components(G_c):
+			for i in range(len(c)):
+				for j in range(i, len(c)):
+					chord_edge = (c[i], c[j])
+					if chord_edge not in self.G.edges():
+						chord_edges.append(chord_edge)
+		'''
 		for i in range(len(cycle_nodes)):
 			for j in range(i+1, len(cycle_nodes)):
 				chord_edge = (cycle_nodes[i], cycle_nodes[j])
 				if chord_edge not in self.G.edges():
 					chord_edges.append(chord_edge)
+		'''
 				
 		# iterate through all subsets of chord edges by increasing set size.
 		# for each subset, check if self.G + additional edges is chordal

@@ -69,12 +69,12 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		'''
 		logging.info("=== triangulate_CMT ===")
 		
-		self.H = self.G.copy()
 		F = self.get_possible_triangulation_edges(self.G)
 		#F = self.get_edges_of_inverse_graph(self.G)
 		logging.info("size of F: "+str(len(F)))
 		
 		F_prime = self.minimize_triangulation(self.G, F, randomized)
+		self.H = self.G.copy()
 		self.H.add_edges_from(F_prime)
 		return self.H
 
