@@ -43,8 +43,8 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		# construct set of possible chord edges:
 		# only consider subgraphs after all separators of size 1 have been removed from graph:
 		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
-		single_node_separators = [n for n in self.G.nodes() if n not in cylce_nodes]
-		G_c = G.subgraph(single_node_separators)
+		single_node_separators = [n for n in self.G.nodes() if n not in cycle_nodes]
+		G_c = self.G.subgraph(single_node_separators)
 		chord_edges = []
 		for c in nx.connected_components(G_c):
 			for i in range(len(c)):
