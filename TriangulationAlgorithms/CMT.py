@@ -54,29 +54,28 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		super().__init__(G)
 
 	def run(self):
-		self.triangulate()
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			F = self.get_possible_triangulation_edges(C)
+			self.edges_of_triangulation += self.minimize_triangulation(C, F, False)
+		
+		self.H = self.G.copy()
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 
 	def run_randomized(self):
-		self.triangulate(randomized=True)
-
-	def triangulate(self, randomized=False):
-		'''
-		Args:
-			randomize : if set to True, the order in which the nodes are processed is randomized
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			F = self.get_possible_triangulation_edges(C)
+			self.edges_of_triangulation += self.minimize_triangulation(C, F, True)
 		
-		Returns:
-			H : a minimal triangulation of G.
-		'''
-		logging.info("=== triangulate_CMT ===")
-		
-		F = self.get_possible_triangulation_edges(self.G)
-		#F = self.get_edges_of_inverse_graph(self.G)
-		logging.info("size of F: "+str(len(F)))
-		
-		F_prime = self.minimize_triangulation(self.G, F, randomized)
 		self.H = self.G.copy()
-		self.H.add_edges_from(F_prime)
-		return self.H
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 
 	def minimize_triangulation(self, G, F, randomized):
 		'''
@@ -129,10 +128,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			F_prime.remove(edge_uv)
 			H.remove_edges_from([edge_uv])
 			edge_uv = self.get_removeable_edge(F_prime, T, randomized)
-		self.edges_of_triangulation = F_prime
 		
-		if self.H == None:
-			self.H = H
 		return F_prime
 		
 	def get_possible_triangulation_edges(self, G):

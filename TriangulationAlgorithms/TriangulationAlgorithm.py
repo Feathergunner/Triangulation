@@ -27,12 +27,15 @@ class TriangulationAlgorithm:
 	'''
 	def __init__(self, G):
 		self.G = G
+		self.get_relevant_components()
+		self.get_chordedge_candidates()
+		
 		self.H = None
 		self.edges_of_triangulation = []
 
 	def run(self):
 		pass
-		
+	
 	def get_triangulated(self):
 		return self.H
 		
@@ -41,6 +44,34 @@ class TriangulationAlgorithm:
 
 	def get_triangulation_size(self):
 		return len(self.edges_of_triangulation)
+		
+	def get_relevant_components(self):
+		logging.info("TA.get_relevant_components")
+		# construct set of possible chord edges:
+		# only consider subgraphs after all separators of size 1 have been removed from graph:
+		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
+		single_node_separators = [n for n in self.G.nodes() if n not in cycle_nodes]
+		self.G_c = self.G.subgraph(cycle_nodes)
+		self.component_subgraphs = [self.G_c.subgraph(c) for c in nx.connected_components(self.G_c) if len(c) > 1]
+		
+		logging.debug ("cycle nodes: "+str(cycle_nodes))
+		logging.debug ("nodes to remove: "+str(single_node_separators))
+	
+	def get_chordedge_candidates(self):
+		logging.info("TA.get_chordedge_candidates")
+		if self.G_c == None:
+			self.get_relevant_components()
+		self.chordedge_candidates = []
+		#print ([c for c in nx.connected_components(self.G_c)])
+		for c in nx.connected_components(self.G_c):
+			c = list(c)
+			for i in range(len(c)):
+				for j in range(i+1, len(c)):
+					chord_edge = (c[i], c[j])
+					if chord_edge not in self.G.edges():
+						self.chordedge_candidates.append(chord_edge)
+		
+		logging.debug ("chordedge candidates: "+str(self.chordedge_candidates))
 
 	def draw_triangulation(self):
 		edges_original = self.G.edges()

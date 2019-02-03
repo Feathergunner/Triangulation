@@ -81,10 +81,26 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 		super().__init__(G)
 		
 	def run(self):
-		self.elimination_game_triangulation(self.G)
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			self.edges_of_triangulation += self.elimination_game_triangulation(C)
+		
+		self.H = self.G.copy()
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 		
 	def run_randomized(self):
-		self.elimination_game_triangulation(self.G, randomized=True)
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			self.edges_of_triangulation += self.elimination_game_triangulation(C, randomized=True)
+		
+		self.H = self.G.copy()
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 	
 	def elimination_game_triangulation(self, G, alpha=None, randomized=False):
 		'''
@@ -108,7 +124,6 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 		else:
 			all_nodes = sorted([n for n in alpha.keys()], key=lambda x: alpha[x])
 		G_temp = G.copy()
-		edges_original = [e for e in G_temp.edges()]
 		edges_added = []
 		for node in all_nodes:
 			all_neighbors = [n for n in G_temp.neighbors(node)]
@@ -121,13 +136,5 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 						logging.debug("Added edge: "+str(edge_between_neighbors))
 			G_temp.remove_node(node)
 			logging.debug("removed node: "+str(node))
-		H = nx.Graph()
-		H.add_nodes_from(all_nodes)
-		H.add_edges_from(edges_original)
-		H.add_edges_from(edges_added)
-		self.edges_of_triangulation = edges_added
-		self.H = H
-	
-		if not nx.is_chordal(H):
-			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
-		return H
+			
+		return edges_added
