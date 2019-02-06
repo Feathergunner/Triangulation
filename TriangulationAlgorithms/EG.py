@@ -112,7 +112,7 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 			randomized : if no ordering alpha is specified and randomized is set to True, the order of the nodes is shuffled
 	
 		Returns:
-			H : a graph in networkx format, which is a triangulation of G
+			F : a set of edges such that G + F is a minimum triangulation of G
 		'''
 		logging.info("=== elimination_game_triangulation ===")
 		logging.debug("Alpha: "+str(alpha))
@@ -124,7 +124,7 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 		else:
 			all_nodes = sorted([n for n in alpha.keys()], key=lambda x: alpha[x])
 		G_temp = G.copy()
-		edges_added = []
+		F = []
 		for node in all_nodes:
 			all_neighbors = [n for n in G_temp.neighbors(node)]
 			for i in range(0, len(all_neighbors)):
@@ -132,9 +132,9 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 					edge_between_neighbors = (all_neighbors[i], all_neighbors[j])
 					if edge_between_neighbors not in G_temp.edges():
 						G_temp.add_edges_from([edge_between_neighbors])
-						edges_added.append(edge_between_neighbors)
+						F.append(edge_between_neighbors)
 						logging.debug("Added edge: "+str(edge_between_neighbors))
 			G_temp.remove_node(node)
 			logging.debug("removed node: "+str(node))
 			
-		return edges_added
+		return F

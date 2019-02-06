@@ -44,24 +44,42 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		super().__init__(G)
 
 	def run(self):
-		self.triangulate()
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			self.edges_of_triangulation += self.triangulate(C)
+		
+		self.H = self.G.copy()
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 		
 	def run_randomized(self):
-		self.triangulate(randomized=True)
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			self.edges_of_triangulation += self.triangulate(C, randomized=True)
+		
+		self.H = self.G.copy()
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 
-	def triangulate(self, randomized=False):
+	def triangulate(self, C, randomized=False):
 		'''
 		Implementation of the algorithm SMS (Saturate Minimal Seperators)
-		to construct a minimal triangulation G_prime
+		to construct a minimal triangulation
 		
 		Args:
-			G : a graph in netwokx format
+			C : a graph in networkx format
+			randomized : if true, the algorithm to find a minimal separator is randomized.
 		
 		Returns:
-			G_prime : a minimal triangulation of G.
+			F : a set of edges s.t. C + F is a minimal triangulation C.
 		'''
 		logging.info("=== triangulate_SMS ===")
 		
+		F = []
 		G_prime = self.G.copy()
 		finished = False
 		while not finished:
@@ -78,10 +96,9 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 						logging.debug("saturate pair "+str(separator[i_u])+","+str(separator[i_v]))
 						if not G_prime.has_edge(separator[i_u], separator[i_v]):
 							edges_to_add.append((separator[i_u], separator[i_v]))
-							self.edges_of_triangulation.append((separator[i_u], separator[i_v]))
+							F.append((separator[i_u], separator[i_v]))
 				G_prime.add_edges_from(edges_to_add)
-		self.H = G_prime
-		return G_prime
+		return F
 			
 	def get_minimal_separator(self, G, randomized=False):
 		'''
@@ -90,7 +107,8 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		see https://cstheory.stackexchange.com/questions/29464/algorithms-for-computing-the-minimal-vertex-separator-of-a-graph
 		
 		Args:
-			randomized : if true, the order in which the nodes are processed gets shuffled (not yet implemented)
+			G : a graph in networkx format.
+			randomized : if true, the order in which the nodes are processed gets shuffled
 		
 		Return:
 			S : a set of nodes that form a minimal separator of G, if such a set exists that is not a clique. If every minimal separator of G is a clique, returns None
