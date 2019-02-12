@@ -6,6 +6,7 @@ import networkx as nx
 import re
 import os
 import json
+import time
 
 from multiprocessing import Process
 
