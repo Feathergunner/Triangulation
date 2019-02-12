@@ -7,6 +7,8 @@ import re
 import os
 import json
 
+from multiprocessing import Process
+
 from MetaScripts import meta
 from MetaScripts import global_settings as gs
 
@@ -183,7 +185,7 @@ def construct_full_set_random_graphs(threaded=True):
 		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", p "+str(p))
 			if threaded:
-				process = Process(target=gdo.construct_set_random_er, args=(100,n,p))
+				process = Process(target=construct_set_random_er, args=(100,n,p))
 				threads.append(process)
 				process.start()
 				
@@ -195,7 +197,7 @@ def construct_full_set_random_graphs(threaded=True):
 			else:
 				meta.print_progress(i, total)
 				i += 1
-				gdo.construct_set_random_er(100, n, p)
+				construct_set_random_er(100, n, p)
 				
 	if threaded:
 		# wait until all threads are finished:
@@ -216,7 +218,7 @@ def construct_full_set_random_planar_graphs(threaded=True):
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", rel_m "+str(rel_m))
 			m = n*rel_m
 			if threaded:
-				process = Process(target=gdo.construct_set_random_planar, args=(100,n,m))
+				process = Process(target=construct_set_random_planar, args=(100,n,m))
 				threads.append(process)
 				process.start()
 				
@@ -230,7 +232,7 @@ def construct_full_set_random_planar_graphs(threaded=True):
 				i += 1
 				try:
 					#gdo.construct_set_random_planar_er(100,n,m)
-					gdo.construct_set_random_planar(100,n,m)
+					construct_set_random_planar(100,n,m)
 				except gca.TooManyIterationsException:
 					logging.debug("TooManyIterationsException: No graphs constructed for this setting")
 					
@@ -253,7 +255,7 @@ def construct_full_set_random_maxdegree_graphs(threaded=True):
 			for md in gs.RANDOM_MAXDEGREE_SETTINGS:
 				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max degree: "+str(md))
 				if threaded:
-					process = Process(target=gdo.construct_set_random_maxdeg, args=(100,n,p,md))
+					process = Process(target=construct_set_random_maxdeg, args=(100,n,p,md))
 					threads.append(process)
 					process.start()
 					
@@ -267,7 +269,7 @@ def construct_full_set_random_maxdegree_graphs(threaded=True):
 					i += 1
 					try:
 						#gdo.construct_set_random_planar_er(100,n,m)
-						gdo.construct_set_random_maxdeg(100,n,p,md)
+						construct_set_random_maxdeg(100,n,p,md)
 					except gca.TooManyIterationsException:
 						logging.debug("TooManyIterationsException: No graphs constructed for this setting")
 
@@ -290,7 +292,7 @@ def construct_full_set_random_maxclique_graphs(threaded=True):
 			for mc in gs.RANDOM_MAXCLIQUE_SETTINGS:
 				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max clique size: "+str(mc))
 				if threaded:
-					process = Process(target=gdo.construct_set_random_maxclique, args=(100,n,p,mc))
+					process = Process(target=construct_set_random_maxclique, args=(100,n,p,mc))
 					threads.append(process)
 					process.start()
 					
@@ -304,7 +306,7 @@ def construct_full_set_random_maxclique_graphs(threaded=True):
 					i += 1
 					try:
 						#gdo.construct_set_random_planar_er(100,n,m)
-						gdo.construct_set_random_maxclique(100,n,p,mc)
+						construct_set_random_maxclique(100,n,p,mc)
 					except gca.TooManyIterationsException:
 						logging.debug("TooManyIterationsException: No graphs constructed for this setting")
 			
