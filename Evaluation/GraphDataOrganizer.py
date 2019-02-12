@@ -14,6 +14,8 @@ from MetaScripts import global_settings as gs
 
 from Evaluation import GraphConstructionAlgorithms as gca
 
+max_num_threads = 10
+
 class GraphData():
 	'''
 	A class to manage graph data and handle the graph data export to json files
