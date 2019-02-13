@@ -58,7 +58,8 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			# get triangulation for each connected component of the reduced graph G_c:
 			logging.debug("Next component: "+str(C.nodes()))
 
-			F = self.get_possible_triangulation_edges(C)
+			#F = self.get_possible_triangulation_edges(C)
+			F = self.get_edges_of_inverse_graph(C)
 			logging.debug("possible chord edges of this component: "+str(F))
 
 			self.edges_of_triangulation += self.minimize_triangulation(C, F, False)
@@ -139,26 +140,6 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			edge_uv = self.get_removeable_edge(F_prime, T, randomized)
 
 		return F_prime
-		
-	def get_possible_triangulation_edges(self, G):
-		'''
-		Computes set of edges that are possible chord edges, ie
-		all edges between nodes that are part of a cycle and that are not contained in G
-		
-		Args:
-			G : a graph in networkx format
-
-		Returns:
-			F : a set of edges s.t. no edge from F is in G and every cycle in G is a clique in G + F
-		'''
-		cycle_nodes = list(set([n for c in nx.cycle_basis(G) for n in c]))
-		F = []
-		for i in range(len(cycle_nodes)):
-			for j in range(i+1, len(cycle_nodes)):
-				chord_edge = (cycle_nodes[i], cycle_nodes[j])
-				if chord_edge not in G.edges():
-					F.append(chord_edge)
-		return F
 		
 	def get_edges_of_inverse_graph(self, G):
 		'''

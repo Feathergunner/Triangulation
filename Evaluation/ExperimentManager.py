@@ -97,6 +97,11 @@ class EvalData:
 			return self.algo < other.algo
 		elif not self.n == other.n:
 			return self.n < other.n
+		elif not self.reduce_graph == other.reduce_graph:
+			if self.reduce_graph:
+				return True
+			else:
+				return False
 		elif not self.is_randomized == other.is_randomized:
 			if self.is_randomized:
 				return False
@@ -104,11 +109,6 @@ class EvalData:
 				return True
 		elif not self.repetitions == other.repetitions:
 			return self.repetitions < other.repetitions
-		elif not self.reduce_graph == other.reduce_graph:
-			if self.reduce_graph:
-				return True
-			else:
-				return False
 		else:
 			return self.id < other.id
 		

@@ -47,11 +47,14 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True):
 	minimizer = CMT.Algorithm_CMT(G)
 	if not randomized:
 		algo.run()
-		minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), False)
+		F = minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), False)
+		H = G.copy()
+		H.add_edges_from(F)
+
 		return {
-			"H" : minimizer.get_triangulated(),
-			"size" : len(minimizer.get_triangulation_edges()),
-			"mean" : len(minimizer.get_triangulation_edges()),
+			"H" : H,
+			"size" : len(F),
+			"mean" : len(F),
 			"variance" : 0,
 			"repetitions" : 1
 			}
@@ -62,11 +65,14 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True):
 		for i in range(repetitions):
 			algo.run_randomized()
 			for j in range(repetitions):
-				minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True)
-				all_sizes.append(len(minimizer.get_triangulation_edges()))
-				if H_opt == None or len(minimizer.get_triangulation_edges()) < size_opt:
-					H_opt = minimizer.get_triangulated()
-					size_opt = len(minimizer.get_triangulation_edges())
+				F = minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True)
+				H = G.copy()
+				H.add_edges_from(F)
+				
+				all_sizes.append(len(F))
+				if H_opt == None or len(F) < size_opt:
+					H_opt = H
+					size_opt = len(F)
 		return {
 			"H" : H_opt,
 			"size" : size_opt,
