@@ -46,7 +46,11 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		Return:
 			F : a set of edges such that C + F is a minimum triangulation
 		'''
-		logging.debug("Find minimum triangulation for component...")
+		logging.info("=== compute_minimum_triangulation ===")
+
+		if nx.is_chordal(C):
+			logging.debug("Component is already chordal")
+			return []
 	
 		# use LEX-M to determine the size of a minimal triangulation to have an upper bound for the minimum triangulation
 		lexm_triang = LEX_M.triangulate_LexM(C)
