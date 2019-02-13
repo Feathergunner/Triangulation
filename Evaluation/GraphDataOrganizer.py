@@ -119,7 +119,7 @@ def load_graphs_from_json(filename):
 	return list_of_graphs
 
 def construct_set_random_er(number_of_graphs, n, p, force_new_data=False):
-	filename_init = "data/eval/random/input/ER_n"+str(n)+"_p"+str(p)
+	filename_init = "data/eval/random_general/input/ER_n"+str(n)+"_p"+str(p)
 	filename = re.sub('\.','', filename_init)
 	if (not os.path.isfile(filename+".json")) or (force_new_data):
 		gg = gca.GraphGenerator()
