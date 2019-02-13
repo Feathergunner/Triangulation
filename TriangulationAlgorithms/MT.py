@@ -9,8 +9,8 @@ import itertools
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 from TriangulationAlgorithms import LEX_M
 
-def triangulate_MT(G, randomized=False, repetitions=1):
-	algo = Algorithm_MinimumTriangulation(G)
+def triangulate_MT(G, randomized=False, repetitions=1, reduce_graph=True):
+	algo = Algorithm_MinimumTriangulation(G, reduce_graph)
 	algo.run()
 	return {
 		"H" : algo.get_triangulated(),
@@ -21,9 +21,9 @@ def triangulate_MT(G, randomized=False, repetitions=1):
 		}
 
 class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
-	def __init__(self, G):
+	def __init__(self, G, reduce_graph=True):
 		logging.info("=== MTA.Algorithm_MinimumTriangulation.init ===")
-		super().__init__(G)
+		super().__init__(G, reduce_graph)
 		
 	def run(self):
 		for C in self.component_subgraphs:

@@ -19,7 +19,7 @@ class EvalData:
 	'''
 	Data structure to organize test and evaluation results
 	'''
-	def __init__(self, algo, input_graph_data, is_randomized, repetitions):
+	def __init__(self, algo, input_graph_data, is_randomized, repetitions, reduce_graph):
 		self.algo = algo
 		self.input = input_graph_data.G
 		self.n = len(input_graph_data.G.nodes())
@@ -27,6 +27,7 @@ class EvalData:
 		self.id = input_graph_data.id
 		self.is_randomized = is_randomized
 		self.repetitions = repetitions
+		self.reduce_graph = reduce_graph
 		
 		self.measurement_finished = False
 		self.output = None
@@ -52,6 +53,10 @@ class EvalData:
 		if self.measurement_finished:
 			string += "OUTPUT:       "+str(self.output)+"\n"
 			string += "RUNNING TIME: "+str(self.running_time)+" sec."
+		if self.reduce_graph:
+			string += "REDUCED:      1"
+		else:
+			string += "REDUCED:      0"
 		return string
 		
 	def to_dict(self):
@@ -60,7 +65,8 @@ class EvalData:
 			"n": self.n,
 			"m": self.m,
 			"randomized": self.is_randomized,
-			"repetitions": self.repetitions
+			"repetitions": self.repetitions,
+			"reduce_graph": self.reduce_graph
 		}
 		
 		if type(self.algo) is str:
@@ -110,26 +116,26 @@ def run_single_experiment(evaldata):
 		The statistics of this experiment.
 	'''
 	t_start = time.time()
-	result = evaldata.algo(evaldata.input, evaldata.is_randomized, evaldata.repetitions)
+	result = evaldata.algo(evaldata.input, evaldata.is_randomized, evaldata.repetitions, evaldata.reduce_graph)
 	t_end = time.time()
 
 	t_diff = t_end - t_start
 	evaldata.set_results(result, t_diff)
 	return evaldata
 	
-def run_subset_of_experiments(algo, randomized, repetitions, datadir, filename, result_filename):
+def run_subset_of_experiments(algo, randomized, repetitions, reduce_graph, datadir, filename, result_filename):
 	'''
 	Run a specified algorithm on all graphs of a single dataset-file
 	'''
 	results = []
 	list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
 	for graphdata in list_of_graphs:
-		evaldata = EvalData(algo, graphdata, randomized, repetitions)
+		evaldata = EvalData(algo, graphdata, randomized, repetitions, reduce_graph)
 		results.append(run_single_experiment(evaldata))
 	store_results_json(results, datadir+"/results/"+result_filename)
 	store_results_csv(results, datadir+"/results/"+result_filename)
 
-def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=False, force_new_data=False):
+def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=False, reduce_graph=True, force_new_data=False):
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
@@ -162,7 +168,7 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 				meta.print_progress(i, num_files)
 				i += 1
 			if threaded:
-				p = Process(target=run_subset_of_experiments, args=(algo, randomized, repetitions, datadir, filename, result_filename))
+				p = Process(target=run_subset_of_experiments, args=(algo, randomized, repetitions, reduce_graph, datadir, filename, result_filename))
 				threads.append(p)
 				p.start()
 				
@@ -173,7 +179,7 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 					threads = [p for p in threads if p.is_alive()]
 
 			else:
-				run_subset_of_experiments(algo, randomized, repetitions, datadir, filename, result_filename)
+				run_subset_of_experiments(algo, randomized, repetitions, reduce_graph, datadir, filename, result_filename)
 	
 	if threaded:
 		# wait until all threads are finished:
@@ -213,8 +219,14 @@ def load_evaldata_from_json(basedir, filename):
 				if gd.id == graph_id:
 					graphdata = gd
 					break
+			if "reduce_graph" not in data:
+				data["reduce_graph"] = True
+			if "randomized" not in data:
+				data["randomized"] = False
+			if "repetitions" not in data:
+				data["repetitions"] = 1
 			if "algo" in data:
-				evaldata = EvalData(data["algo"], graphdata, data["randomized"], data["repetitions"])
+				evaldata = EvalData(data["algo"], graphdata, data["randomized"], data["repetitions"], data["reduce_graph"])
 			else:
 				evaldata = EvalData("generic", graphdata)
 			evaldata.set_results(data["output"], data["running_time"])
@@ -223,12 +235,16 @@ def load_evaldata_from_json(basedir, filename):
 			if "output variance" in data:
 				evaldata.out_var = data["output variance"]
 			evaldataset.append(evaldata)
+			if "reduce_graph" in data:
+				evaldata.reduce_graph = data["reduce_graph"]
+			else:
+				evaldata.reduce_graph = True
 	return evaldataset	
 		
 def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
 	stats = []
-	columns = ["graph id", "avg n", "avg m", "algorithm", "repeats", "mean time", "var time", "moo", "voo", "mmo", "mvo"]
+	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "mean time", "var time", "moo", "voo", "mmo", "mvo"]
 	for file in os.listdir(datadir+"/results"):
 		if ".json" in file:
 			filename = re.split(r'\.', file)[0]
@@ -250,6 +266,7 @@ def compute_statistics(datadir):
 			#stats[graph_id] = 
 			stats.append({
 				"algorithm" : algo_name,
+				"reduced" : str(evaldata[0].reduce_graph),
 				"graph id" : graph_id,
 				"avg n" : avg_n,
 				"avg m" : avg_m, 
@@ -296,10 +313,12 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 	for data in sorteddataset:
 		rowstring = "\\verb+"+data["graph id"]+ "+"
 		#rowstring = "\\verb+"+data["algo"] + "+ & \\verb+" + data["graph_id"] + "+"
+		non_numeric_data_keys = ["algorithm", "graph id", "reduced"]
+		string_data_keys = ["algorithm", "reduced"]
 		for data_key in data_keys:
-			if not data_key == "algorithm" and not data_key == "graph id":
+			if data_key not in non_numeric_data_keys:
 				rowstring += " & ${0:.2f}$".format(round(data[data_key],2))
-			elif data_key == "algorithm":
+			elif data_key in string_data_keys:
 				rowstring += " & \\verb+"+data[data_key]+"+"
 		texoutputstring += rowstring+"\\\\\n"
 	texoutputstring += "\\end{longtable}\n"

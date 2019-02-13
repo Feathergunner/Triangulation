@@ -9,8 +9,8 @@ import numpy as np
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def triangulate_LexM(G, randomized=False, repetitions=1):
-	algo = Algorithm_LexM(G)
+def triangulate_LexM(G, randomized=False, repetitions=1, reduce_graph=True):
+	algo = Algorithm_LexM(G, reduce_graph)
 	if not randomized:
 		algo.run()
 		return {
@@ -53,9 +53,9 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		alpha : the corresponding minimal elimination ordering of G 
 	'''
 	
-	def __init__(self, G):
+	def __init__(self, G, reduce_graph=True):
 		logging.info("=== LexM.Algorithm_LexM.init ===")
-		super().__init__(G)
+		super().__init__(G, reduce_graph)
 		self.alpha = {}
 
 	def run(self):

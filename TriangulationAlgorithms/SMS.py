@@ -9,8 +9,8 @@ import numpy as np
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def triangulate_SMS(G, randomized=False, repetitions=1):
-	algo = Algorithm_SMS(G)
+def triangulate_SMS(G, randomized=False, repetitions=1, reduce_graph=True):
+	algo = Algorithm_SMS(G, reduce_graph)
 	if not randomized:
 		algo.run()
 		return {
@@ -39,9 +39,9 @@ def triangulate_SMS(G, randomized=False, repetitions=1):
 			}
 	
 class Algorithm_SMS(ta.TriangulationAlgorithm):
-	def __init__(self, G):
+	def __init__(self, G, reduce_graph=True):
 		logging.info("=== SMS.Algorithm_SMS.init ===")
-		super().__init__(G)
+		super().__init__(G, reduce_graph)
 
 	def run(self):
 		for C in self.component_subgraphs:

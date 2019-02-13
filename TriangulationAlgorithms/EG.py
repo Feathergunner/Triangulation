@@ -10,8 +10,8 @@ import numpy as np
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 from TriangulationAlgorithms import CMT
 
-def triangulate_EG(G, randomized=False, repetitions=1):
-	algo = Algorithm_EliminationGame(G)
+def triangulate_EG(G, randomized=False, repetitions=1, reduce_graph=True):
+	algo = Algorithm_EliminationGame(G, reduce_graph)
 	if not randomized:
 		algo.run()
 		return {
@@ -39,11 +39,11 @@ def triangulate_EG(G, randomized=False, repetitions=1):
 			"repetitions" : repetitions
 			}
 	
-def triangulate_EGPLUS(G, randomized=False, repetitions=1):
+def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True):
 	'''
 	run Elimination Game, but minimize the result using CMT
 	'''
-	algo = Algorithm_EliminationGame(G)
+	algo = Algorithm_EliminationGame(G, reduce_graph)
 	minimizer = CMT.Algorithm_CMT(G)
 	if not randomized:
 		algo.run()
@@ -76,9 +76,9 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1):
 			}
 	
 class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
-	def __init__(self, G):
+	def __init__(self, G, reduce_graph=True):
 		logging.info("=== EG.Algorithm_EliminationGame.init ===")
-		super().__init__(G)
+		super().__init__(G, reduce_graph)
 		
 	def run(self):
 		for C in self.component_subgraphs:

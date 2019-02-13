@@ -9,8 +9,8 @@ import numpy as np
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def triangulate_CMT(G, randomized=False, repetitions=1):
-	algo = Algorithm_CMT(G)
+def triangulate_CMT(G, randomized=False, repetitions=1, reduce_graph=True):
+	algo = Algorithm_CMT(G, reduce_graph)
 	if not randomized:
 		algo.run()
 		return {
@@ -49,9 +49,9 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		G : a graph in netwokx format
 	'''
 	
-	def __init__(self, G):
+	def __init__(self, G, reduce_graph=True):
 		logging.info("=== CMT.Algorithm_CMT.init ===")
-		super().__init__(G)
+		super().__init__(G, reduce_graph)
 
 	def run(self):
 		for C in self.component_subgraphs:

@@ -80,6 +80,7 @@ if __name__ == "__main__":
 	dataset = "undefined"
 	threaded = False
 	randomized = False
+	reduced = True
 	num_iter = 1
 	algo_code = None
 	data_dir = "data/eval/"
@@ -89,13 +90,19 @@ if __name__ == "__main__":
 		if arg_data[0] == "mode":
 			if arg_data[1] in VALID_MODES:
 				mode = arg_data[1]
+			else:
+				print("Error! Incorrect mode: "+arg_data[1])
 		elif arg_data[0] == "set":
 			if arg_data[1] in VALID_SETS:
 				dataset = arg_data[1]
 				data_dir += "random_"+dataset
+			else:
+				print("Error! Incorrect set: "+arg_data[1])
 		elif arg_data[0] == "algo":
 			if arg_data[1] in ALGORITHMS.keys():
 				algo_code = arg_data[1]
+			else:
+				print("Error! Incorrect algo code: "+arg_data[1])
 		elif arg_data[0] == "loglevel":
 			level = int(arg_data[1])
 			if level >= 0 and level <= 50:
@@ -109,6 +116,10 @@ if __name__ == "__main__":
 			threaded = True
 		elif arg_data[0] == "iterations":
 			num_iter = int(arg_data[1])
+		elif arg_data[0] == "noreduce":
+			reduced = False
+		else:
+			print ("Argument "+arg_data[0]+" unknown!")
 				
 	logging.info("cmd line args:")
 	logging.info(sys.argv)
@@ -131,12 +142,13 @@ if __name__ == "__main__":
 			gdo.construct_full_set_random_maxdegree_graphs()
 		elif dataset == "maxclique":
 			gdo.construct_full_set_random_maxclique_graphs()
+
 	elif mode == "eval":
 		algo = ALGORITHMS[algo_code]
 		if "_R" in algo_code:
 			randomized = True
 		
-		em.run_set_of_experiments(algo, data_dir, randomized=randomized, repetitions=num_iter, threaded=threaded)
+		em.run_set_of_experiments(algo, data_dir, randomized=randomized, repetitions=num_iter, threaded=threaded, reduce_graph=reduced)
 
 	elif mode == "output":
 		(columns, stats) = em.compute_statistics(data_dir)

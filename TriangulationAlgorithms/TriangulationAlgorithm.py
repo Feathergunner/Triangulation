@@ -21,16 +21,23 @@ class TriangulationAlgorithm:
 
 	Args:
 		G : the graph to triangulate
+		reduce_graph : if set to True, all single-vertex-seperators get removed from the graph,
+						and a subgraph for each component gets constructed
 
 	Attributes:
 		G : the original graph
+		component_subgraphs : a list of graphs in networkx format
+			if G was reduced, this contains each component of the reduced G as a graph.
+			otherwise, it contains only G
 		H : the triangulated graph
 		edges_of_triangulation = the set of edges that are added to G to achieve H
 	'''
-	def __init__(self, G):
+	def __init__(self, G, reduce_graph=True):
 		self.G = G
-		self.get_relevant_components()
-		self.get_chordedge_candidates()
+		self.component_subgraphs = [G]
+		if reduce_graph:
+			self.get_relevant_components()
+			self.get_chordedge_candidates()
 		
 		self.H = None
 		self.edges_of_triangulation = []
@@ -63,8 +70,8 @@ class TriangulationAlgorithm:
 		logging.info("TA.get_chordedge_candidates")
 		if self.G_c == None:
 			self.get_relevant_components()
+
 		self.chordedge_candidates = []
-		#print ([c for c in nx.connected_components(self.G_c)])
 		for c in nx.connected_components(self.G_c):
 			c = list(c)
 			for i in range(len(c)):
