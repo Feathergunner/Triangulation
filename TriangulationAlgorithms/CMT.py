@@ -58,7 +58,6 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			# get triangulation for each connected component of the reduced graph G_c:
 			logging.debug("Next component: "+str(C.nodes()))
 
-			#F = self.get_possible_triangulation_edges(C)
 			F = self.get_edges_of_inverse_graph(C)
 			logging.debug("possible chord edges of this component: "+str(F))
 
@@ -76,7 +75,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			# get triangulation for each connected component of the reduced graph G_c:
 			logging.debug("Next component: "+str(C.nodes()))
 			
-			F = self.get_possible_triangulation_edges(C)
+			F = self.get_edges_of_inverse_graph(C)
 			logging.debug("possible chord edges of this component: "+str(F))
 
 			self.edges_of_triangulation += self.minimize_triangulation(C, F, True)
