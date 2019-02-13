@@ -98,6 +98,7 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 		
 	def run_randomized(self):
+		self.edges_of_triangulation = []
 		for C in self.component_subgraphs:
 			# get triangulation for each connected component of the reduced graph G_c:
 			self.edges_of_triangulation += self.elimination_game_triangulation(C, randomized=True)

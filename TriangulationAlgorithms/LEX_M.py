@@ -72,8 +72,9 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 			
 	def run_randomized(self):
+		self.edges_of_triangulation = []
+		self.alpha = {}
 		for C in self.component_subgraphs:
-			self.alpha = {}
 			self.nodelabels = {node : [] for node in C}
 			# get triangulation for each connected component of the reduced graph G_c:
 			self.edges_of_triangulation += self.triangulate(C, True)
