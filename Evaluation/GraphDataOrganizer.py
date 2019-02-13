@@ -48,7 +48,7 @@ def check_filepath(filepath):
 	path = ""
 	for directory in path_components[:-1]:
 		path += directory+"/"
-		if not os.path.isdir(path):
+		if not os.path.exists(path):
 			os.mkdir(path)
 
 	if len(path_components) > 1:
