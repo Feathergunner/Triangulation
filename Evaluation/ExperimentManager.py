@@ -104,6 +104,11 @@ class EvalData:
 				return True
 		elif not self.repetitions == other.repetitions:
 			return self.repetitions < other.repetitions
+		elif not self.reduce_graph == other.reduce_graph:
+			if self.reduce_graph:
+				return True
+			else:
+				return False
 		else:
 			return self.id < other.id
 		
@@ -157,11 +162,15 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 		filename_sufix += "_r"+str(repetitions)
 	i = 0
 	for file in all_datafiles:
+		# construct output filename:
 		filename = re.split(r'\.json', file)[0]
+		result_filename = "results_"+algo.__name__
 		if randomized:
-			result_filename = "results_"+algo.__name__+"_R"+str(repetitions)+"_"+filename+filename_sufix
-		else:
-			result_filename = "results_"+algo.__name__+"_"+filename+filename_sufix
+			result_filename += "_R"+str(repetitions)
+		if not reduce_graph:
+			result_filename += "_B"
+		result_filename += "_"+filename+filename_sufix
+		
 		if (not os.path.isfile(result_filename+".json")) or force_new_data:
 			if not threaded:
 				logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
@@ -288,9 +297,8 @@ def compute_statistics(datadir):
 	return (columns, stats)
 			
 def construct_output_table(columns, dataset, outputfilename="out.tex"):
-
 	# sort dataset:
-	sorteddataset = sorted(dataset, key=lambda data: (data["avg n"], data["graph id"], data["algorithm"], data["repeats"]))
+	sorteddataset = sorted(dataset, key=lambda data: (data["avg n"], data["graph id"], data["algorithm"], data["repeats"], data["reduced"]))
 
 	texoutputstring = ""
 	with open("tex_template.txt", "r") as tex_template:
