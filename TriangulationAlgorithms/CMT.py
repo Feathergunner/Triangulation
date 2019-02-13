@@ -56,7 +56,11 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 	def run(self):
 		for C in self.component_subgraphs:
 			# get triangulation for each connected component of the reduced graph G_c:
+			logging.debug("Next component: "+str(C.nodes()))
+
 			F = self.get_possible_triangulation_edges(C)
+			logging.debug("possible chord edges of this component: "+str(F))
+
 			self.edges_of_triangulation += self.minimize_triangulation(C, F, False)
 		
 		self.H = self.G.copy()
@@ -68,7 +72,11 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 	def run_randomized(self):
 		for C in self.component_subgraphs:
 			# get triangulation for each connected component of the reduced graph G_c:
+			logging.debug("Next component: "+str(C.nodes()))
+			
 			F = self.get_possible_triangulation_edges(C)
+			logging.debug("possible chord edges of this component: "+str(F))
+
 			self.edges_of_triangulation += self.minimize_triangulation(C, F, True)
 		
 		self.H = self.G.copy()
@@ -109,6 +117,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		edge_uv = self.get_removeable_edge(F_prime, T, randomized)
 		# while there are removeable edges:
 		while (not edge_uv == None):
+			logging.debug("Consider removeable edge "+str(edge_uv))
 			u = edge_uv[0]
 			v = edge_uv[1]
 			for edge_rs in T:
@@ -128,7 +137,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			F_prime.remove(edge_uv)
 			H.remove_edges_from([edge_uv])
 			edge_uv = self.get_removeable_edge(F_prime, T, randomized)
-		
+
 		return F_prime
 		
 	def get_possible_triangulation_edges(self, G):
@@ -142,12 +151,12 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		Returns:
 			F : a set of edges s.t. no edge from F is in G and every cycle in G is a clique in G + F
 		'''
-		cycle_nodes = list(set([n for c in nx.cycle_basis(self.G) for n in c]))
+		cycle_nodes = list(set([n for c in nx.cycle_basis(G) for n in c]))
 		F = []
 		for i in range(len(cycle_nodes)):
 			for j in range(i+1, len(cycle_nodes)):
 				chord_edge = (cycle_nodes[i], cycle_nodes[j])
-				if chord_edge not in self.G.edges():
+				if chord_edge not in G.edges():
 					F.append(chord_edge)
 		return F
 		
