@@ -69,7 +69,7 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		self.H.add_edges_from(self.edges_of_triangulation)
 		
 		if not nx.is_chordal(self.H):
-			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
+			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 			
 	def run_randomized(self):
 		for C in self.component_subgraphs:
@@ -82,7 +82,7 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		self.H.add_edges_from(self.edges_of_triangulation)
 		
 		if not nx.is_chordal(self.H):
-			raise TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
+			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 
 	def get_alpha(self):
 		return self.alpha
