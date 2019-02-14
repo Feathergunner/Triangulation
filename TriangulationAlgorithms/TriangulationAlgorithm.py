@@ -4,8 +4,8 @@
 import logging
 
 import networkx as nx
-#import matplotlib
-#matplotlib.use('agg')
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 class TriangulationNotSuccessfulException(Exception):
