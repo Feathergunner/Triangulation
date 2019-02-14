@@ -134,7 +134,9 @@ def run_subset_of_experiments(algo, randomized, repetitions, reduce_graph, datad
 	'''
 	results = []
 	list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
+	print(filename)
 	for graphdata in list_of_graphs:
+		print(graphdata.id)
 		evaldata = EvalData(algo, graphdata, randomized, repetitions, reduce_graph)
 		results.append(run_single_experiment(evaldata))
 	store_results_json(results, datadir+"/results/"+result_filename)
@@ -171,7 +173,7 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 			result_filename += "_B"
 		result_filename += "_"+filename+filename_sufix
 		
-		if (not os.path.isfile(result_filename+".json")) or force_new_data:
+		if (not os.path.isfile(datadir+"/results/"+result_filename+".json")) or force_new_data:
 			if not threaded:
 				logging.debug("Evaluate algo "+algo.__name__+ "on graphs of file: "+filename)
 				meta.print_progress(i, num_files)
