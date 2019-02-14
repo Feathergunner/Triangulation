@@ -6,11 +6,12 @@ import logging
 import networkx as nx
 import random
 import numpy as np
+import time
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def triangulate_LexM(G, randomized=False, repetitions=1, reduce_graph=True):
-	algo = Algorithm_LexM(G, reduce_graph)
+def triangulate_LexM(G, randomized=False, repetitions=1, reduce_graph=True, timeout=-1):
+	algo = Algorithm_LexM(G, reduce_graph, timeout)
 	if not randomized:
 		algo.run()
 		return {
@@ -53,9 +54,9 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		alpha : the corresponding minimal elimination ordering of G 
 	'''
 	
-	def __init__(self, G, reduce_graph=True):
+	def __init__(self, G, reduce_graph=True, timeout=-1):
 		logging.info("=== LexM.Algorithm_LexM.init ===")
-		super().__init__(G, reduce_graph)
+		super().__init__(G, reduce_graph, timeout)
 		self.alpha = {}
 
 	def run(self):
@@ -108,6 +109,10 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		F = []
 		n = len(C)
 		for i in range(n,0, -1):
+			# check timeout:
+			if self.timeout > 0 and time.time() > self.timeout:
+				raise ta.TimeLimitExceededException("Time Limit Exceeded!")
+
 			logging.debug("Iteration: "+str(i))
 			node_v = self.get_maxlex_node(C, randomize)
 			logging.debug("max lex node: "+str(node_v))

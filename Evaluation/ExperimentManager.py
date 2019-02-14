@@ -14,12 +14,13 @@ from multiprocessing import Process
 
 from MetaScripts import meta
 from Evaluation import GraphDataOrganizer as gdo
+from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
 class EvalData:
 	'''
 	Data structure to organize test and evaluation results
 	'''
-	def __init__(self, algo, input_graph_data, is_randomized, repetitions, reduce_graph):
+	def __init__(self, algo, input_graph_data, is_randomized, repetitions, reduce_graph, timelimit):
 		self.algo = algo
 		self.input = input_graph_data.G
 		self.n = len(input_graph_data.G.nodes())
@@ -28,6 +29,7 @@ class EvalData:
 		self.is_randomized = is_randomized
 		self.repetitions = repetitions
 		self.reduce_graph = reduce_graph
+		self.timelimit = timelimit
 		
 		self.measurement_finished = False
 		self.output = None
@@ -52,11 +54,12 @@ class EvalData:
 			string += "#RAND. REP.:  "+str(self.repetitions)+"\n"
 		if self.measurement_finished:
 			string += "OUTPUT:       "+str(self.output)+"\n"
-			string += "RUNNING TIME: "+str(self.running_time)+" sec."
+			string += "RUNNING TIME: "+str(self.running_time)+" sec.\n"
 		if self.reduce_graph:
-			string += "REDUCED:      1"
+			string += "REDUCED:      1\n"
 		else:
-			string += "REDUCED:      0"
+			string += "REDUCED:      0\n"
+		string +=     "TIME LIMIT:  "+str(self.timelimit)+" sec.\n"
 		return string
 		
 	def to_dict(self):
@@ -66,7 +69,8 @@ class EvalData:
 			"m": self.m,
 			"randomized": self.is_randomized,
 			"repetitions": self.repetitions,
-			"reduce_graph": self.reduce_graph
+			"reduce_graph": self.reduce_graph,
+			"timelimit": self.timelimit
 		}
 		
 		if type(self.algo) is str:
@@ -91,6 +95,13 @@ class EvalData:
 			self.out_var = output["variance"]
 		else:
 			self.output = output
+
+	def set_failed(self, running_time):
+		self.measurement_finished = True
+		self.running_time = running_time
+		self.output = -1
+		self.out_mean = -1
+		self.out_var = -1
 			
 	def __lt__(self,other):
 		if not self.algo == other.algo:
@@ -121,28 +132,36 @@ def run_single_experiment(evaldata):
 		The statistics of this experiment.
 	'''
 	t_start = time.time()
-	result = evaldata.algo(evaldata.input, evaldata.is_randomized, evaldata.repetitions, evaldata.reduce_graph)
-	t_end = time.time()
-
-	t_diff = t_end - t_start
-	evaldata.set_results(result, t_diff)
+	if evaldata.timelimit > 0:
+		timeout = t_start + evaldata.timelimit
+	else:
+		timeout = -1
+	try:
+		result = evaldata.algo(evaldata.input, evaldata.is_randomized, evaldata.repetitions, evaldata.reduce_graph, timeout)
+		t_end = time.time()
+		t_diff = t_end - t_start
+		evaldata.set_results(result, t_diff)
+	except ta.TimeLimitExceededException:
+		t_end = time.time()
+		t_diff = t_end - t_start
+		evaldata.set_failed(t_diff)
 	return evaldata
 	
-def run_subset_of_experiments(algo, randomized, repetitions, reduce_graph, datadir, filename, result_filename):
+def run_subset_of_experiments(algo, randomized, repetitions, reduce_graph, timelimit, datadir, filename, result_filename):
 	'''
 	Run a specified algorithm on all graphs of a single dataset-file
 	'''
 	results = []
 	list_of_graphs = gdo.load_graphs_from_json(datadir+"/input/"+filename)
-	print(filename)
+	#print(filename)
 	for graphdata in list_of_graphs:
-		print(graphdata.id)
-		evaldata = EvalData(algo, graphdata, randomized, repetitions, reduce_graph)
+		#print(graphdata.id)
+		evaldata = EvalData(algo, graphdata, randomized, repetitions, reduce_graph, timelimit)
 		results.append(run_single_experiment(evaldata))
 	store_results_json(results, datadir+"/results/"+result_filename)
 	store_results_csv(results, datadir+"/results/"+result_filename)
 
-def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=False, reduce_graph=True, force_new_data=False):
+def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=False, reduce_graph=True, timelimit=-1, force_new_data=False):
 	'''
 	Run all experiment with a specific algorithm with all graphs from a directory
 	'''
@@ -179,7 +198,7 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 				meta.print_progress(i, num_files)
 				i += 1
 			if threaded:
-				p = Process(target=run_subset_of_experiments, args=(algo, randomized, repetitions, reduce_graph, datadir, filename, result_filename))
+				p = Process(target=run_subset_of_experiments, args=(algo, randomized, repetitions, reduce_graph, timelimit, datadir, filename, result_filename))
 				threads.append(p)
 				p.start()
 				
@@ -190,7 +209,7 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 					threads = [p for p in threads if p.is_alive()]
 
 			else:
-				run_subset_of_experiments(algo, randomized, repetitions, reduce_graph, datadir, filename, result_filename)
+				run_subset_of_experiments(algo, randomized, repetitions, reduce_graph, timelimit, datadir, filename, result_filename)
 	
 	if threaded:
 		# wait until all threads are finished:
@@ -232,12 +251,14 @@ def load_evaldata_from_json(basedir, filename):
 					break
 			if "reduce_graph" not in data:
 				data["reduce_graph"] = True
+			if "timelimit" not in data:
+				data["timelimit"] = -1
 			if "randomized" not in data:
 				data["randomized"] = False
 			if "repetitions" not in data:
 				data["repetitions"] = 1
 			if "algo" in data:
-				evaldata = EvalData(data["algo"], graphdata, data["randomized"], data["repetitions"], data["reduce_graph"])
+				evaldata = EvalData(data["algo"], graphdata, data["randomized"], data["repetitions"], data["reduce_graph"], data["timelimit"])
 			else:
 				evaldata = EvalData("generic", graphdata)
 			evaldata.set_results(data["output"], data["running_time"])
@@ -246,36 +267,38 @@ def load_evaldata_from_json(basedir, filename):
 			if "output variance" in data:
 				evaldata.out_var = data["output variance"]
 			evaldataset.append(evaldata)
-			if "reduce_graph" in data:
-				evaldata.reduce_graph = data["reduce_graph"]
-			else:
-				evaldata.reduce_graph = True
 	return evaldataset	
 		
 def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
 	stats = []
-	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "mean time", "var time", "moo", "voo", "mmo", "mvo"]
+	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "time limit", "mean time", "var time", "moo", "voo", "mmo", "mvo", "success (\%)"]
 	for file in os.listdir(datadir+"/results"):
 		if ".json" in file:
 			filename = re.split(r'\.', file)[0]
 			evaldata = load_evaldata_from_json(datadir, filename)
-			graph_id = evaldata[0].id
-			avg_n = np.mean([data.n for data in evaldata])
-			avg_m = np.mean([data.m for data in evaldata])
-			mean_time = np.mean([data.running_time for data in evaldata])
-			var_time = np.var([data.running_time for data in evaldata])
-			mean_output = np.mean([data.output for data in evaldata])
-			var_output = np.var([data.output for data in evaldata])
+			graph_id = "_".join(re.split(r'_',evaldata[0].id)[:-1])
+			avg_n = np.mean([data.n for data in evaldata])# if data.output >= 0])
+			avg_m = np.mean([data.m for data in evaldata])# if data.output >= 0])
+			timelimit = evaldata[0].timelimit
+			mean_time = np.mean([data.running_time for data in evaldata if data.output >= 0])
+			var_time = np.var([data.running_time for data in evaldata if data.output >= 0])
+			mean_output = np.mean([data.output for data in evaldata if data.output >= 0])
+			var_output = np.var([data.output for data in evaldata if data.output >= 0])
 			repeats = evaldata[0].repetitions
-			mmo = np.mean([data.out_mean for data in evaldata])
-			mvo = np.mean([data.out_var for data in evaldata])
+			mmo = np.mean([data.out_mean for data in evaldata if data.out_mean >= 0])
+			mvo = np.mean([data.out_var for data in evaldata if data.out_var >= 0])
 			algo_name = evaldata[0].algo
 			if evaldata[0].is_randomized:
 				algo_name += " (R)"
-				
-			#stats[graph_id] = 
-			stats.append({
+
+			if mmo == mean_output:
+				mmo = "N/A"
+				mvo = "N/A"
+
+			success = 100*float(len([data.output for data in evaldata if data.output >= 0]))/float(len([data.output for data in evaldata]))
+
+			newstats = {
 				"algorithm" : algo_name,
 				"reduced" : str(evaldata[0].reduce_graph),
 				"graph id" : graph_id,
@@ -287,14 +310,15 @@ def compute_statistics(datadir):
 				"voo" : var_output,
 				"repeats" : repeats,
 				"mmo" : mmo,
-				"mvo" : mvo
-			})
-			'''
-			for p in evaldata[0].parameters:
-				if p not in columns:
-					columns.append(p)
-				stats[graph_id][p] = evaldata[0].parameters[p]
-			'''
+				"mvo" : mvo,
+				"time limit" : timelimit,
+				"success (\%)": success
+			}
+			for key in newstats:
+				if not isinstance(newstats[key], str) and np.isnan(newstats[key]):
+					newstats[key] = "N/A"
+
+			stats.append(newstats)
 				
 	return (columns, stats)
 			
@@ -320,15 +344,25 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 	texoutputstring += tabheadline
 	#all_graph_ids = [key for key in dataset if not key == "algo"]
 	data_keys = [key for key in columns] #if not key == "algorithm" and not key == "graph id"]
+
+	non_numeric_data_keys = ["algorithm", "graph id", "reduced"]
+	string_data_keys = ["algorithm", "reduced"]
+	might_be_string_data_keys = ["mean time", "var time", "moo", "voo", "mmo", "mvo"]
+
 	for data in sorteddataset:
 		rowstring = "\\verb+"+data["graph id"]+ "+"
 		#rowstring = "\\verb+"+data["algo"] + "+ & \\verb+" + data["graph_id"] + "+"
-		non_numeric_data_keys = ["algorithm", "graph id", "reduced"]
-		string_data_keys = ["algorithm", "reduced"]
 		for data_key in data_keys:
-			if data_key not in non_numeric_data_keys:
-				rowstring += " & ${0:.2f}$".format(round(data[data_key],2))
-			elif data_key in string_data_keys:
+			#print(data_key +": "+str(data[data_key]))
+			if data_key not in non_numeric_data_keys and not isinstance(data[data_key], str):
+				if data_key ==  "mean time":
+					precision = 4
+					formatstring = "${0:.4f}$"
+				else:
+					precision = 2
+					formatstring = "${0:.2f}$"
+				rowstring += " & "+formatstring.format(round(data[data_key],precision))
+			elif data_key in string_data_keys+might_be_string_data_keys:
 				rowstring += " & \\verb+"+data[data_key]+"+"
 		texoutputstring += rowstring+"\\\\\n"
 	texoutputstring += "\\end{longtable}\n"

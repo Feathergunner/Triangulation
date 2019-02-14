@@ -84,6 +84,8 @@ if __name__ == "__main__":
 	num_iter = 1
 	algo_code = None
 	data_dir = "data/eval/"
+	timelimit = -1
+	forcenew = False
 	
 	for arg in sys.argv[1:]:
 		arg_data = re.split(r'=', arg)
@@ -118,6 +120,10 @@ if __name__ == "__main__":
 			num_iter = int(arg_data[1])
 		elif arg_data[0] == "noreduce":
 			reduced = False
+		elif arg_data[0] == "forcenew":
+			forcenew = True
+		elif arg_data[0] == "timelimit":
+			timelimit = float(arg_data[1])
 		else:
 			print ("Argument "+arg_data[0]+" unknown!")
 				
@@ -148,7 +154,7 @@ if __name__ == "__main__":
 		if "_R" in algo_code:
 			randomized = True
 		
-		em.run_set_of_experiments(algo, data_dir, randomized=randomized, repetitions=num_iter, threaded=threaded, reduce_graph=reduced)
+		em.run_set_of_experiments(algo, data_dir, randomized=randomized, repetitions=num_iter, threaded=threaded, reduce_graph=reduced, timelimit=timelimit, force_new_data=forcenew)
 
 	elif mode == "output":
 		(columns, stats) = em.compute_statistics(data_dir)

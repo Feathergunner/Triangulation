@@ -6,11 +6,12 @@ import logging
 import networkx as nx
 import random
 import numpy as np
+import time
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
-def triangulate_SMS(G, randomized=False, repetitions=1, reduce_graph=True):
-	algo = Algorithm_SMS(G, reduce_graph)
+def triangulate_SMS(G, randomized=False, repetitions=1, reduce_graph=True, timeout=-1):
+	algo = Algorithm_SMS(G, reduce_graph, timeout)
 	if not randomized:
 		algo.run()
 		return {
@@ -39,9 +40,9 @@ def triangulate_SMS(G, randomized=False, repetitions=1, reduce_graph=True):
 			}
 	
 class Algorithm_SMS(ta.TriangulationAlgorithm):
-	def __init__(self, G, reduce_graph=True):
+	def __init__(self, G, reduce_graph=True, timeout=-1):
 		logging.info("=== SMS.Algorithm_SMS.init ===")
-		super().__init__(G, reduce_graph)
+		super().__init__(G, reduce_graph, timeout)
 
 	def run(self):
 		for C in self.component_subgraphs:
@@ -84,6 +85,10 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		G_prime = C.copy()
 		finished = False
 		while not finished:
+			# check timeout:
+			if self.timeout > 0 and time.time() > self.timeout:
+				raise ta.TimeLimitExceededException("Time Limit Exceeded!")
+
 			logging.debug("Next iteration")
 			logging.debug("edges of G_prime: "+str(G_prime.edges()))
 			separator = self.get_minimal_separator(G_prime, randomized=randomized)

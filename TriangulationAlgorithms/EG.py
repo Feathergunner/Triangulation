@@ -6,12 +6,13 @@ import logging
 import networkx as nx
 import random
 import numpy as np
+import time
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 from TriangulationAlgorithms import CMT
 
-def triangulate_EG(G, randomized=False, repetitions=1, reduce_graph=True):
-	algo = Algorithm_EliminationGame(G, reduce_graph)
+def triangulate_EG(G, randomized=False, repetitions=1, reduce_graph=True, timeout=-1):
+	algo = Algorithm_EliminationGame(G, reduce_graph, timeout)
 	if not randomized:
 		algo.run()
 		return {
@@ -39,11 +40,11 @@ def triangulate_EG(G, randomized=False, repetitions=1, reduce_graph=True):
 			"repetitions" : repetitions
 			}
 	
-def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True):
+def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True, timeout=-1):
 	'''
 	run Elimination Game, but minimize the result using CMT
 	'''
-	algo = Algorithm_EliminationGame(G, reduce_graph)
+	algo = Algorithm_EliminationGame(G, reduce_graph, timeout)
 	minimizer = CMT.Algorithm_CMT(G)
 	if not randomized:
 		algo.run()
@@ -82,9 +83,9 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True):
 			}
 	
 class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
-	def __init__(self, G, reduce_graph=True):
+	def __init__(self, G, reduce_graph=True, timeout=-1):
 		logging.info("=== EG.Algorithm_EliminationGame.init ===")
-		super().__init__(G, reduce_graph)
+		super().__init__(G, reduce_graph, timeout)
 		
 	def run(self):
 		for C in self.component_subgraphs:
@@ -133,6 +134,10 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 		G_temp = G.copy()
 		F = []
 		for node in all_nodes:
+			# check timeout:
+			if self.timeout > 0 and time.time() > self.timeout:
+				raise ta.TimeLimitExceededException("Time Limit Exceeded!")
+
 			all_neighbors = [n for n in G_temp.neighbors(node)]
 			for i in range(0, len(all_neighbors)):
 				for j in range(i+1, len(all_neighbors)):

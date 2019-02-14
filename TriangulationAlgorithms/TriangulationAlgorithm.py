@@ -15,6 +15,12 @@ class TriangulationNotSuccessfulException(Exception):
 	is somehow not chordal.
 	'''
 
+class TimeLimitExceededException(Exception):
+	'''
+	Custom error type that gets thrown
+	when a time limit was set and is exceeded.
+	'''
+
 class TriangulationAlgorithm:
 	'''
 	Superclass for all triangulation algorithms
@@ -32,7 +38,7 @@ class TriangulationAlgorithm:
 		H : the triangulated graph
 		edges_of_triangulation = the set of edges that are added to G to achieve H
 	'''
-	def __init__(self, G, reduce_graph=True):
+	def __init__(self, G, reduce_graph=True, timeout=-1):
 		self.G = G
 		self.component_subgraphs = [G]
 		if reduce_graph:
@@ -41,6 +47,7 @@ class TriangulationAlgorithm:
 		
 		self.H = None
 		self.edges_of_triangulation = []
+		self.timeout = timeout
 
 	def run(self):
 		pass

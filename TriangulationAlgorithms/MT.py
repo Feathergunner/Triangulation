@@ -5,12 +5,13 @@ import logging
 
 import networkx as nx
 import itertools
+import time
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 from TriangulationAlgorithms import LEX_M
 
-def triangulate_MT(G, randomized=False, repetitions=1, reduce_graph=True):
-	algo = Algorithm_MinimumTriangulation(G, reduce_graph)
+def triangulate_MT(G, randomized=False, repetitions=1, reduce_graph=True, timeout=-1):
+	algo = Algorithm_MinimumTriangulation(G, reduce_graph, timeout)
 	algo.run()
 	return {
 		"H" : algo.get_triangulated(),
@@ -21,9 +22,9 @@ def triangulate_MT(G, randomized=False, repetitions=1, reduce_graph=True):
 		}
 
 class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
-	def __init__(self, G, reduce_graph=True):
+	def __init__(self, G, reduce_graph=True, timeout=-1):
 		logging.info("=== MTA.Algorithm_MinimumTriangulation.init ===")
-		super().__init__(G, reduce_graph)
+		super().__init__(G, reduce_graph, timeout)
 		
 	def run(self):
 		for C in self.component_subgraphs:
@@ -64,6 +65,10 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		k = 1
 		found_minimum = False
 		while not found_minimum and k < size_minimal:
+			# check timeout:
+			if self.timeout > 0 and time.time() > self.timeout:
+				raise ta.TimeLimitExceededException("Time Limit Exceeded!")
+
 			logging.debug("Current iteration: consider edgesets of size "+str(k))
 			edgesets_size_k = itertools.combinations(self.chordedge_candidates, k)
 			for edgeset in edgesets_size_k:
