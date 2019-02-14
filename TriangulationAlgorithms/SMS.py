@@ -81,7 +81,7 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		logging.info("=== triangulate_SMS ===")
 		
 		F = []
-		G_prime = self.G.copy()
+		G_prime = C.copy()
 		finished = False
 		while not finished:
 			logging.debug("Next iteration")
