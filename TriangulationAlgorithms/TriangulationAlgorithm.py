@@ -63,8 +63,9 @@ class TriangulationAlgorithm:
 		self.G_c = self.G.subgraph(cycle_nodes)
 		self.component_subgraphs = [self.G_c.subgraph(c) for c in nx.connected_components(self.G_c) if len(c) > 1]
 		
-		logging.debug ("cycle nodes: "+str(cycle_nodes))
-		logging.debug ("nodes to remove: "+str(single_node_separators))
+		#logging.debug("cycle nodes: "+str(cycle_nodes))
+		#logging.debug("nodes to remove: "+str(single_node_separators))
+		logging.debug("Number of components of the reduced graph: "+str(len(self.component_subgraphs)))
 	
 	def get_chordedge_candidates(self):
 		logging.info("TA.get_chordedge_candidates")
