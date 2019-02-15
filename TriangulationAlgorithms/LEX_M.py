@@ -59,37 +59,10 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		super().__init__(G, reduce_graph, timeout)
 		self.alpha = {}
 
-	def run(self):
-		for C in self.component_subgraphs:
-			self.alpha = {}
-			self.nodelabels = {node : [] for node in C}
-			# get triangulation for each connected component of the reduced graph G_c:
-			self.edges_of_triangulation += self.triangulate(C)
-		
-		self.H = self.G.copy()
-		self.H.add_edges_from(self.edges_of_triangulation)
-		
-		if not nx.is_chordal(self.H):
-			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
-			
-	def run_randomized(self):
-		self.edges_of_triangulation = []
-		self.alpha = {}
-		for C in self.component_subgraphs:
-			self.nodelabels = {node : [] for node in C}
-			# get triangulation for each connected component of the reduced graph G_c:
-			self.edges_of_triangulation += self.triangulate(C, True)
-		
-		self.H = self.G.copy()
-		self.H.add_edges_from(self.edges_of_triangulation)
-		
-		if not nx.is_chordal(self.H):
-			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
-
 	def get_alpha(self):
 		return self.alpha
 
-	def triangulate(self, C, randomize=False):
+	def triangulate(self, C, randomized=False):
 		'''
 		Implementation of LEX M Algorithm 
 			Rose, Tarjan, Lueker: Algorithmic Aspects of Vertex Elimination on Graphs
@@ -108,45 +81,49 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		
 		F = []
 		n = len(C)
+		nodelabels = {node : [] for node in C}
+		
+		all_unnumbered_vertices = [n for n in C if n not in self.alpha]
+		if randomized:
+			random.shuffle(all_unnumbered_vertices)
+		
 		for i in range(n,0, -1):
 			# check timeout:
 			if self.timeout > 0 and time.time() > self.timeout:
 				raise ta.TimeLimitExceededException("Time Limit Exceeded!")
 
 			logging.debug("Iteration: "+str(i))
-			node_v = self.get_maxlex_node(C, randomize)
+			node_v = self.get_maxlex_node(C, nodelabels, randomized)
 			logging.debug("max lex node: "+str(node_v))
 			self.alpha[node_v] = i
+			all_unnumbered_vertices.remove(node_v)
 			S = []
-			all_unnumbered_vertices = [n for n in C if n not in self.alpha]
-			if randomize:
-				random.shuffle(all_unnumbered_vertices)
 			logging.debug("all unnumbered nodes:")
-			logging.debug([str(n)+": "+str(self.nodelabels[n]) for n in all_unnumbered_vertices])
+			logging.debug([str(n)+": "+str(nodelabels[n]) for n in all_unnumbered_vertices])
 			for node_u in all_unnumbered_vertices:
-				smallerlex_nodes = [n for n in all_unnumbered_vertices if list_lexicographic_is_less_than(self.nodelabels[n], self.nodelabels[node_u])]+[node_v, node_u]
-				logging.debug("start Node "+str(node_v)+" label: "+str(self.nodelabels[node_v]))
-				logging.debug("target Node "+str(node_u)+" label: "+str(self.nodelabels[node_u]))
+				smallerlex_nodes = [n for n in all_unnumbered_vertices if list_lexicographic_is_less_than(nodelabels[n], nodelabels[node_u])]+[node_v, node_u]
+				logging.debug("start Node "+str(node_v)+" label: "+str(nodelabels[node_v]))
+				logging.debug("target Node "+str(node_u)+" label: "+str(nodelabels[node_u]))
 				if nx.has_path(C.subgraph(smallerlex_nodes),node_v, node_u):
 					logging.debug("Add target node "+str(node_u)+" to set S")
 					S.append(node_u)
 			for node_u in S:
-				self.nodelabels[node_u].append(i)
+				nodelabels[node_u].append(i)
 				if (node_v, node_u) not in C.edges():
 					F.append((node_v, node_u))
 					logging.debug("added edge: "+str((node_v, node_u)))
 			logging.debug("End of iteration. all node labels:")
-			logging.debug([str(n)+": "+str(self.nodelabels[n]) for n in C])		
+			logging.debug([str(n)+": "+str(nodelabels[n]) for n in C])		
 		
 		return F
 		
-	def get_maxlex_node(self, G, randomize=False):
+	def get_maxlex_node(self, G, nodelabels, randomized=False):
 		'''
 		Get an unnumbered vertex v of lexicograpohically maximum label from G
 	
 		Args:
 			G : a graph in networkx format
-			randomize : if set to True and if there are multiple nodes with the max lex. label, one of these is returned at random
+			randomized : if set to True and if there are multiple nodes with the max lex. label, one of these is returned at random
 	
 		Returns:
 			v : an unnumbered vertex v of lexicograpohically maximum label from G
@@ -156,12 +133,12 @@ class Algorithm_LexM(ta.TriangulationAlgorithm):
 		current_max_label = ''
 		current_best_node = None
 		nodes = [n for n in G]
-		if randomize:
+		if randomized:
 			random.shuffle(nodes)
 		for node in G: 
-			if (node not in self.alpha) and ((current_best_node == None) or (list_lexicographic_is_less_than(current_max_label, self.nodelabels[node]))):
+			if (node not in self.alpha) and ((current_best_node == None) or (list_lexicographic_is_less_than(current_max_label, nodelabels[node]))):
 				current_best_node = node
-				current_max_label = self.nodelabels[node]
+				current_max_label = nodelabels[node]
 		return current_best_node
 	
 def list_lexicographic_is_less_than(list_1, list_2):

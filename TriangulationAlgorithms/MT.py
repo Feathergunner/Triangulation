@@ -23,31 +23,21 @@ def triangulate_MT(G, randomized=False, repetitions=1, reduce_graph=True, timeou
 
 class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 	def __init__(self, G, reduce_graph=True, timeout=-1):
-		logging.info("=== MTA.Algorithm_MinimumTriangulation.init ===")
+		logging.info("=== MT.Algorithm_MinimumTriangulation.init ===")
 		super().__init__(G, reduce_graph, timeout)
 		
-	def run(self):
-		for C in self.component_subgraphs:
-			# get triangulation for each connected component of the reduced graph G_c:
-			self.edges_of_triangulation += self.compute_minimum_triangulation(C)
-		
-		self.H = self.G.copy()
-		self.H.add_edges_from(self.edges_of_triangulation)
-		
-		if not nx.is_chordal(self.H):
-			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
-		
-	def compute_minimum_triangulation(self, C):
+	def triangulate(self, C, randomized=False):
 		'''
 		Find a minimum triangulation of a graph
 		
 		Args:
 			C : a graph in networkx format
+			randomized : has no effect
 			
 		Return:
 			F : a set of edges such that C + F is a minimum triangulation
 		'''
-		logging.info("=== compute_minimum_triangulation ===")
+		logging.info("=== MT.triangulate ===")
 
 		if nx.is_chordal(C):
 			logging.debug("Component is already chordal")

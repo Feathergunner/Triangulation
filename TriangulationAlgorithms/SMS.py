@@ -44,29 +44,6 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		logging.info("=== SMS.Algorithm_SMS.init ===")
 		super().__init__(G, reduce_graph, timeout)
 
-	def run(self):
-		for C in self.component_subgraphs:
-			# get triangulation for each connected component of the reduced graph G_c:
-			self.edges_of_triangulation += self.triangulate(C)
-		
-		self.H = self.G.copy()
-		self.H.add_edges_from(self.edges_of_triangulation)
-		
-		if not nx.is_chordal(self.H):
-			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
-		
-	def run_randomized(self):
-		self.edges_of_triangulation = []
-		for C in self.component_subgraphs:
-			# get triangulation for each connected component of the reduced graph G_c:
-			self.edges_of_triangulation += self.triangulate(C, randomized=True)
-		
-		self.H = self.G.copy()
-		self.H.add_edges_from(self.edges_of_triangulation)
-		
-		if not nx.is_chordal(self.H):
-			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
-
 	def triangulate(self, C, randomized=False):
 		'''
 		Implementation of the algorithm SMS (Saturate Minimal Seperators)

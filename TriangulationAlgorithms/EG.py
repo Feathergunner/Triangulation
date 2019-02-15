@@ -86,31 +86,8 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 	def __init__(self, G, reduce_graph=True, timeout=-1):
 		logging.info("=== EG.Algorithm_EliminationGame.init ===")
 		super().__init__(G, reduce_graph, timeout)
-		
-	def run(self):
-		for C in self.component_subgraphs:
-			# get triangulation for each connected component of the reduced graph G_c:
-			self.edges_of_triangulation += self.elimination_game_triangulation(C)
-		
-		self.H = self.G.copy()
-		self.H.add_edges_from(self.edges_of_triangulation)
-		
-		if not nx.is_chordal(self.H):
-			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
-		
-	def run_randomized(self):
-		self.edges_of_triangulation = []
-		for C in self.component_subgraphs:
-			# get triangulation for each connected component of the reduced graph G_c:
-			self.edges_of_triangulation += self.elimination_game_triangulation(C, randomized=True)
-		
-		self.H = self.G.copy()
-		self.H.add_edges_from(self.edges_of_triangulation)
-		
-		if not nx.is_chordal(self.H):
-			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 	
-	def elimination_game_triangulation(self, G, alpha=None, randomized=False):
+	def triangulate(self, G, randomized=False, alpha=None):
 		'''
 		The elimination game algorithm for computing a triangulation algorithm
 		
@@ -129,8 +106,14 @@ class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
 			all_nodes = [n for n in G]
 			if randomized:
 				random.shuffle(all_nodes)
+			self.alpha = {}
+			i = 0
+			for n in all_nodes:
+				self.alpha[n] = i
+				i += 1
 		else:
 			all_nodes = sorted([n for n in alpha.keys()], key=lambda x: alpha[x])
+			self.alpha = alpha
 		G_temp = G.copy()
 		F = []
 		for node in all_nodes:

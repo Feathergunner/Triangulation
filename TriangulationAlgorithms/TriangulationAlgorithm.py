@@ -29,6 +29,8 @@ class TriangulationAlgorithm:
 		G : the graph to triangulate
 		reduce_graph : if set to True, all single-vertex-seperators get removed from the graph,
 						and a subgraph for each component gets constructed
+		timeout : if timeout is set to a value > 0, it specifies the maximum time in seconds the algorithm
+						is allowed to run before it gets terminated
 
 	Attributes:
 		G : the original graph
@@ -36,7 +38,8 @@ class TriangulationAlgorithm:
 			if G was reduced, this contains each component of the reduced G as a graph.
 			otherwise, it contains only G
 		H : the triangulated graph
-		edges_of_triangulation = the set of edges that are added to G to achieve H
+		edges_of_triangulation : the set of edges that are added to G to achieve H
+		alpha : a dict {node: int} that contains a perfect elimination ordering, if one gets constructed
 	'''
 	def __init__(self, G, reduce_graph=True, timeout=-1):
 		self.G = G
@@ -47,10 +50,33 @@ class TriangulationAlgorithm:
 		
 		self.H = None
 		self.edges_of_triangulation = []
+		self.alpha = {}
 		self.timeout = timeout
 
 	def run(self):
-		pass
+		self.alpha = {}
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			self.edges_of_triangulation += self.triangulate(C)
+		
+		self.H = self.G.copy()
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
+			
+	def run_randomized(self):
+		self.edges_of_triangulation = []
+		self.alpha = {}
+		for C in self.component_subgraphs:
+			# get triangulation for each connected component of the reduced graph G_c:
+			self.edges_of_triangulation += self.triangulate(C, randomized=True)
+		
+		self.H = self.G.copy()
+		self.H.add_edges_from(self.edges_of_triangulation)
+		
+		if not nx.is_chordal(self.H):
+			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 	
 	def get_triangulated(self):
 		return self.H
