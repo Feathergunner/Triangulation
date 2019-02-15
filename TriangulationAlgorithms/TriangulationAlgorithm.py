@@ -118,14 +118,13 @@ class TriangulationAlgorithm:
 
 	def draw_triangulation(self):
 		edges_original = self.G.edges()
-		self.G.add_edges_from(self.edges_of_triangulation)
 
 		#pos = nx.shell_layout(self.G)
 		pos = nx.kamada_kawai_layout(self.G)
 		
-		nx.draw_networkx_nodes(self.G, pos, node_color='r', node_size=50)
-		nx.draw_networkx_edges(self.G, pos, edgelist=edges_original, width=1, edge_color='black')
-		nx.draw_networkx_edges(self.G, pos, edgelist=self.edges_of_triangulation, width=1, edge_color='blue')
+		nx.draw_networkx_nodes(self.H, pos, node_color='r', node_size=50)
+		nx.draw_networkx_edges(self.H, pos, edgelist=edges_original, width=1, edge_color='black')
+		nx.draw_networkx_edges(self.H, pos, edgelist=self.edges_of_triangulation, width=1, edge_color='blue')
 
 		labels = {}
 		for n in self.G.nodes():

@@ -165,7 +165,3 @@ if __name__ == "__main__":
 		
 		os.chdir(data_dir)
 		call(["pdflatex","out.tex"])
-
-
-		
-	

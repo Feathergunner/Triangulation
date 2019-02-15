@@ -14,6 +14,7 @@ def triangulate_LexM(G, randomized=False, repetitions=1, reduce_graph=True, time
 	algo = Algorithm_LexM(G, reduce_graph, timeout)
 	if not randomized:
 		algo.run()
+			
 		return {
 			"H" : algo.get_triangulated(),
 			"size" : len(algo.get_triangulation_edges()),

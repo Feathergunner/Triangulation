@@ -7,6 +7,7 @@ import networkx as nx
 import random
 import numpy as np
 import time
+import copy
 
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
 
@@ -87,7 +88,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		if not nx.is_chordal(self.H):
 			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
 
-	def minimize_triangulation(self, G, F, randomized):
+	def minimize_triangulation(self, G, F, randomized, T=None):
 		'''
 		Minimize a given triangulation.
 		
@@ -98,23 +99,25 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			G : a graph
 			F : a set of edges, s.t. G + F is chordal
 			randomized : if set to True, get_removeable_edge is randomized
+			T : a pre-initialized database of removeable edges
 			
 		Returns:
 			F_prime : a subset of F, s.t. G + F_prime is minimal chordal
 		'''
 		logging.info("=== CMT.minimize_triangulation ===")
 		
-		F_prime = F
+		F_prime = copy.deepcopy(F)
 		H = G.copy()
-		H.add_edges_from(F)
+		H.add_edges_from(F_prime)
 
 		# initialize set V_F of all nodes that are endpoint of some edge in F:
-		V_F = list(set([v for e in F for v in e]))
+		V_F = list(set([v for e in F_prime for v in e]))
 		
 		# initialize T: all edges e with len(T[e]) == 0 are removeable
-		T  = {}
-		for edge in F_prime:
-			T[edge] = set()
+		if T == None:
+			T  = {}
+			for edge in F_prime:
+				T[edge] = set()
 
 		edge_uv = self.get_removeable_edge(F_prime, T, randomized)
 		# while there are removeable edges:

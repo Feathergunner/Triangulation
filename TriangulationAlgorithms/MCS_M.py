@@ -102,20 +102,20 @@ class Algorithm_MCSM(ta.TriangulationAlgorithm):
 				if weight[n] > maxweight:
 					node_v = n
 					maxweight = weight[node_v]
+			self.alpha[node_v] = i
+			unnumbered_nodes.remove(node_v)
 			S = []
 			for node_u in unnumbered_nodes:
 				if not node_u == node_v:
-					if nx.has_path(C.subgraph(unnumbered_nodes),node_v, node_u):
+					unnumbered_lowerweight_nodes = [node_x for node_x in unnumbered_nodes if weight[node_x] < weight[node_u]]
+					if nx.has_path(C.subgraph(unnumbered_lowerweight_nodes+[node_v, node_u]),node_v, node_u):
 						logging.debug("Add target node "+str(node_u)+" to set S")
 						S.append(node_u)
 			for node_u in S:
-				weight[node_u] = weight[node_u]+1
+				weight[node_u] += 1
 				if not (node_v, node_u) in C.edges():
 					F.append((node_v, node_u))
 					
-			self.alpha[node_v] = i
-			unnumbered_nodes.remove(node_v)
-			
 			logging.debug("End of iteration. all node labels:")
 			logging.debug([str(n)+": "+str(weight[n]) for n in C])		
 		

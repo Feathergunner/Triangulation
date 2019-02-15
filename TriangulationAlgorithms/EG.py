@@ -48,14 +48,32 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True, ti
 	minimizer = CMT.Algorithm_CMT(G)
 	if not randomized:
 		algo.run()
-		F = minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), False)
+		F = algo.get_triangulation_edges()
+		
+		# initialize database of removable edges:
 		H = G.copy()
 		H.add_edges_from(F)
-
+		T = {}
+		for e in F:
+			Te = []
+			common_neighborhood = [n for n in H.nodes if (n,e[0]) in H.edges() and (n,e[1]) in H.edges()]
+			for i in range(len(common_neighborhood)):
+				for j in range(i+1, len(common_neighborhood)):
+					if (common_neighborhood[i], common_neighborhood[j]) not in H.edges():
+						Te.append((common_neighborhood[i], common_neighborhood[j]))
+			T[e] = set(Te)
+		
+		F_prime = minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), False, T)
+		H_prime = G.copy()
+		H_prime.add_edges_from(F_prime)
+		
+		if not nx.is_chordal(H):
+			raise ta.TriangulationNotSuccessfulException("Resulting graph is somehow not chordal!")
+			
 		return {
-			"H" : H,
-			"size" : len(F),
-			"mean" : len(F),
+			"H" : H_prime,
+			"size" : len(F_prime),
+			"mean" : len(F_prime),
 			"variance" : 0,
 			"repetitions" : 1
 			}
@@ -65,21 +83,36 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True, ti
 		all_sizes = []
 		for i in range(repetitions):
 			algo.run_randomized()
+			F = algo.get_triangulation_edges()
+			
+			# initialize database of removable edges:
+			H = G.copy()
+			H.add_edges_from(F)
+			T = {}
+			for e in F:
+				Te = []
+				common_neighborhood = [n for n in H.nodes if (n,e[0]) in H.edges() and (n,e[1]) in H.edges()]
+				for i in range(len(common_neighborhood)):
+					for j in range(i+1, len(common_neighborhood)):
+						if (common_neighborhood[i], common_neighborhood[j]) not in H.edges():
+							Te.append((common_neighborhood[i], common_neighborhood[j]))
+				T[e] = set(Te)
+			
 			for j in range(repetitions):
-				F = minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True)
-				H = G.copy()
-				H.add_edges_from(F)
+				F_prime= minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True, T)
+				H_prime = G.copy()
+				H_prime.add_edges_from(F_prime)
 				
-				all_sizes.append(len(F))
-				if H_opt == None or len(F) < size_opt:
-					H_opt = H
-					size_opt = len(F)
+				all_sizes.append(len(F_prime))
+				if H_opt == None or len(F_prime) < size_opt:
+					H_opt = H_prime
+					size_opt = len(F_prime)
 		return {
 			"H" : H_opt,
 			"size" : size_opt,
 			"mean" : np.mean(all_sizes),
 			"variance" : np.var(all_sizes),
-			"repetitions" : repetitions*repetitions
+			"repetitions" : repetitions
 			}
 	
 class Algorithm_EliminationGame(ta.TriangulationAlgorithm):
