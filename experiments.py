@@ -18,6 +18,7 @@ from Evaluation import GraphDataOrganizer as gdo
 from Evaluation import ExperimentManager as em
 
 from TriangulationAlgorithms import LEX_M
+from TriangulationAlgorithms import MCS_M
 from TriangulationAlgorithms import MT
 from TriangulationAlgorithms import MTA
 from TriangulationAlgorithms import EG
@@ -30,6 +31,8 @@ ALGORITHMS = {
 	"EG_R"		: EG.triangulate_EG,
 	"LEXM"		: LEX_M.triangulate_LexM,
 	"LEXM_R"	: LEX_M.triangulate_LexM,
+	"MCSM"		: MCS_M.triangulate_MCSM,
+	"MCSM_R"	: MCS_M.triangulate_MCSM,
 	"MT"		: MT.triangulate_MT,
 	"MTA"		: MTA.triangulate_MTA, 
 	"MT_R"		: RAMT.triangulate_RAMT, 

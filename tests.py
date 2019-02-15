@@ -16,6 +16,7 @@ from Evaluation import GraphDataOrganizer as gdo
 from TriangulationAlgorithms import EG
 from TriangulationAlgorithms import SMS
 from TriangulationAlgorithms import LEX_M
+from TriangulationAlgorithms import MCS_M
 from TriangulationAlgorithms import CMT
 from TriangulationAlgorithms import MT
 from TriangulationAlgorithms import MTA
@@ -206,6 +207,20 @@ if DO_TEST_ALGO:
 	print("TEST RANDOMIZED LEX M")
 	triangulation_lexm_r = LEX_M.triangulate_LexM(GRAPH_TEST.copy(), randomized=True)
 	logging.debug("Size of triangulation by randomized Lex M: "+str(triangulation_lexm_r["size"]))
+	print("ok")
+	
+	# ===== MCS M =====
+	logging.info("===== TEST MCS M =====")
+	print("TEST MCS M")
+	triangulation_mcsm = MCS_M.triangulate_MCSM(GRAPH_TEST.copy())
+	logging.debug("Size of triangulation by MCS M: "+str(triangulation_mcsm["size"]))
+	print("ok")
+
+	# ===== Randomized MCS M =====
+	logging.info("===== TEST RANDOMIZED MCS M =====")
+	print("TEST RANDOMIZED MCS M")
+	triangulation_mcsm_r = MCS_M.triangulate_MCSM(GRAPH_TEST.copy(), randomized=True)
+	logging.debug("Size of triangulation by randomized MCS M: "+str(triangulation_mcsm_r["size"]))
 	print("ok")
 
 	# ===== CMT =====
