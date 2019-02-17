@@ -132,10 +132,10 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			for edge_rs in T:
 				r = edge_rs[0]
 				s = edge_rs[1]
-				cn_of_rs_cap_VF = [n for n in self.get_combined_neighborhood(H,[r,s]) if n in V_F]
+				cn_of_rs_cap_VF = [n for n in self.get_common_neighborhood(H,[r,s]) if n in V_F]
 				if u in cn_of_rs_cap_VF and v in cn_of_rs_cap_VF:
 					T[edge_rs].add(edge_uv)
-			cn_of_uv_cap_VF = [n for n in self.get_combined_neighborhood(H,[u,v]) if n in V_F]
+			cn_of_uv_cap_VF = [n for n in self.get_common_neighborhood(H,[u,v]) if n in V_F]
 			for x in cn_of_uv_cap_VF:
 				if (u,x) in F_prime:
 					for e in [e for e in T[(u,x)] if v in e]:
@@ -196,14 +196,22 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 		else:
 			return None
 
-	def get_combined_neighborhood(self, G, V):
+	def get_common_neighborhood(self, G, V):
 		'''
-		Computes the combined neighborhood of V in G, that is:
-			NC(V) = {w in V(G) | exists v in V: w in N(w) and not w in V}
+		Computes the common neighborhood of V in G, that is:
+			NC(V') = {w in V(G) | forall v in V': w in N(v)}
 		'''
-		NC = []
-
-		for v in V:
-			NC += [n for n in G.neighbors(v) if n not in NC]
-
-		return NC
+		neighbor_count = {}
+		
+		for i in range(len(V)):
+			for w in G.neighbors(V[i]):
+				if not w in neighbor_count:
+					neighbor_count[w] = 0
+				neighbor_count[w] += 1
+		
+		common_neighbothood = []
+		for w in neighbor_count:
+			if neighbor_count[w] == len(V):
+				common_neighbothood.append(w)
+				
+		return common_neighbothood
