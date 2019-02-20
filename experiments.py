@@ -58,7 +58,7 @@ logging.basicConfig(
 	level=logging.ERROR,
 )
 
-VALID_MODES = ["build", "eval", "test", "output"]
+VALID_MODES = ["build", "eval", "output", "test", "evalall"]
 VALID_SETS = ["general", "planar", "maxdeg", "maxclique"]
 
 def fix_filenames(datadir):
@@ -72,10 +72,94 @@ def fix_filenames(datadir):
 		print ("new filename: "+new_filename)
 		os.rename(datadir+"/"+filename, datadir+"/"+new_filename)
 
-def run_evaluation():
-	paramters = {"n": 10}
-	for algo in all_algorithms:
-		em.run_set_of_experiments(algo, "data/eval/random_maxdeg", paramters)
+def run_eval_all(forcenew=False):
+	algo_codes = ["EG", "EG_R", "LEXM", "MCSM", "SMS", "SMS_R", "CMT", "CMT_R", "EGP", "EGP_R"]
+	repetitions = [5, 10, 20]
+	timelimit = 10
+
+	max_num_threads = 10
+	threads = []
+
+	for algo_code in algo_codes:
+		algo = ALGORITHMS[algo_code]
+		if "_R" in algo_code:
+			randomized = True
+		else:
+			randomized = False
+		for dataset in VALID_SETS:
+			data_dir = "data/eval/random_"+dataset
+			if randomized:
+				for rep in repetitions:
+					# run randomized experiments
+					p = Process(
+						target=em.run_set_of_experiments,
+						args=(
+							algo, 		# algo
+							data_dir,	# datadir
+							True,		# randomized
+							rep,		# repetitions
+							False,		# threaded
+							False, 		# reduce_graph
+							timelimit,	# timelimit
+							forcenew 	# force_new_data
+						)
+					)
+					threads.append(p)
+					p.start()
+					p = Process(
+						target=em.run_set_of_experiments,
+						args=(
+							algo, 		# algo
+							data_dir,	# datadir
+							True,		# randomized
+							rep,		# repetitions
+							False,		# threaded
+							True, 		# reduce_graph
+							timelimit,	# timelimit
+							forcenew 	# force_new_data
+						)
+					)
+					threads.append(p)
+					p.start()
+			else:
+				# run non-randomized experiments
+				p = Process(
+					target=em.run_set_of_experiments,
+					args=(
+						algo, 		# algo
+						data_dir,	# datadir
+						False,		# randomized
+						1,			# repetitions
+						False,		# threaded
+						False, 		# reduce_graph
+						timelimit,	# timelimit
+						forcenew 	# force_new_data
+					)
+				)
+				threads.append(p)
+				p.start()
+				p = Process(
+					target=em.run_set_of_experiments,
+					args=(
+						algo, 		# algo
+						data_dir,	# datadir
+						False,		# randomized
+						1,			# repetitions
+						False,		# threaded
+						True, 		# reduce_graph
+						timelimit,	# timelimit
+						forcenew 	# force_new_data
+					)
+				)
+				threads.append(p)
+				p.start()
+
+
+			threads = [p for p in threads if p.is_alive()]
+			while len(threads) >= max_num_threads:
+				#print ("thread limit reached... wait")
+				time.sleep(1.0)
+				threads = [p for p in threads if p.is_alive()]
 
 if __name__ == "__main__":
 	
@@ -138,6 +222,9 @@ if __name__ == "__main__":
 	
 	if mode == "test":
 		import tests
+
+	elif mode == "evalall":
+		run_eval_all(forcenew)
 		
 	elif (mode == "undefined" or dataset == "undefined" or (mode == "eval" and algo_code == None)):
 		print ("Error! Missing parameters!")
