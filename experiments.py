@@ -58,7 +58,7 @@ logging.basicConfig(
 	level=logging.ERROR,
 )
 
-VALID_MODES = ["build", "eval", "output", "test", "evalall"]
+VALID_MODES = ["build", "eval", "output", "test", "evalall", "buildall"]
 VALID_SETS = ["general", "planar", "maxdeg", "maxclique"]
 
 def fix_filenames(datadir):
