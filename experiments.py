@@ -160,6 +160,17 @@ def run_eval_all(forcenew=False):
 				#print ("thread limit reached... wait")
 				time.sleep(1.0)
 				threads = [p for p in threads if p.is_alive()]
+				
+def run_build_all(forcenew=False):
+	for set in VALID_SETS:
+		if set == "general":
+			gdo.construct_full_set_random_graphs()
+		elif set == "planar":
+			gdo.construct_full_set_random_planar_graphs()
+		elif set == "maxdeg":
+			gdo.construct_full_set_random_maxdegree_graphs()
+		elif set == "maxclique":
+			gdo.construct_full_set_random_maxclique_graphs()
 
 if __name__ == "__main__":
 	
@@ -225,6 +236,9 @@ if __name__ == "__main__":
 
 	elif mode == "evalall":
 		run_eval_all(forcenew)
+		
+	elif mode == "buildall":
+		run_build_all(forcenew)
 		
 	elif (mode == "undefined" or dataset == "undefined" or (mode == "eval" and algo_code == None)):
 		print ("Error! Missing parameters!")
