@@ -178,9 +178,6 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 		threadset = {}
 	
 	num_files = len(all_datafiles)
-	filename_sufix = ""
-	if randomized:
-		filename_sufix += "_r"+str(repetitions)
 	i = 0
 	for file in all_datafiles:
 		# construct output filename:
@@ -190,7 +187,7 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 			result_filename += "_R"+str(repetitions)
 		if not reduce_graph:
 			result_filename += "_B"
-		result_filename += "_"+filename+filename_sufix
+		result_filename += "_"+filename
 		
 		if (not os.path.isfile(datadir+"/results/"+result_filename+".json")) or force_new_data:
 			if not threaded:
