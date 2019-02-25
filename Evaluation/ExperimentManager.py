@@ -270,52 +270,56 @@ def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
 	stats = []
 	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "time limit", "mean time", "var time", "moo", "voo", "mmo", "mvo", "success (\%)"]
-	for file in os.listdir(datadir+"/results"):
-		if ".json" in file:
-			filename = re.split(r'\.', file)[0]
-			evaldata = load_evaldata_from_json(datadir, filename)
-			graph_id = "_".join(re.split(r'_',evaldata[0].id)[:-1])
-			avg_n = np.mean([data.n for data in evaldata])# if data.output >= 0])
-			avg_m = np.mean([data.m for data in evaldata])# if data.output >= 0])
-			timelimit = evaldata[0].timelimit
-			mean_time = np.mean([data.running_time for data in evaldata if data.output >= 0])
-			var_time = np.var([data.running_time for data in evaldata if data.output >= 0])
-			mean_output = np.mean([data.output for data in evaldata if data.output >= 0])
-			var_output = np.var([data.output for data in evaldata if data.output >= 0])
-			repeats = evaldata[0].repetitions
-			mmo = np.mean([data.out_mean for data in evaldata if data.out_mean >= 0])
-			mvo = np.mean([data.out_var for data in evaldata if data.out_var >= 0])
-			algo_name = evaldata[0].algo
-			if evaldata[0].is_randomized:
-				algo_name += " (R)"
+	progress = 0
+	allfiles = [file for file in os.listdir(datadir+"/results") if ".json" in file]
+	for file in allfiles:
+		meta.print_progress(progress, len(allfiles))
+		progress += 1
+		
+		filename = re.split(r'\.', file)[0]
+		evaldata = load_evaldata_from_json(datadir, filename)
+		graph_id = "_".join(re.split(r'_',evaldata[0].id)[:-1])
+		avg_n = np.mean([data.n for data in evaldata])# if data.output >= 0])
+		avg_m = np.mean([data.m for data in evaldata])# if data.output >= 0])
+		timelimit = evaldata[0].timelimit
+		mean_time = np.mean([data.running_time for data in evaldata if data.output >= 0])
+		var_time = np.var([data.running_time for data in evaldata if data.output >= 0])
+		mean_output = np.mean([data.output for data in evaldata if data.output >= 0])
+		var_output = np.var([data.output for data in evaldata if data.output >= 0])
+		repeats = evaldata[0].repetitions
+		mmo = np.mean([data.out_mean for data in evaldata if data.out_mean >= 0])
+		mvo = np.mean([data.out_var for data in evaldata if data.out_var >= 0])
+		algo_name = evaldata[0].algo
+		if evaldata[0].is_randomized:
+			algo_name += " (R)"
 
-			if mmo == mean_output:
-				mmo = "N/A"
-				mvo = "N/A"
+		if mmo == mean_output:
+			mmo = "N/A"
+			mvo = "N/A"
 
-			success = 100*float(len([data.output for data in evaldata if data.output >= 0]))/float(len([data.output for data in evaldata]))
+		success = 100*float(len([data.output for data in evaldata if data.output >= 0]))/float(len([data.output for data in evaldata]))
 
-			newstats = {
-				"algorithm" : algo_name,
-				"reduced" : str(evaldata[0].reduce_graph),
-				"graph id" : graph_id,
-				"avg n" : avg_n,
-				"avg m" : avg_m, 
-				"mean time" : mean_time,
-				"var time" : var_time,
-				"moo" : mean_output,
-				"voo" : var_output,
-				"repeats" : repeats,
-				"mmo" : mmo,
-				"mvo" : mvo,
-				"time limit" : timelimit,
-				"success (\%)": success
-			}
-			for key in newstats:
-				if not isinstance(newstats[key], str) and np.isnan(newstats[key]):
-					newstats[key] = "N/A"
+		newstats = {
+			"algorithm" : algo_name,
+			"reduced" : str(evaldata[0].reduce_graph),
+			"graph id" : graph_id,
+			"avg n" : avg_n,
+			"avg m" : avg_m, 
+			"mean time" : mean_time,
+			"var time" : var_time,
+			"moo" : mean_output,
+			"voo" : var_output,
+			"repeats" : repeats,
+			"mmo" : mmo,
+			"mvo" : mvo,
+			"time limit" : timelimit,
+			"success (\%)": success
+		}
+		for key in newstats:
+			if not isinstance(newstats[key], str) and np.isnan(newstats[key]):
+				newstats[key] = "N/A"
 
-			stats.append(newstats)
+		stats.append(newstats)
 				
 	return (columns, stats)
 			
