@@ -5,10 +5,12 @@ import logging
 
 import networkx as nx
 try:
-	import matplotlib.pyplot as plt
+	import tkinter
 except ImportError:
 	import matplotlib
 	matplotlib.use('agg')
+	import matplotlib.pyplot as plt
+else:
 	import matplotlib.pyplot as plt
 
 class TriangulationNotSuccessfulException(Exception):

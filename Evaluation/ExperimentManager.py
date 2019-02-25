@@ -12,10 +12,12 @@ import csv
 import re
 from multiprocessing import Process
 try:
-	import matplotlib.pyplot as plt
+	import tkinter
 except ImportError:
 	import matplotlib
 	matplotlib.use('agg')
+	import matplotlib.pyplot as plt
+else:
 	import matplotlib.pyplot as plt
 from MetaScripts import meta
 from Evaluation import GraphDataOrganizer as gdo
