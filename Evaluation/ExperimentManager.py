@@ -11,7 +11,12 @@ import json
 import csv
 import re
 from multiprocessing import Process
-
+try:
+	import matplotlib.pyplot as plt
+except ImportError:
+	import matplotlib
+	matplotlib.use('agg')
+	import matplotlib.pyplot as plt
 from MetaScripts import meta
 from Evaluation import GraphDataOrganizer as gdo
 from TriangulationAlgorithms import TriangulationAlgorithm as ta
@@ -381,3 +386,67 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 def write_stats_to_file(datadir, stats):
 	with open(datadir+"/stats.json", 'w') as statsfile:
 		json.dump(stats, statsfile, cls=meta.My_JSON_Encoder)
+
+def load_stats_from_file(datadir):
+	[path, filename] = gdo.check_filepath(datadir+"/stats.json")
+
+	if not os.path.isdir(path):
+		## TO DO: raise error
+		return
+
+	if not ".json" in filename:
+		filename += ".json"
+
+	with open(path+filename) as jsonfile:
+		data = json.load(jsonfile)
+
+	return data
+
+def make_stat_boxplot(setname, graph_id, axis="RESULT_OPT", savedir=None):
+	datadir = "data/eval/random_"+setname+"/results"
+	all_files_in_dir = os.listdir(datadir)
+	files = [file for file in all_files_in_dir if ".json" in file and graph_id in file]
+	data = []
+	labels = []
+	for file in files:
+		filepath = datadir+"/"+file
+		with open(filepath) as jsonfile:
+			this_file_data = json.load(jsonfile)
+
+		if axis=="RESULT_OPT":
+			data.append([d["output"] for d in this_file_data])
+		result_label_base = re.split('results_triangulate',file)[1]
+		results_label = re.split('\.',re.split('graph_id',result_label_base)[0])[0]
+		labels.append(results_label)
+
+	fig, ax1 = plt.subplots(figsize=(len(data), 6))
+	#fig.canvas.set_window_title('A Boxplot Example')
+	fig.subplots_adjust(bottom=0.5)
+
+	ax1.set_xlabel('Algorithm')
+	ax1.set_ylabel('Distribution of minimal fill-in')
+
+	bp = ax1.boxplot(data, notch=0, sym='+', vert=1, whis=1.5)
+	plt.setp(bp['boxes'], color='black')
+	ax1.set_xticklabels(labels)
+	for tick in ax1.get_xticklabels():
+		tick.set_rotation(90)
+	if savedir == None:
+		plt.show()
+	else:
+		plt.savefig(savedir+"/"+graph_id+".png")
+
+def make_all_stat_boxplots(setname, axis="RESULT_OPT"):
+	basedir = "data/eval/random_"+setname
+	graphdir = basedir+"/input"
+	resultdir = basedir+"/results"
+	outputdir = basedir+"/plots"
+	if not os.path.exists(outputdir):
+		os.mkdir(outputdir)
+
+	all_graph_ids = []
+	for filename in os.listdir(graphdir):
+		all_graph_ids.append(re.split(r'\.',filename)[0])
+
+	for graph_id in all_graph_ids:
+		make_stat_boxplot(setname, graph_id, axis, outputdir)
