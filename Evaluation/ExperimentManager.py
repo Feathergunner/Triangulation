@@ -268,6 +268,11 @@ def load_evaldata_from_json(basedir, filename):
 		
 def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
+
+	#stats_dir = datadir+"/"+stats
+	#if not os.path.exists(stats_dir):
+	#	os.mkdir(stats_dir)
+
 	stats = []
 	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "time limit", "mean time", "var time", "moo", "voo", "mmo", "mvo", "success (\%)"]
 	progress = 0
@@ -275,7 +280,7 @@ def compute_statistics(datadir):
 	for file in allfiles:
 		meta.print_progress(progress, len(allfiles))
 		progress += 1
-		
+
 		filename = re.split(r'\.', file)[0]
 		evaldata = load_evaldata_from_json(datadir, filename)
 		graph_id = "_".join(re.split(r'_',evaldata[0].id)[:-1])
@@ -320,7 +325,8 @@ def compute_statistics(datadir):
 				newstats[key] = "N/A"
 
 		stats.append(newstats)
-				
+	write_stats_to_file(datadir, stats)
+
 	return (columns, stats)
 			
 def construct_output_table(columns, dataset, outputfilename="out.tex"):
@@ -372,3 +378,6 @@ def construct_output_table(columns, dataset, outputfilename="out.tex"):
 	with open(outputfilename, "w") as tex_output:
 		tex_output.write(texoutputstring)
 	
+def write_stats_to_file(datadir, stats):
+	with open(datadir+"/stats.json", 'w') as statsfile:
+		json.dump(stats, statsfile, cls=meta.My_JSON_Encoder)
