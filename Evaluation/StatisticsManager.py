@@ -38,59 +38,6 @@ def get_algo_name_from_filename(filename, graph_set_id):
 	algo_name = re.split('\.',re.split("_"+graph_set_id, algo_name_base)[0])[0]
 	return algo_name
 
-def make_stat_boxplot(setname, graph_set_id, axis="RESULT_OPT", savedir=None):
-	# initialize:
-	datadir = "data/eval/random_"+setname+"/results"
-	all_files_in_dir = os.listdir(datadir)
-	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
-	data = []
-	labels = []
-	files.sort()
-
-	# load data:
-	for file in files:
-		filepath = datadir+"/"+file
-		data.append(load_axis_data_from_file(filepath, axis))
-		#result_label_base = re.split('results_triangulate_',file)[1]
-		#re.split('\.',re.split("_"+graph_set_id, result_label_base)[0])[0]
-		results_label = get_algo_name_from_filename(file, graph_set_id)
-		labels.append(results_label)
-
-	# create plot:
-	fig, ax1 = plt.subplots(figsize=(len(data), 6))
-	#fig.canvas.set_window_title('A Boxplot Example')
-	fig.subplots_adjust(bottom=0.3)
-
-	ax1.set_xlabel('Algorithm')
-	ax1.set_ylabel('Distribution of minimal fill-in')
-
-	bp = ax1.boxplot(data, notch=0, sym='+', vert=1, whis=1.5)
-	plt.setp(bp['boxes'], color='black')
-	ax1.set_xticklabels(labels)
-	for tick in ax1.get_xticklabels():
-		tick.set_rotation(90)
-	if savedir == None:
-		plt.show()
-	else:
-		plt.savefig(savedir+"/"+graph_set_id+".png")
-	plt.close()
-
-def make_all_stat_boxplots(setname, axis="RESULT_OPT"):
-	basedir = "data/eval/random_"+setname
-	graphdir = basedir+"/input"
-	resultdir = basedir+"/results"
-	outputdir = basedir+"/plots"
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
-
-	all_graph_set_ids = []
-	for filename in os.listdir(graphdir):
-		all_graph_set_ids.append(re.split(r'\.',filename)[0])
-
-	for graph_set_id in all_graph_set_ids:
-		make_stat_boxplot(setname, graph_set_id, axis, outputdir)
-
-
 def compute_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
@@ -141,3 +88,71 @@ def compute_mean_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
 	mrp = {algo : np.mean(rp[algo]) for algo in algos}
 
 	return mrp
+
+def make_stat_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix=None):
+	# initialize:
+	datadir = "data/eval/random_"+setname+"/results"
+	all_files_in_dir = os.listdir(datadir)
+	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
+	labels = []
+	files.sort()
+
+	# load data:
+	for file in files:
+		filepath = datadir+"/"+file
+		results_label = get_algo_name_from_filename(file, graph_set_id)
+		labels.append(results_label)
+
+	# create plot:
+	fig, ax1 = plt.subplots(figsize=(len(data), 6))
+	#fig.canvas.set_window_title('A Boxplot Example')
+	fig.subplots_adjust(bottom=0.3)
+
+	ax1.set_xlabel('Algorithm')
+	ax1.set_ylabel('Distribution of minimal fill-in')
+
+	bp = ax1.boxplot(data, notch=0, sym='+', vert=1, whis=1.5)
+	plt.setp(bp['boxes'], color='black')
+	ax1.set_xticklabels(labels)
+	for tick in ax1.get_xticklabels():
+		tick.set_rotation(90)
+	if savedir == None:
+		plt.show()
+	else:
+		plt.savefig(savedir+"/"+graph_set_id+"_"+filename_suffix+".png")
+	plt.close()
+
+def make_stat_boxplot_output(setname, graph_set_id, axis="RESULT_OPT", savedir=None):
+	# initialize:
+	datadir = "data/eval/random_"+setname+"/results"
+	all_files_in_dir = os.listdir(datadir)
+	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
+	data = []
+	files.sort()
+
+	# load data:
+	for file in files:
+		filepath = datadir+"/"+file
+		data.append(load_axis_data_from_file(filepath, axis))
+
+	make_stat_boxplot(data, setname, graph_set_id, savedir, filename_suffix)
+
+def make_stat_boxplot_rp(setname, graph_set_id, axis="RESULT_OPT", savedir=None):
+	data = compute_relative_performance(setname, graph_set_id, axis)
+
+	make_stat_boxplot(data, setname, graph_set_id, savedir)
+
+def make_all_stat_boxplots(setname, axis="RESULT_OPT"):
+	basedir = "data/eval/random_"+setname
+	graphdir = basedir+"/input"
+	resultdir = basedir+"/results"
+	outputdir = basedir+"/plots"
+	if not os.path.exists(outputdir):
+		os.mkdir(outputdir)
+
+	all_graph_set_ids = []
+	for filename in os.listdir(graphdir):
+		all_graph_set_ids.append(re.split(r'\.',filename)[0])
+
+	for graph_set_id in all_graph_set_ids:
+		make_stat_boxplot_output(setname, graph_set_id, axis, outputdir)
