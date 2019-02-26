@@ -142,7 +142,7 @@ def make_stat_boxplot_rp(setname, graph_set_id, axis="RESULT_OPT", savedir=None)
 
 	make_stat_boxplot(data, setname, graph_set_id, savedir)
 
-def make_all_stat_boxplots(setname, axis="RESULT_OPT"):
+def make_all_stat_boxplots_output(setname, axis="RESULT_OPT"):
 	basedir = "data/eval/random_"+setname
 	graphdir = basedir+"/input"
 	resultdir = basedir+"/results"
@@ -156,3 +156,18 @@ def make_all_stat_boxplots(setname, axis="RESULT_OPT"):
 
 	for graph_set_id in all_graph_set_ids:
 		make_stat_boxplot_output(setname, graph_set_id, axis, outputdir)
+
+def make_all_stat_boxplot_rp(setname, axis="RESULT_OPT"):
+	basedir = "data/eval/random_"+setname
+	graphdir = basedir+"/input"
+	resultdir = basedir+"/results"
+	outputdir = basedir+"/plots"
+	if not os.path.exists(outputdir):
+		os.mkdir(outputdir)
+
+	all_graph_set_ids = []
+	for filename in os.listdir(graphdir):
+		all_graph_set_ids.append(re.split(r'\.',filename)[0])
+
+	for graph_set_id in all_graph_set_ids:
+		make_stat_boxplot_output_rp(setname, graph_set_id, axis, outputdir)
