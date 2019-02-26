@@ -9,4 +9,8 @@ if __name__ == "__main__":
 	
 	#sm.make_stat_boxplot("general", "ER_n20_p01")
 	mrp = sm.compute_mean_relative_performance("general", "ER_n20_p01")
-	print (mrp["SMS"])
+	for algo in mrp:
+		print (algo + ": " + str(round(mrp[algo],2)))
+
+	#rp = sm.compute_relative_performance("general", "ER_n20_p01")
+	#print ([algo + ": "+str(rp[algo][:10]) for algo in rp])

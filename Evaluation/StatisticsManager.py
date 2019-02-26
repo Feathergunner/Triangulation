@@ -119,12 +119,13 @@ def compute_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
 				results[algo] += 1000000
 		algoorder = sorted(algos, key=lambda a: results[a])
 		j = 1
-		for a in algoorder:
-			rp[a].append(j)
-			j += 1
+		for a_i in range(len(algos)):
+			rp[algoorder[a_i]].append(j)
+			if a_i < len(algos)-1 and results[algoorder[a_i+1]] > results[algoorder[a_i]]:
+				j += 1
 
 	return rp
-	
+
 def compute_mean_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
