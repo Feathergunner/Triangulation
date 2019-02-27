@@ -119,9 +119,9 @@ def make_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix=None
 	if savedir == None:
 		plt.show()
 	elif filename_suffix == None:
-		plt.savefig(savedir+"/"+graph_set_id+".png")
+		plt.savefig(savedir+"/boxplots_"+graph_set_id+".png")
 	else:
-		plt.savefig(savedir+"/"+graph_set_id+"_"+filename_suffix+".png")
+		plt.savefig(savedir+"/boxplots_"+graph_set_id+"_"+filename_suffix+".png")
 	plt.close()
 
 def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
@@ -160,13 +160,10 @@ def make_boxplots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
 	for graph_set_id in all_graph_set_ids:
 		make_boxplot_set(setname, graph_set_id, axis, type, outputdir)
 
-def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE"):
+def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE", savedir=None):
 	basedir = "data/eval/random_"+setname
 	graphdir = basedir+"/input"
 	resultdir = basedir+"/results"
-	outputdir = basedir+"/plots"
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
 
 	all_graph_set_ids = []
 	for filename in os.listdir(graphdir):
@@ -200,5 +197,11 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE")
 		m = sorted([avg_m for avg_m in database[algo]])
 		data = [database[algo][avg_m] for avg_m in m]
 		plt.plot (m, data)
-
-	plt.show()
+	
+	if savedir == None:
+		plt.show()
+	else:
+		filename_suffix = axis+"_"+type
+		plt.savefig(outputdir+"/plots_by_density_"+setname+"n"+str(n)+"_"+filename_suffix+".png")
+	plt.close()
+		
