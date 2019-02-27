@@ -232,7 +232,10 @@ def store_results_csv(list_of_results, filename):
 def load_evaldata_from_json(basedir, filename):
 	graphdataset = []
 	evaldataset = []
-	with open(basedir+"/results/"+filename+".json", "r") as jsonfile:
+	filepath = basedir+"/results/"+filename
+	if not "json" in filepath:
+		filepath+="-json"
+	with open(filepath,"r") as jsonfile:
 		dataset = json.load(jsonfile)
 		for data in dataset:
 			graph_id = re.split(r'\.',data["input_id"])[0]
@@ -267,10 +270,6 @@ def load_evaldata_from_json(basedir, filename):
 		
 def compute_statistics(datadir):
 	logging.debug("Compute statistics for results in "+datadir)
-
-	#stats_dir = datadir+"/"+stats
-	#if not os.path.exists(stats_dir):
-	#	os.mkdir(stats_dir)
 
 	stats = []
 	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "time limit", "mean time", "var time", "moo", "voo", "mmo", "mvo", "success (\%)"]

@@ -18,4 +18,6 @@ if __name__ == "__main__":
 	#rp = sm.compute_relative_performance("general", "ER_n20_p01")
 	#print ([algo + ": "+str(rp[algo][:10]) for algo in rp])
 	
-	sm.make_boxplots_all("maxclique", axis="TIME", type="ABSOLUTE")
+	#sm.make_boxplots_all("maxclique", axis="TIME", type="ABSOLUTE")
+
+	sm.plot_mean_performance_by_density("general", 20, axis="TIME")

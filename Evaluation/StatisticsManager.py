@@ -34,9 +34,8 @@ def load_axis_data_from_file(filename, axis, keep_nulls=False):
 	else:
 		return data
 
-def get_algo_name_from_filename(filename, graph_set_id):
-	algo_name_base = re.split('results_triangulate_',filename)[1]
-	algo_name = re.split('\.',re.split("_"+graph_set_id, algo_name_base)[0])[0]
+def get_algo_name_from_filename(filename):
+	algo_name = re.split('_',filename)[2]
 	return algo_name
 
 def compute_relative_performance(setname, graph_set_id, axis="OUTPUT"):
@@ -51,7 +50,7 @@ def compute_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 	# load data:
 	for algofile in files:
 		filepath = datadir+"/"+algofile
-		algo = get_algo_name_from_filename(algofile, graph_set_id)
+		algo = get_algo_name_from_filename(algofile)
 		data[algo] = load_axis_data_from_file(filepath, axis, True)
 		if number_of_results == 0:
 			number_of_results = len(data[algo])
@@ -83,7 +82,7 @@ def compute_mean_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 
 	# load data:
 	for algofile in files:
-		algos.append(get_algo_name_from_filename(algofile, graph_set_id))
+		algos.append(get_algo_name_from_filename(algofile))
 
 	rp = compute_relative_performance(setname, graph_set_id, axis)
 	mrp = {algo : np.mean(rp[algo]) for algo in algos}
@@ -176,19 +175,30 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE")
 
 	files = []
 	for graph_set_id in all_graph_set_ids:
-		files.append([file for file in all_files_in_dir if ".json" in file and graph_set_id in file])
+		files += [file for file in os.listdir(resultdir) if ".json" in file and graph_set_id in file]
 
 	database = {}
 	for file in files:
 		algo = get_algo_name_from_filename(file)
-		evaldata = em.load_evaldata_from_json(resultdir, file)
+		evaldata = em.load_evaldata_from_json(basedir, file)
 		avg_m = np.mean([data.m for data in evaldata])
 		if axis == "OUTPUT":
-			data = np.mean([data.output for data in evaldata if data.output >= 0])
+			data = [data.output for data in evaldata if data.output >= 0]
 		elif axis == "TIME":
-			data = np.mean([data.running_time for data in evaldata if data.output >= 0])
+			data = [data.running_time for data in evaldata if data.output >= 0]
 		if algo not in database:
 			database[algo] = {}
 		if avg_m not in database[algo]:
 			database[algo][avg_m] = 0
-		database[algo][avg_m] = data
+		if type == "ABSOLUTE":
+			database[algo][avg_m] = np.mean(data)
+		elif type == "RP":
+			# TO DO
+			database[algo][avg_m] = -1
+
+	for algo in database:
+		m = sorted([avg_m for avg_m in database[algo]])
+		data = [database[algo][avg_m] for avg_m in m]
+		plt.plot (m, data)
+
+	plt.show()
