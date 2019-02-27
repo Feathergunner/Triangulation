@@ -17,6 +17,7 @@ else:
 	import matplotlib.pyplot as plt
 
 from Evaluation import GraphDataOrganizer as gdo
+from Evaluation import ExperimentManager as em
 from MetaScripts import meta
 
 def load_axis_data_from_file(filename, axis, keep_nulls=False):
@@ -159,3 +160,35 @@ def make_boxplots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
 
 	for graph_set_id in all_graph_set_ids:
 		make_boxplot_set(setname, graph_set_id, axis, type, outputdir)
+
+def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE"):
+	basedir = "data/eval/random_"+setname
+	graphdir = basedir+"/input"
+	resultdir = basedir+"/results"
+	outputdir = basedir+"/plots"
+	if not os.path.exists(outputdir):
+		os.mkdir(outputdir)
+
+	all_graph_set_ids = []
+	for filename in os.listdir(graphdir):
+		if "n"+str(n) in filename:
+			all_graph_set_ids.append(re.split(r'\.',filename)[0])
+
+	files = []
+	for graph_set_id in all_graph_set_ids:
+		files.append([file for file in all_files_in_dir if ".json" in file and graph_set_id in file])
+
+	database = {}
+	for file in files:
+		algo = get_algo_name_from_filename(file)
+		evaldata = em.load_evaldata_from_json(resultdir, file)
+		avg_m = np.mean([data.m for data in evaldata])
+		if axis == "OUTPUT":
+			data = np.mean([data.output for data in evaldata if data.output >= 0])
+		elif axis == "TIME":
+			data = np.mean([data.running_time for data in evaldata if data.output >= 0])
+		if algo not in database:
+			database[algo] = {}
+		if avg_m not in database[algo]:
+			database[algo][avg_m] = 0
+		database[algo][avg_m] = data
