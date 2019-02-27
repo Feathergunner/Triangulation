@@ -73,9 +73,9 @@ def fix_filenames(datadir):
 		os.rename(datadir+"/"+filename, datadir+"/"+new_filename)
 
 def run_eval_all(forcenew=False):
-	algo_codes = ["EG", "EG_R", "LEXM", "MCSM", "SMS", "SMS_R", "CMT", "CMT_R", "EGP", "EGP_R"]
+	algo_codes = ["EG", "EG_R", "LEXM", "MCSM", "SMS", "SMS_R", "CMT", "CMT_R", "EGP", "EGP_R", "MT"]
 	repetitions = [5, 10, 20]
-	timelimit = 10
+	timelimit = 5
 
 	max_num_threads = 10
 	threads = []
