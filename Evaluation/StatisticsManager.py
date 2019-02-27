@@ -23,7 +23,7 @@ def load_axis_data_from_file(filename, axis, keep_nulls=False):
 	with open(filename) as jsonfile:
 		this_file_data = json.load(jsonfile)
 
-	if axis=="RESULT_OPT":
+	if axis=="OUTPUT":
 		data = [d["output"] for d in this_file_data]
 	elif axis=="TIME":
 		data = [d["running_time"] for d in this_file_data if d["running_time"]>0]
@@ -38,7 +38,7 @@ def get_algo_name_from_filename(filename, graph_set_id):
 	algo_name = re.split('\.',re.split("_"+graph_set_id, algo_name_base)[0])[0]
 	return algo_name
 
-def compute_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
+def compute_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
 	all_files_in_dir = os.listdir(datadir)
@@ -73,7 +73,7 @@ def compute_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
 
 	return rp
 
-def compute_mean_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
+def compute_mean_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
 	all_files_in_dir = os.listdir(datadir)
@@ -89,7 +89,7 @@ def compute_mean_relative_performance(setname, graph_set_id, axis="RESULT_OPT"):
 
 	return mrp
 
-def make_stat_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix=None):
+def make_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix=None):
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
 	all_files_in_dir = os.listdir(datadir)
@@ -97,7 +97,7 @@ def make_stat_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix
 	labels = []
 	files.sort()
 
-	# load data:
+	# get labels:
 	for file in files:
 		filepath = datadir+"/"+file
 		results_label = get_algo_name_from_filename(file, graph_set_id)
@@ -110,7 +110,7 @@ def make_stat_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix
 
 	ax1.set_xlabel('Algorithm')
 	ax1.set_ylabel('Distribution of minimal fill-in')
-
+	
 	bp = ax1.boxplot(data, notch=0, sym='+', vert=1, whis=1.5)
 	plt.setp(bp['boxes'], color='black')
 	ax1.set_xticklabels(labels)
@@ -118,31 +118,34 @@ def make_stat_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix
 		tick.set_rotation(90)
 	if savedir == None:
 		plt.show()
+	elif filename_suffix == None:
+		plt.savefig(savedir+"/"+graph_set_id+".png")
 	else:
 		plt.savefig(savedir+"/"+graph_set_id+"_"+filename_suffix+".png")
 	plt.close()
 
-def make_stat_boxplot_output(setname, graph_set_id, axis="RESULT_OPT", savedir=None):
-	# initialize:
-	datadir = "data/eval/random_"+setname+"/results"
-	all_files_in_dir = os.listdir(datadir)
-	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
-	data = []
-	files.sort()
+def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
+	if type == "ABSOLUTE":
+		# initialize:
+		datadir = "data/eval/random_"+setname+"/results"
+		all_files_in_dir = os.listdir(datadir)
+		files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
+		data = []
+		files.sort()
+	
+		# load data:
+		for file in files:
+			filepath = datadir+"/"+file
+			data.append(load_axis_data_from_file(filepath, axis))
 
-	# load data:
-	for file in files:
-		filepath = datadir+"/"+file
-		data.append(load_axis_data_from_file(filepath, axis))
+	elif type == "RP":
+		database = compute_relative_performance(setname, graph_set_id, axis)
+		data = [database[key] for key in database]
+	filename_suffix = axis+"_"+type
+			
+	make_boxplot(data, setname, graph_set_id, savedir, filename_suffix)
 
-	make_stat_boxplot(data, setname, graph_set_id, savedir, filename_suffix)
-
-def make_stat_boxplot_rp(setname, graph_set_id, axis="RESULT_OPT", savedir=None):
-	data = compute_relative_performance(setname, graph_set_id, axis)
-
-	make_stat_boxplot(data, setname, graph_set_id, savedir)
-
-def make_all_stat_boxplots_output(setname, axis="RESULT_OPT"):
+def make_boxplots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
 	basedir = "data/eval/random_"+setname
 	graphdir = basedir+"/input"
 	resultdir = basedir+"/results"
@@ -155,19 +158,4 @@ def make_all_stat_boxplots_output(setname, axis="RESULT_OPT"):
 		all_graph_set_ids.append(re.split(r'\.',filename)[0])
 
 	for graph_set_id in all_graph_set_ids:
-		make_stat_boxplot_output(setname, graph_set_id, axis, outputdir)
-
-def make_all_stat_boxplot_rp(setname, axis="RESULT_OPT"):
-	basedir = "data/eval/random_"+setname
-	graphdir = basedir+"/input"
-	resultdir = basedir+"/results"
-	outputdir = basedir+"/plots"
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
-
-	all_graph_set_ids = []
-	for filename in os.listdir(graphdir):
-		all_graph_set_ids.append(re.split(r'\.',filename)[0])
-
-	for graph_set_id in all_graph_set_ids:
-		make_stat_boxplot_output_rp(setname, graph_set_id, axis, outputdir)
+		make_boxplot_set(setname, graph_set_id, axis, type, outputdir)
