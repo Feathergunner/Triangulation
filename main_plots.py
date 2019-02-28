@@ -20,4 +20,4 @@ if __name__ == "__main__":
 	
 	#sm.make_boxplots_all("maxclique", axis="TIME", type="ABSOLUTE")
 
-	sm.plot_mean_performance_by_density("general", 20, axis="TIME")
+	sm.make_performance_plots_all("general", axis="OUTPUT", type="RP")

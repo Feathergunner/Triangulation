@@ -202,6 +202,14 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE",
 		plt.show()
 	else:
 		filename_suffix = axis+"_"+type
-		plt.savefig(outputdir+"/plots_by_density_"+setname+"n"+str(n)+"_"+filename_suffix+".png")
+		plt.savefig(savedir+"/plots_by_density_"+setname+"n"+str(n)+"_"+filename_suffix+".png")
 	plt.close()
 		
+def make_performance_plots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
+	basedir = "data/eval/random_"+setname
+	outputdir = basedir+"/plots"
+	if not os.path.exists(outputdir):
+		os.mkdir(outputdir)
+
+	for n in [20, 40, 60, 80, 100]:
+		plot_mean_performance_by_density(setname, n, axis, type, savedir=outputdir)
