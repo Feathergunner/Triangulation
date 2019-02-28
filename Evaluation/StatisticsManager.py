@@ -202,7 +202,7 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE",
 		plt.show()
 	else:
 		filename_suffix = axis+"_"+type
-		plt.savefig(savedir+"/plots_by_density_"+setname+"n"+str(n)+"_"+filename_suffix+".png")
+		plt.savefig(savedir+"/plots_by_density_"+setname+"_n"+str(n)+"_"+filename_suffix+".png")
 	plt.close()
 		
 def make_performance_plots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
