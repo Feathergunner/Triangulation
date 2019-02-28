@@ -35,7 +35,14 @@ def load_axis_data_from_file(filename, axis, keep_nulls=False):
 		return data
 
 def get_algo_name_from_filename(filename):
-	algo_name = re.split('_',filename)[2]
+	algo_parts = re.split('_',filename)
+	algo_name = algo_parts[2]
+	b_id = 3
+	if algo_parts[3][0] == "R":
+		algo_name += "_"+algo_parts[3]
+		b_id += 1
+	if algo_parts[b_id] == "B":
+		algo_name += "_B"
 	return algo_name
 
 def compute_relative_performance(setname, graph_set_id, axis="OUTPUT"):
@@ -89,7 +96,7 @@ def compute_mean_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 
 	return mrp
 
-def make_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix=None):
+def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suffix=None):
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
 	all_files_in_dir = os.listdir(datadir)
@@ -100,7 +107,7 @@ def make_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix=None
 	# get labels:
 	for file in files:
 		filepath = datadir+"/"+file
-		results_label = get_algo_name_from_filename(file, graph_set_id)
+		results_label = get_algo_name_from_filename(file)
 		labels.append(results_label)
 
 	# create plot:
@@ -109,7 +116,7 @@ def make_boxplot(data, setname, graph_set_id, savedir=None, filename_suffix=None
 	fig.subplots_adjust(bottom=0.3)
 
 	ax1.set_xlabel('Algorithm')
-	ax1.set_ylabel('Distribution of minimal fill-in')
+	ax1.set_ylabel(ylabel)
 	
 	bp = ax1.boxplot(data, notch=0, sym='+', vert=1, whis=1.5)
 	plt.setp(bp['boxes'], color='black')
@@ -143,7 +150,7 @@ def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", save
 		data = [database[key] for key in database]
 	filename_suffix = axis+"_"+type
 			
-	make_boxplot(data, setname, graph_set_id, savedir, filename_suffix)
+	make_boxplot(data, setname, graph_set_id, axis+" ("+type+")", savedir, filename_suffix)
 
 def make_boxplots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
 	basedir = "data/eval/random_"+setname
