@@ -74,7 +74,6 @@ def fix_filenames(datadir):
 
 def run_eval_all(forcenew=False):
 	algo_codes = ["EG", "EG_R", "LEXM", "MCSM", "SMS", "SMS_R", "CMT", "CMT_R", "EGP", "EGP_R", "MT"]
-	repetitions = [5, 10, 20]
 	timelimit = 5
 
 	max_num_threads = 10
@@ -89,19 +88,19 @@ def run_eval_all(forcenew=False):
 		for dataset in VALID_SETS:
 			data_dir = "data/eval/random_"+dataset
 			if randomized:
-				for rep in repetitions:
+				for rep in gs.RANDOMIZED_REPETITIONS:
 					# run randomized experiments
 					p = Process(
 						target=em.run_set_of_experiments,
 						args=(
-							algo, 		# algo
-							data_dir,	# datadir
-							True,		# randomized
-							rep,		# repetitions
-							False,		# threaded
-							False, 		# reduce_graph
-							timelimit,	# timelimit
-							forcenew 	# force_new_data
+							algo, 			# algo
+							data_dir,		# datadir
+							True,			# randomized
+							rep,			# repetitions
+							False,			# threaded
+							False, 			# reduce_graph
+							gs.TIMELIMIT,	# timelimit
+							forcenew 		# force_new_data
 						)
 					)
 					threads.append(p)
@@ -109,14 +108,14 @@ def run_eval_all(forcenew=False):
 					p = Process(
 						target=em.run_set_of_experiments,
 						args=(
-							algo, 		# algo
-							data_dir,	# datadir
-							True,		# randomized
-							rep,		# repetitions
-							False,		# threaded
-							True, 		# reduce_graph
-							timelimit,	# timelimit
-							forcenew 	# force_new_data
+							algo, 			# algo
+							data_dir,		# datadir
+							True,			# randomized
+							rep,			# repetitions
+							False,			# threaded
+							True, 			# reduce_graph
+							gs.TIMELIMIT,	# timelimit
+							forcenew 		# force_new_data
 						)
 					)
 					threads.append(p)
@@ -126,14 +125,14 @@ def run_eval_all(forcenew=False):
 				p = Process(
 					target=em.run_set_of_experiments,
 					args=(
-						algo, 		# algo
-						data_dir,	# datadir
-						False,		# randomized
-						1,			# repetitions
-						False,		# threaded
-						False, 		# reduce_graph
-						timelimit,	# timelimit
-						forcenew 	# force_new_data
+						algo, 			# algo
+						data_dir,		# datadir
+						False,			# randomized
+						1,				# repetitions
+						False,			# threaded
+						False, 			# reduce_graph
+						gs.TIMELIMIT,	# timelimit
+						forcenew 		# force_new_data
 					)
 				)
 				threads.append(p)
@@ -141,14 +140,14 @@ def run_eval_all(forcenew=False):
 				p = Process(
 					target=em.run_set_of_experiments,
 					args=(
-						algo, 		# algo
-						data_dir,	# datadir
-						False,		# randomized
-						1,			# repetitions
-						False,		# threaded
-						True, 		# reduce_graph
-						timelimit,	# timelimit
-						forcenew 	# force_new_data
+						algo, 			# algo
+						data_dir,		# datadir
+						False,			# randomized
+						1,				# repetitions
+						False,			# threaded
+						True, 			# reduce_graph
+						gs.TIMELIMIT,	# timelimit
+						forcenew 		# force_new_data
 					)
 				)
 				threads.append(p)

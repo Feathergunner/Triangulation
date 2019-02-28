@@ -182,10 +182,10 @@ def construct_full_set_random_graphs(threaded=True):
 		threads = []
 		threadset = {}
 		
-	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"])
+	total = len(gs.GRAPH_SIZES) * len(gs.GRAPH_DENSITIY_P)
 	i = 0
-	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
-		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
+	for n in gs.GRAPH_SIZES:
+		for p in gs.GRAPH_DENSITIY_P:
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", p "+str(p))
 			if threaded:
 				process = Process(target=construct_set_random_er, args=(100,n,p))
@@ -214,10 +214,10 @@ def construct_full_set_random_planar_graphs(threaded=True):
 		threads = []
 		threadset = {}
 		
-	total = len(gs.RANDOM_PLANAR_SETTINGS["n"]) * len(gs.RANDOM_PLANAR_SETTINGS["rel_m"])
+	total = len(gs.GRAPH_SIZES) * len(gs.PLANAR_DENSITY_RELM)
 	i = 0
-	for n in gs.RANDOM_PLANAR_SETTINGS["n"]:
-		for rel_m in gs.RANDOM_PLANAR_SETTINGS["rel_m"]:
+	for n in gs.GRAPH_SIZES:
+		for rel_m in gs.PLANAR_DENSITY_RELM:
 			logging.debug("Constructing graphs with parameters n: "+str(n)+", rel_m "+str(rel_m))
 			m = n*rel_m
 			if threaded:
@@ -246,16 +246,16 @@ def construct_full_set_random_planar_graphs(threaded=True):
 
 def construct_full_set_random_maxdegree_graphs(threaded=True):
 	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
-	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXDEGREE_SETTINGS)
+	total = len(gs.GRAPH_SIZES) * len(gs.BOUNDEDGRAPHS_DENSITY_P) * len(gs.MAXDEGREE_SETTINGS)
 	
 	if threaded:
 		threads = []
 		threadset = {}
 		
 	i = 0
-	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
-		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
-			for md in gs.RANDOM_MAXDEGREE_SETTINGS:
+	for n in gs.GRAPH_SIZES:
+		for p in gs.BOUNDEDGRAPHS_DENSITY_P:
+			for md in gs.MAXDEGREE_SETTINGS:
 				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max degree: "+str(md))
 				if threaded:
 					process = Process(target=construct_set_random_maxdeg, args=(100,n,p,md))
@@ -283,16 +283,16 @@ def construct_full_set_random_maxdegree_graphs(threaded=True):
 
 def construct_full_set_random_maxclique_graphs(threaded=True):
 	logging.info("=== construct_full_set_random_maxdegree_graphs ===")
-	total = len(gs.RANDOM_GRAPH_SETTINGS["n"]) * len(gs.RANDOM_GRAPH_SETTINGS["p"]) * len(gs.RANDOM_MAXCLIQUE_SETTINGS)
+	total = len(gs.GRAPH_SIZES) * len(gs.BOUNDEDGRAPHS_DENSITY_P) * len(gs.MAXCLIQUE_SETTINGS)
 	
 	if threaded:
 		threads = []
 		threadset = {}
 		
 	i = 0
-	for n in gs.RANDOM_GRAPH_SETTINGS["n"]:
-		for p in gs.RANDOM_GRAPH_SETTINGS["p"]:
-			for mc in gs.RANDOM_MAXCLIQUE_SETTINGS:
+	for n in gs.GRAPH_SIZES:
+		for p in gs.BOUNDEDGRAPHS_DENSITY_P:
+			for mc in gs.MAXCLIQUE_SETTINGS:
 				logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", max clique size: "+str(mc))
 				if threaded:
 					process = Process(target=construct_set_random_maxclique, args=(100,n,p,mc))
