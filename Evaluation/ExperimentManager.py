@@ -234,7 +234,7 @@ def load_evaldata_from_json(basedir, filename):
 	evaldataset = []
 	filepath = basedir+"/results/"+filename
 	if not "json" in filepath:
-		filepath+="-json"
+		filepath+=".json"
 	with open(filepath,"r") as jsonfile:
 		dataset = json.load(jsonfile)
 		for data in dataset:
