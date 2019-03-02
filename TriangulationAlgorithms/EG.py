@@ -45,7 +45,7 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True, ti
 	run Elimination Game, but minimize the result using CMT
 	'''
 	algo = Algorithm_EliminationGame(G, reduce_graph, timeout)
-	minimizer = CMT.Algorithm_CMT(G)
+	minimizer = CMT.Algorithm_CMT(G, False, timeout)
 	if not randomized:
 		algo.run()
 		F = algo.get_triangulation_edges()
@@ -99,7 +99,7 @@ def triangulate_EGPLUS(G, randomized=False, repetitions=1, reduce_graph=True, ti
 				T[e] = set(Te)
 			
 			for j in range(repetitions):
-				F_prime= minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True, T)
+				F_prime = minimizer.minimize_triangulation(G, algo.get_triangulation_edges(), True, T)
 				H_prime = G.copy()
 				H_prime.add_edges_from(F_prime)
 				
