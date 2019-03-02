@@ -5,10 +5,13 @@ from Evaluation import StatisticsManager as sm
 
 def make_plots():
 	for setname in ["general", "planar", "maxdeg", "maxclique"]:
-		sm.make_all_stat_boxplots(setname)
+		sm.make_boxplots_all(setname, axis="TIME", type="ABSOLUTE")
+		sm.make_boxplots_all(setname, axis="OUTPUT", type="RP")
+		sm.make_performance_plots_all(setname, axis="TIME", type="ABSOLUTE")
+		sm.make_performance_plots_all(setname, axis="OUTPUT", type="RP")
 
 if __name__ == "__main__":
-	#make_plots()
+	make_plots()
 	
 	#sm.make_stat_boxplot("general", "ER_n20_p01")
 	#mrp = sm.compute_mean_relative_performance("general", "ER_n20_p01")
@@ -20,4 +23,4 @@ if __name__ == "__main__":
 	
 	#sm.make_boxplots_all("maxclique", axis="TIME", type="ABSOLUTE")
 
-	sm.make_performance_plots_all("general", axis="OUTPUT", type="RP")
+	#sm.make_performance_plots_all("general", axis="OUTPUT", type="RP")

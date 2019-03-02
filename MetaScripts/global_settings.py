@@ -11,3 +11,14 @@ MAXCLIQUE_SETTINGS = [3, 4, 5]
 # algorithm parameters:
 RANDOMIZED_REPETITIONS = [3, 5, 10]
 TIMELIMIT = 2
+
+# plotting settings:
+PLT_ALGO_COLORS = {
+	"EG" : 'b',
+	"EGPLUS" : 'c',
+	"SMS" : 'g',
+	"LexM" : 'm', 
+	"MCSM" : '#ffa400', # orange
+	"CMT" : 'r', 
+	"MT" : 'k' # black
+}
