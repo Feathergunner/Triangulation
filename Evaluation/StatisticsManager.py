@@ -15,10 +15,12 @@ except ImportError:
 	import matplotlib.pyplot as plt
 else:
 	import matplotlib.pyplot as plt
+	import matplotlib.lines as mlines
 
 from Evaluation import GraphDataOrganizer as gdo
 from Evaluation import ExperimentManager as em
 from MetaScripts import meta
+from MetaScripts import global_settings as gs
 
 def load_axis_data_from_file(filename, axis, keep_nulls=False):
 	with open(filename) as jsonfile:
@@ -86,7 +88,7 @@ def compute_mean_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 	all_files_in_dir = os.listdir(datadir)
 	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
 	algos = []
-
+	
 	# load data:
 	for algofile in files:
 		algos.append(get_algo_name_from_filename(algofile))
@@ -182,34 +184,58 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE",
 		files += [file for file in os.listdir(resultdir) if ".json" in file and graph_set_id in file]
 
 	database = {}
-	for file in files:
-		algo = get_algo_name_from_filename(file)
-		evaldata = em.load_evaldata_from_json(basedir, file)
-		avg_m = np.mean([data.m for data in evaldata])
-		if axis == "OUTPUT":
-			data = [data.output for data in evaldata if data.output >= 0]
-		elif axis == "TIME":
-			data = [data.running_time for data in evaldata if data.output >= 0]
-		if algo not in database:
-			database[algo] = {}
-		if avg_m not in database[algo]:
-			database[algo][avg_m] = 0
-		if type == "ABSOLUTE":
+	if type == "ABSOLUTE":
+		for file in files:
+			algo = get_algo_name_from_filename(file)
+			evaldata = em.load_evaldata_from_json(basedir, file)
+			avg_m = np.mean([data.m for data in evaldata])
+			if axis == "OUTPUT":
+				data = [data.output for data in evaldata if data.output >= 0]
+			elif axis == "TIME":
+				data = [data.running_time for data in evaldata if data.output >= 0]
+			if algo not in database:
+				database[algo] = {}
 			database[algo][avg_m] = np.mean(data)
-		elif type == "RP":
-			# TO DO
-			database[algo][avg_m] = -1
-
+	
+	elif type == "RP":
+		for graph_set_id in all_graph_set_ids:
+			mrt = compute_mean_relative_performance(setname, graph_set_id, axis)
+			examplefile = [file for file in os.listdir(resultdir) if ".json" in file and graph_set_id in file][0]
+			evaldata = em.load_evaldata_from_json(basedir, examplefile)
+			avg_m = np.mean([data.m for data in evaldata])
+			for algo in mrt:
+				if algo not in database:
+					database[algo] = {}
+				database[algo][avg_m] = mrt[algo]
+	
+	fig, ax = plt.subplots()
+	legenditems = {}
 	for algo in database:
+		basealgo = re.split('_', algo)[0]
+		linestyle = '-'
+		if "_B" in algo:
+			if "_R" in algo:
+				linestyle = '-.'
+			else:
+				linestyle = ':'
+		elif "_R" in algo:
+			linestyle = '--'
+		
 		m = sorted([avg_m for avg_m in database[algo]])
 		data = [database[algo][avg_m] for avg_m in m]
-		plt.plot (m, data)
+		line = ax.plot(m, data, label=algo, linewidth=0.5, linestyle=linestyle, color=gs.PLT_ALGO_COLORS[basealgo])
+		if basealgo not in legenditems:
+			legenditems[basealgo] = mlines.Line2D([],[], color=gs.PLT_ALGO_COLORS[basealgo], label=basealgo) 
+	
+	ax.set_xlabel('number of edges (i.e. density)')
+	ax.set_ylabel(axis+" ("+type+")")
+	legend = ax.legend(handles=[legenditems[a] for a in legenditems], bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 	
 	if savedir == None:
 		plt.show()
 	else:
 		filename_suffix = axis+"_"+type
-		plt.savefig(savedir+"/plots_by_density_"+setname+"_n"+str(n)+"_"+filename_suffix+".png")
+		plt.savefig(savedir+"/plots_by_density_"+setname+"_n"+str(n)+"_"+filename_suffix+".png", dpi=500, bbox_extra_artists=(legend,), bbox_inches='tight')
 	plt.close()
 		
 def make_performance_plots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
