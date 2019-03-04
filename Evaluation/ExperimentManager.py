@@ -230,6 +230,9 @@ def store_results_csv(list_of_results, filename):
 			csvwriter.writerow(r.to_dict())
 			
 def load_evaldata_from_json(basedir, filename):
+	'''
+	Loads the Evaldata from a specific file
+	'''
 	graphdataset = []
 	evaldataset = []
 	filepath = basedir+"/results/"+filename
@@ -269,6 +272,17 @@ def load_evaldata_from_json(basedir, filename):
 	return evaldataset	
 		
 def compute_statistics(datadir):
+	'''
+	Computes relevant statistic from all EvalData files in a specific directory.
+	Constructs a list of dicts that contains a dictionary for each file in the directory.
+	Each dictionary contains data of the based experiment (graph data, algorithm data)
+	as well as some computed statistics like mean and variance of fill-in size and runtime.
+	Also writes these statistics to a file
+
+	return:
+		columns : contains the keys of the constructed dictionaries
+		stats : contains the data
+	'''
 	logging.debug("Compute statistics for results in "+datadir)
 
 	stats = []
@@ -328,6 +342,10 @@ def compute_statistics(datadir):
 	return (columns, stats)
 			
 def construct_output_table(columns, dataset, outputfilename="out.tex"):
+	'''
+	Constructs a tex-file containing a table that contains the statistics
+	computed by the method "compute_statistics" above
+	'''
 	# sort dataset:
 	sorteddataset = sorted(dataset, key=lambda data: (data["avg n"], data["graph id"], data["algorithm"], data["repeats"], data["reduced"]))
 
