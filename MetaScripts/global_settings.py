@@ -22,3 +22,11 @@ PLT_ALGO_COLORS = {
 	"CMT" : 'r', 
 	"MT" : 'k' # black
 }
+
+PLT_GRAPHSIZE_COLORS = {
+	"n20" : 'b',
+	"n40" : 'c',
+	"n60" : 'g',
+	"n80" : 'm',
+	"n100" : 'r'
+}

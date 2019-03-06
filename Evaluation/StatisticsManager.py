@@ -172,12 +172,13 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 	ax1.set_xticklabels(labels)
 	for tick in ax1.get_xticklabels():
 		tick.set_rotation(90)
+		
 	if savedir == None:
 		plt.show()
 	elif filename_suffix == None:
-		plt.savefig(savedir+"/boxplots_"+graph_set_id+".png")
+		plt.savefig(savedir+"/performance_"+graph_set_id+"_algo_boxplots.png")
 	else:
-		plt.savefig(savedir+"/boxplots_"+graph_set_id+"_"+filename_suffix+".png")
+		plt.savefig(savedir+"/performance_"+graph_set_id+"_"+filename_suffix+"_algo_boxplots.png")
 	plt.close()
 
 def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
@@ -216,7 +217,7 @@ def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", save
 
 def make_boxplots_allsets(setname, axis="OUTPUT", type="ABSOLUTE"):
 	'''
-	Uses the method "make_boxplot_set" to construct all boxplots for a set of experiments
+	Uses the method "make_boxplot_set" to construct all boxplots (ie one for each subclass) for a set of experiments
 	'''
 	basedir = "data/eval/random_"+setname
 	graphdir = basedir+"/input"
@@ -271,6 +272,115 @@ def make_boxplots_total(setname, axis="OUTPUT", type="ABSOLUTE"):
 	#data = [data_dict[key] for key in data_dict]
 
 	make_boxplot(data_dict, setname, '', ylabel=axis+" ("+type+")", savedir=outputdir, filename_suffix='total_'+axis+"_"+type)
+	
+def plot_performance_by_algorithm(setname, graph_set_id="ALL", axis="OUTPUT", type="ABSOLUTE", savedir=None, filename_suffix=None):
+	'''
+	Construct a 2D-line-plot of the algorithms performance,
+	where all algorithms are on the x-axis and
+	where each graph is a line
+	(i.e. same data as the boxplots)
+	
+	args:
+		setname : the major graph class
+		graph_set_id : specifies the subclass, or "ALL"
+		axis : defines which axis of the experiment result data should be plotted 
+				("OUTPUT" or "TIME")
+		type : defines whether the absolute values or the relative performance should be used for plotting
+				("ABSOLUTE" or "RP")
+		savedir : specifies a directory where the produced plots are saved.
+	'''
+	basedir = "data/eval/random_"+setname
+	graphdir = basedir+"/input"
+	resultdir = basedir+"/results"
+	if savedir == None:
+		savedir = basedir+"/plots"
+	if not os.path.exists(savedir):
+		os.mkdir(savedir)
+		
+	if filename_suffix == None:
+		filename_suffix = axis+"_"+type
+		
+	all_graph_set_ids = []
+	if graph_set_id == "ALL":
+		graph_set_filename_part = "total"
+		for filename in os.listdir(graphdir):
+			all_graph_set_ids.append(re.split(r'\.',filename)[0])
+	else:
+		graph_set_filename_part = graph_set_id
+		all_graph_set_ids.append(graph_set_id)
+		
+	data = {}
+	for graph_set_id in all_graph_set_ids:
+		if type == "ABSOLUTE":
+			# initialize:
+			all_files_in_dir = os.listdir(resultdir)
+			files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
+			files.sort()
+		
+			# load data:
+			for file in files:
+				filepath = resultdir+"/"+file
+				algo = get_algo_name_from_filename(file)
+				if algo not in data:
+					data[algo] = {}
+				if graph_set_id not in data[algo]:
+					data[algo][graph_set_id] = []
+				data[algo][graph_set_id] += load_axis_data_from_file(filepath, axis, True, True)
+	
+		elif type == "RP":
+			database = compute_relative_performance_distribution(setname, graph_set_id, axis)
+			for algo in database:
+				if algo not in data:
+					data[algo] = {}
+				if graph_set_id not in data[algo]:
+					data[algo][graph_set_id] = []
+				data[algo][graph_set_id] += database[algo]
+			
+	algos = [a for a in data.keys()]
+	algo_ids = {}
+	for i in range(len(algos)):
+		algo_ids[algos[i]] = i
+		
+	algo_numbers = [algo_ids[a] for a in algos]
+			
+	linedata = {}
+	for graph_set_id in all_graph_set_ids:
+		#print (graph_set_id)
+		linedata[graph_set_id] = [[-1 for i in range(100)] for a in algos]
+		#print (linedata[graph_set_id])
+	
+	for algo in algos:
+		for graph_set_id in all_graph_set_ids:
+			if graph_set_id in data[algo]:
+				linedata[graph_set_id][algo_ids[algo]] = data[algo][graph_set_id]
+		
+	# create plot:
+	fig, ax1 = plt.subplots(figsize=(len(data), 6))
+	fig.subplots_adjust(bottom=0.3)
+	
+	ax1.set_xlabel("Algorithm")
+	ax1.set_ylabel(axis+" ("+type+")")
+	
+	for graph_set_id in all_graph_set_ids:
+		for i in range(100):
+			#print (graph_data_id)
+			graph_size = re.split('_', graph_set_id)[1]
+			linecolor = gs.PLT_GRAPHSIZE_COLORS[graph_size]
+			this_linedata = [linedata[graph_set_id][algo_ids[algo]][i] for algo in algos]
+			line = ax1.plot(algo_numbers, this_linedata, label=graph_set_id, linewidth=0.5, color=linecolor)
+	
+	#print (algos)
+	ax1.xaxis.set_ticks(range(len(algos)))
+	ax1.set_xticklabels(algos)
+	for tick in ax1.get_xticklabels():
+		tick.set_rotation(90)
+	if savedir == None:
+		plt.show()
+	elif filename_suffix == None:
+		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_algo_line.png")
+	else:
+		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_"+filename_suffix+"_algo_line.png")
+	plt.close()
 
 def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE", savedir=None):
 	'''
@@ -357,8 +467,8 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE",
 			plt.show()
 		else:
 			filename_suffix += axis+"_"+type
-			filename = savedir+"/plots_by_density_"+setname+"_n"+str(n)+"_"+filename_suffix+".png"
-			print (filename)
+			filename = savedir+"/performance_"+setname+"_n"+str(n)+"_density_"+filename_suffix+".png"
+			#print (filename)
 			plt.savefig(filename, dpi=500, bbox_extra_artists=(legend,), bbox_inches='tight')
 		plt.close()
 		
