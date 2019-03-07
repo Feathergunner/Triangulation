@@ -480,3 +480,77 @@ def make_performance_plots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
 
 	for n in [20, 40, 60, 80, 100]:
 		plot_mean_performance_by_density(setname, n, axis, type, savedir=outputdir)
+
+'''		
+def performance_plot_analyze_reduction(setname, algo, axis="OUTPUT", type="ABSOLUTE"):
+	basedir = "data/eval/random_"+setname
+	graphdir = basedir+"/input"
+	resultdir = basedir+"/results"
+	outputdir = basedir+"/plots"
+	if not os.path.exists(outputdir):
+		os.mkdir(outputdir)
+		
+	filenames_reduced = {}
+	filenames_basic = {}
+	for filename in os.listdir(resultdir):
+		if algo in filename and not "_R" in filename:
+			filenameparts = re.split('_', filename):
+			n = -1
+			p = -1
+			for part in filenameparts:
+				if part[0] == "n":
+					n = int(part[1:])
+				elif part[1] == "p":
+					p = float(part[2:])/10
+			if "_B_" in filename:
+				if n not in filenames_basic:
+					filenames_basic[n] = []
+				filenames_basic[n].append(filename)
+			else:
+				if n not in filenames_reduced:
+					filenames_reduced[n] = []
+				filenames_reduced[n].append(filename)
+	
+	database = {}
+	for n in [20, 40, 60, 80, 100]:
+		if type == "ABSOLUTE":
+			for file in files:
+				algo = get_algo_name_from_filename(file)
+				evaldata = em.load_evaldata_from_json(basedir, file)
+				avg_m = np.mean([data.m for data in evaldata])
+				if axis == "OUTPUT":
+					data = [data.output for data in evaldata if data.output >= 0]
+				elif axis == "TIME":
+					data = [data.running_time for data in evaldata if data.output >= 0]
+				if algo not in database:
+					database[algo] = {}
+				database[algo][avg_m] = np.mean(data)
+		
+		elif type == "RP":
+			for graph_set_id in all_graph_set_ids:
+				mrt = compute_mean_relative_performance(setname, graph_set_id, axis)
+				examplefile = [file for file in os.listdir(resultdir) if ".json" in file and graph_set_id in file][0]
+				evaldata = em.load_evaldata_from_json(basedir, examplefile)
+				avg_m = np.mean([data.m for data in evaldata])
+				for algo in mrt:
+					if algo not in database:
+						database[algo] = {}
+					database[algo][avg_m] = mrt[algo]
+			
+	
+	for n in [20, 40, 60, 80, 100]:
+		all_graph_set_ids_master = {}
+		for filename in os.listdir(graphdir):
+			if "n"+str(n) in filename:
+				graph_set_id = re.split(r'\.',filename)[0]
+				graph_set_id_parts = re.split('_', graph_set_id)
+				if len(graph_set_id_parts) > 3:
+					if graph_set_id_parts[3] not in all_graph_set_ids_master:
+						all_graph_set_ids_master[graph_set_id_parts[3]] = []
+					all_graph_set_ids_master[graph_set_id_parts[3]].append(graph_set_id)
+				else:
+					if '' not in all_graph_set_ids_master:
+						all_graph_set_ids_master[''] = []
+					all_graph_set_ids_master[''].append(graph_set_id)
+	
+'''
