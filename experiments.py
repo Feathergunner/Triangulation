@@ -159,7 +159,7 @@ def run_eval_all(forcenew=False):
 				
 def run_build_all(forcenew=False):
 	for set in gs.GRAPH_CLASSES:
-		gdo.construct_full_set_graphs()
+		gdo.construct_full_set_graphs(set, threaded=False)
 
 if __name__ == "__main__":
 	

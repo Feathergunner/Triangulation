@@ -17,7 +17,7 @@ from Evaluation import GraphConstructionAlgorithms as gca
 
 class ParameterMissingException(Exception):
 	'''
-	Custom error type that gets thrown when the generalized graph set construction method misses input parametersd
+	Custom error type that gets thrown when the generalized graph set construction method misses input parameters
 	'''
 
 class GraphData():
@@ -58,8 +58,8 @@ def check_filepath(filepath):
 		if not os.path.exists(path):
 			os.mkdir(path)
 
-	if len(path_components) > 1:
-		filename = path_components[-1]
+	#if len(path_components) > 1:
+	filename = path_components[-1]
 
 	#if not "."+fileending in filename:
 	#	filename += "."+fileending
@@ -80,7 +80,7 @@ def parse_graph_filename(filename):
 	if parameters["subclass"] == "dense":
 		parameters["p"] = float(parts[2][2:])/10
 	elif parameters["subclass"] == "sparse":
-		parameters["rel_m"] = int(parts[2][1:])
+		parameters["rel_m"] = float(parts[2][4:])/10
 	
 	for i in range(3, len(parts)):
 		if parts[i][0] == "d":
@@ -103,10 +103,10 @@ def check_parameters(parameters):
 	if not "n" in parameters:
 		raise ParameterMissingException("Missing parameters in initialization: n")
 	
-	if not "p" in parameters and not "rel_m" in parametersd:
+	if not "p" in parameters and not "rel_m" in parameters:
 		raise ParameterMissingException("Missing parameters in initialization: p or rel_m")
 		
-	if not "number_of_grahps" in parameters:
+	if not "number_of_graphs" in parameters:
 		raise ParameterMissingException("Missing parameters in initialization: number_of_graphs")
 	
 def write_graphs_to_json(list_of_graphs, filename, parameters={}):
@@ -179,25 +179,27 @@ def construct_set_random_graph(parameters, force_new_data=False):
 		p = parameters["p"]
 	elif "rel_m" in parameters:
 		subclass = "sparse"
-		p = round((2*rel_m*n)/(n*(n-1)),2)
+		p = round((2*parameters["rel_m"]*n)/(n*(n-1)),2)
 	
 	graphdir = "data/eval/random_"+graphclass+"/input/"
+	check_filepath(graphdir)
 	
 	if subclass == "dense":
 		p_as_string = "{0:.2f}".format(p)
 		filename_init = subclass+"_n"+str(n)+"_p"+p_as_string
 	elif subclass == "sparse":
-		filename_init = subclass+"_n"+str(n)+"_relm"+parameters["rel_m"]
+		filename_init = subclass+"_n"+str(n)+"_relm"+str(parameters["rel_m"])
 	if graphclass == "maxdeg":
 		filename_init += "_d"+str(parameters["deg_bound"])
 	if graphclass == "maxclique":
 		filename_init += "_c"+str(parameters["clique_bound"])
 	filename = re.sub('\.','', filename_init)
-		
-	if (not os.path.isfile(filename+".json")) or (force_new_data):
+	filepath = graphdir+filename+".json"
+	
+	if (not os.path.isfile(filepath)) or force_new_data:
 		gg = gca.GraphGenerator()
 		graphs = []
-		for i in range(parametersd["number_of_graphs"]):
+		for i in range(parameters["number_of_graphs"]):
 			if graphclass == "general":
 				graphs.append(gg.construct_connected_er(n, p))
 				
@@ -210,12 +212,27 @@ def construct_set_random_graph(parameters, force_new_data=False):
 			elif graphclass == "maxclique":
 				graphs.append(gg.construct_random_max_clique_size(n, p, parameters["clique_bound"]))
 	
-		write_graphs_to_json(graphs, filename, parameters)
+		write_graphs_to_json(graphs, filepath, parameters)
 	
 
 def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, threaded=True):
 	logging.info("=== construct_full_set_raphs ===")
 	
+	options_for_p = []
+	if graphclass == "general":
+		options_for_p = gs.GRAPH_DENSITIY_P
+	if graphclass == "maxdeg":
+		options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
+		options_for_d = gs.MAXDEGREE_SETTINGS
+	else:
+		options_for_d = [-1]
+
+	if graphclass == "maxclique":
+		options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
+		options_for_c = gs.MAXCLIQUE_SETTINGS
+	else:
+		options_for_c = [-1]	
+			
 	base_params = {
 		"number_of_graphs" : number_of_graphs_per_subclass,
 		"class" : graphclass
@@ -224,40 +241,28 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 	if threaded:
 		threads = []
 		threadset = {}
+	else:
+		total = len(gs.GRAPH_SIZES) * len(options_for_d) * len(options_for_c) * (len(options_for_p) + len(gs.SPARSE_DENSITY_RELM))
+		i = 0
 		
-	for n in gs.GRAPH_SIZES:
-		options_for_p = []
-		if graphclass == "general":
-			options_for_p = gs.GRAPH_DENSITIY_P
-		if graphclass == "maxdeg":
-			options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
-			options_for_d = gs.MAXDEGREE_SETTINGS
-		else:
-			options_for_d = [-1]
-
-		if graphclass == "maxclique":
-			options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
-			options_for_c = gs.MAXCLIQUE_SETTINGS
-		else:
-			options_for_c = [-1]			
-		
+	for n in gs.GRAPH_SIZES:		
 		for d in options_for_d:
 			for c in options_for_c:
+				if graphclass == "maxdeg":
+					base_params["deg_bound"] = d
+				if graphclass == "maxclique":
+					base_params["clique_bound"] = c
 				for p in options_for_p:
 					# construct dense graphs:
 					
-					params = [baseparams[key] for key in baseparams]
+					params = {key : base_params[key] for key in base_params}
 					params["n"] = n
 					params["p"] = p
-					if graphclass == "maxdeg":
-						params["deg_bound"] = d
-					if graphclass == "maxclique":
-						params["clique_bound"] = c
 					
 					logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", d: "+str(d)+", c: "+str(c))
 					
 					if threaded:
-						process = Process(target=construct_set_random_graph, args=(params))
+						process = Process(target=construct_set_random_graph, args=({"params":params}))
 						threads.append(process)
 						process.start()
 						
@@ -273,7 +278,7 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 		
 				for rel_m in gs.SPARSE_DENSITY_RELM:
 					# construct sparse graphs:
-					params = [baseparams[key] for key in baseparams]
+					params = {key : base_params[key] for key in base_params}
 					params["n"] = n
 					params["rel_m"] = rel_m
 					if graphclass == "maxdeg":
@@ -281,7 +286,7 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 					if graphclass == "maxclique":
 						params["clique_bound"] = c
 						
-					logging.debug("Constructing sparse graphs with parameters n: "+str(n)+", rel_m "+str(p)+", d: "+str(d)+", c: "+str(c))
+					logging.debug("Constructing sparse graphs with parameters n: "+str(n)+", rel_m "+str(rel_m)+", d: "+str(d)+", c: "+str(c))
 					
 					if threaded:
 						process = Process(target=construct_set_random_graph, args=(params))
