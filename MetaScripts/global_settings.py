@@ -16,9 +16,10 @@ RANDOMIZED_REPETITIONS = [3, 5, 10]
 # experiment settings:
 TIMELIMIT = 2
 MAX_NUM_THREADS = 10
+BASE_ALGO_CODES = ["EG", "EGPLUS", "SMS", "LexM", "MCSM", "CMT", "MT"]
 
 # plotting settings:
-PLT_ALGO_COLORS = {
+ALGO_COLORS = {
 	"EG" : 'b',
 	"EGPLUS" : 'c',
 	"SMS" : 'g',

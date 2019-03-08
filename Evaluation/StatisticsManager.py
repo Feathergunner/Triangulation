@@ -30,6 +30,7 @@ def load_axis_data_from_file(filename, axis, keep_nulls=False, cutoff_at_timelim
 		filename: the filename
 		axis: "OUTPUT" or "TIME", defines which data to load
 		keep_nulls: if False, null-entries are removed from the data before returning
+		cutoff_at_timelimit : if True, evaldata that terminated with exceeded timelimit is considered as not terminated
 
 	return:
 		a list of numbers
@@ -67,6 +68,296 @@ def get_algo_name_from_filename(filename):
 		algo_name += "_B"
 	return algo_name
 
+def load_evaldata_from_json(basedir, filename):
+	'''
+	Loads the Evaldata from a specific file
+	'''
+	graphdataset = []
+	evaldataset = []
+	filepath = basedir+"/results/"+filename
+	if not "json" in filepath:
+		filepath+=".json"
+	with open(filepath,"r") as jsonfile:
+		dataset = json.load(jsonfile)
+		for data in dataset:
+			graph_id = re.split(r'\.',data["input_id"])[0]
+			if graphdataset == []:
+				graphdatafile = "_".join(re.split(r'_',data["input_id"])[:-1])+".json"
+				graphdataset = gdo.load_graphs_from_json(basedir+"/input/"+graphdatafile)
+			graphdata = None
+			for gd in graphdataset:
+				gd.id = re.split(r'\.', gd.id)[0]
+				if gd.id == graph_id:
+					graphdata = gd
+					break
+			if "reduce_graph" not in data:
+				data["reduce_graph"] = True
+			if "timelimit" not in data:
+				data["timelimit"] = -1
+			if "randomized" not in data:
+				data["randomized"] = False
+			if "repetitions" not in data:
+				data["repetitions"] = 1
+			if "algo" in data:
+				evaldata = em.EvalData(data["algo"], graphdata, data["randomized"], data["repetitions"], data["reduce_graph"], data["timelimit"])
+			else:
+				evaldata = em.EvalData("generic", graphdata)
+			evaldata.set_results(data["output"], data["running_time"])
+			if "output mean" in data:
+				evaldata.out_mean = data["output mean"]
+			if "output variance" in data:
+				evaldata.out_var = data["output variance"]
+			evaldataset.append(evaldata)
+	return evaldataset
+	
+def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m=None, d=None, c=None, algocode=None, randomized=False, rand_reptetions=None, reduced=False, axis="OUTPUT", keep_nulls=False, cutoff_at_timelimit=False):
+	'''
+	loads all data from the evaldata-database that is conform to the specified parameters.
+	
+	args:
+		n, p, rel_m, d, c: restrictions on the subclass of graphs.
+			Only restrictions that are not "None" are considered.
+		axis: "OUTPUT" or "TIME", defines which data to load
+		keep_nulls: if False, null-entries are removed from the data before returning
+		cutoff_at_timelimit : if True, evaldata that terminated with exceeded timelimit is considered as not terminated		
+	'''
+	logging.debug("sm.load_data")
+	
+	if not graphclass in gs.GRAPH_CLASSES:
+		raise gdo.ParameterMissingException("Wrong parameter: graphclass: "+graphclass)
+		
+	if not density_class in ["dense", "sparse"]:
+		raise gdo.ParameterMissingException("Wrong parameter: density_class: "+density_class)
+	
+	if p == None and rel_m == None:
+		raise ParameterMissingException("Missing parameters in initialization: p or rel_m")
+		
+	if graphclass == "planar" and density_class == "dense":
+		raise gdo.ParameterMissingException("Incompatible parameters: graphclass: planar and density_class: dense")
+		
+	if graphclass == "maxdeg" and d == None:
+		raise ParameterMissingException("Missing parameters in initialization: d")
+		
+	if graphclass == "maxclique" and c == None:
+		raise ParameterMissingException("Missing parameters in initialization: c")
+		
+	if algocode not in gs.BASE_ALGO_CODES:
+		raise ParameterMissingException("Wrong parameter: algocode: "+algocode)
+	
+	if randomized and rand_repetions == None:
+		raise ParameterMissingException("Missing parameters in initialization: rand_reptetions")
+		
+	base_dir = "data/eval/results/result_"+graphclass
+		
+	if n == None:
+		options_for_n = gs.GRAPH_SIZES
+	else:
+		options_for_n = [n]
+	
+	if density_class == "dense":
+		if p == None:
+			if graphclass == "general":
+				options_for_p = gs.GRAPH_DENSITIY_P
+			elif graphclass == "maxdeg" or graphclass == "maxclique":
+				options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
+		else:
+			options_for_p = [p]
+	else:
+		options_for_p = [-1]
+		
+	if density_class == "sparse":
+		if rel_m == None:
+			options_for_relm = gs.SPARSE_DENSITY_RELM
+		else:
+			options_for_relm = [rel_m]
+	else:
+		options_for_relm = [-1]
+			
+	if graphclass == "maxdeg":
+		if d == None:
+			options_for_d = gs.MAXDEGREE_SETTINGS
+		else:
+			options_for_d = [d]
+	else:
+		options_for_d = [-1]
+			
+	if graphclass == "maxclique":
+		if c == None:
+			options_for_c = gs.MAXCLIQUE_SETTINGS
+		else:
+			options_for_c = [c]
+	else:
+		options_for_c = [-1]
+			
+	data = {}
+	for n in options_for_n:
+		for p in options_for_p:
+			for rel_m in options_for_relm:
+				for d in options_for_d:
+					for c in options_for_c:
+						if density_class == "dense":
+							p_as_string = p_as_string = "{0:.2f}".format(p)
+							graph_base_filename = "dense_n"+str(n)+"_p"+p_as_string
+						elif density_class == "sparse":
+							graph_base_filename = "sparse_n"+str(n)+"_relm"+str(parameters["rel_m"])
+							if graphclass == "maxdeg":
+								graph_base_filename += "_d"+str(d)
+							if graphclass == "maxclique":
+								graph_base_filename += "_c"+str(c)
+						graph_filename = re.sub('\.','', graph_base_filename)
+						extended_algo_code = algocode
+						if randomized:
+							extended_algo_code += "_R"+str(rand_reptetions)
+						if not reduced:
+							extended_algo_code += "_B"
+							
+						evaldata_filename = "results_"+extended_algo_code
+						filepath = base_dir+"/"+evaldata_filename+".json"
+						data[n][p][rel_m][d][c][density_class] = extended_algo_code(filepath, axis, keep_nulls, cutoff_at_timelimit)
+	return data								
+				
+def compute_statistics(datadir):
+	'''
+	Computes relevant statistic from all EvalData files in a specific directory.
+	Constructs a list of dicts that contains a dictionary for each file in the directory.
+	Each dictionary contains data of the based experiment (graph data, algorithm data)
+	as well as some computed statistics like mean and variance of fill-in size and runtime.
+	Also writes these statistics to a file
+
+	return:
+		columns : contains the keys of the constructed dictionaries
+		stats : contains the data
+	'''
+	logging.debug("Compute statistics for results in "+datadir)
+
+	stats = []
+	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "time limit", "mean time", "var time", "moo", "voo", "mmo", "mvo", "success (\%)"]
+	progress = 0
+	allfiles = [file for file in os.listdir(datadir+"/results") if ".json" in file]
+	for file in allfiles:
+		meta.print_progress(progress, len(allfiles))
+		progress += 1
+
+		filename = re.split(r'\.', file)[0]
+		evaldata = load_evaldata_from_json(datadir, filename)
+		graph_id = "_".join(re.split(r'_',evaldata[0].id)[:-1])
+		avg_n = np.mean([data.n for data in evaldata])# if data.output >= 0])
+		avg_m = np.mean([data.m for data in evaldata])# if data.output >= 0])
+		timelimit = evaldata[0].timelimit
+		mean_time = np.mean([data.running_time for data in evaldata if data.output >= 0])
+		var_time = np.var([data.running_time for data in evaldata if data.output >= 0])
+		mean_output = np.mean([data.output for data in evaldata if data.output >= 0])
+		var_output = np.var([data.output for data in evaldata if data.output >= 0])
+		repeats = evaldata[0].repetitions
+		mmo = np.mean([data.out_mean for data in evaldata if data.out_mean >= 0])
+		mvo = np.mean([data.out_var for data in evaldata if data.out_var >= 0])
+		algo_name = evaldata[0].algo
+		if evaldata[0].is_randomized:
+			algo_name += " (R)"
+
+		if mmo == mean_output:
+			mmo = "N/A"
+			mvo = "N/A"
+
+		success = 100*float(len([data.output for data in evaldata if data.output >= 0]))/float(len([data.output for data in evaldata]))
+
+		newstats = {
+			"algorithm" : algo_name,
+			"reduced" : str(evaldata[0].reduce_graph),
+			"graph id" : graph_id,
+			"avg n" : avg_n,
+			"avg m" : avg_m, 
+			"mean time" : mean_time,
+			"var time" : var_time,
+			"moo" : mean_output,
+			"voo" : var_output,
+			"repeats" : repeats,
+			"mmo" : mmo,
+			"mvo" : mvo,
+			"time limit" : timelimit,
+			"success (\%)": success
+		}
+		for key in newstats:
+			if not isinstance(newstats[key], str) and np.isnan(newstats[key]):
+				newstats[key] = "N/A"
+
+		stats.append(newstats)
+	write_stats_to_file(datadir, stats)
+
+	return (columns, stats)
+			
+def construct_output_table(columns, dataset, outputfilename="out.tex"):
+	'''
+	Constructs a tex-file containing a table that contains the statistics
+	computed by the method "compute_statistics" above
+	'''
+	# sort dataset:
+	sorteddataset = sorted(dataset, key=lambda data: (data["avg n"], data["graph id"], data["algorithm"], data["repeats"], data["reduced"]))
+
+	texoutputstring = ""
+	with open("tex_template.txt", "r") as tex_template:
+		for line in tex_template:
+			texoutputstring += line
+
+	tabulardefline = "\\begin{longtable}{"
+	for c in columns:
+		tabulardefline += "c"
+	tabulardefline += "}"
+	texoutputstring += tabulardefline+"\n"
+
+	tabheadline = columns[0]
+	for i in range(1,len(columns)):
+		tabheadline += " & "+columns[i]
+	tabheadline += " \\\\ \\hline \n"
+	texoutputstring += tabheadline
+	#all_graph_ids = [key for key in dataset if not key == "algo"]
+	data_keys = [key for key in columns] #if not key == "algorithm" and not key == "graph id"]
+
+	non_numeric_data_keys = ["algorithm", "graph id", "reduced"]
+	string_data_keys = ["algorithm", "reduced"]
+	might_be_string_data_keys = ["mean time", "var time", "moo", "voo", "mmo", "mvo"]
+
+	for data in sorteddataset:
+		rowstring = "\\verb+"+data["graph id"]+ "+"
+		#rowstring = "\\verb+"+data["algo"] + "+ & \\verb+" + data["graph_id"] + "+"
+		for data_key in data_keys:
+			#print(data_key +": "+str(data[data_key]))
+			if data_key not in non_numeric_data_keys and not isinstance(data[data_key], str):
+				if data_key ==  "mean time":
+					precision = 4
+					formatstring = "${0:.4f}$"
+				else:
+					precision = 2
+					formatstring = "${0:.2f}$"
+				rowstring += " & "+formatstring.format(round(data[data_key],precision))
+			elif data_key in string_data_keys+might_be_string_data_keys:
+				rowstring += " & \\verb+"+data[data_key]+"+"
+		texoutputstring += rowstring+"\\\\\n"
+	texoutputstring += "\\end{longtable}\n"
+	texoutputstring += "\\end{document}\n"
+
+	with open(outputfilename, "w") as tex_output:
+		tex_output.write(texoutputstring)
+	
+def write_stats_to_file(datadir, stats):
+	with open(datadir+"/stats.json", 'w') as statsfile:
+		json.dump(stats, statsfile, cls=meta.My_JSON_Encoder)
+
+def load_stats_from_file(datadir):
+	[path, filename] = gdo.check_filepath(datadir+"/stats.json")
+
+	if not os.path.isdir(path):
+		## TO DO: raise error
+		return
+
+	if not ".json" in filename:
+		filename += ".json"
+
+	with open(path+filename) as jsonfile:
+		data = json.load(jsonfile)
+
+	return data
+	
 def compute_relative_performance_distribution(setname, graph_set_id, axis="OUTPUT", algo_subset=None):
 	'''
 	for a set of experiments defined by a setname and a graph_set_id,
@@ -140,416 +431,3 @@ def compute_mean_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 	mrp = {algo : np.mean(rp[algo]) for algo in algos}
 
 	return mrp
-
-def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suffix=None):
-	'''
-	create a figure containing the boxplots of a specific dataset.
-	This method assumes that the data contains a list of lists, where each sublist corresponds to an algorithm
-	and contains the evaluation results of said algorithm.
-	All datasets are supposed to belong to a common set of graphs.
-
-	args:
-		data : a dict of lists that contains the data to be plotted. each sublist will induce a single boxplot
-		setname : the major graph class
-		graph_set_id : specifies the subclass
-		ylabel : the label for the y-axis
-		savedir : if specified, the graph gets saved to this directory.
-			if None, the graph gets plotted directly
-		filename_suffix : an optional suffix to the autogenerated filename. gets only used if savedir != None.
-	'''
-
-	# initialize:
-	datadir = "data/eval/random_"+setname+"/results"
-	labels = [key for key in data]
-	# create plot:
-	fig, ax1 = plt.subplots(figsize=(len(data), 6))
-	#fig.canvas.set_window_title('A Boxplot Example')
-	fig.subplots_adjust(bottom=0.3)
-
-	ax1.set_xlabel('Algorithm')
-	ax1.set_ylabel(ylabel)
-	
-	bp = ax1.boxplot([data[key] for key in labels], notch=0, sym='+', vert=1, whis=1.5)
-	plt.setp(bp['boxes'], color='black')
-	ax1.set_xticklabels(labels)
-	for tick in ax1.get_xticklabels():
-		tick.set_rotation(90)
-		
-	if savedir == None:
-		plt.show()
-	elif filename_suffix == None:
-		plt.savefig(savedir+"/performance_"+graph_set_id+"_algo_boxplots.png")
-	else:
-		plt.savefig(savedir+"/performance_"+graph_set_id+"_"+filename_suffix+"_algo_boxplots.png")
-	plt.close()
-
-def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
-	'''
-	Wrapper method for the function above ("make_boxplot"). This method loads data and calls make_boxplots.
-
-	args:
-		setname : the major graph class
-		graph_set_id : specifies the subclass
-		axis : defines which axis of the experiment result data should be plotted 
-				("OUTPUT" or "TIME")
-		type : defines whether the absolute values or the relative performance should be used for plotting
-				("ABSOLUTE" or "RP")
-		savedir : specifies a directory where the produced plots are saved.
-	'''
-	if type == "ABSOLUTE":
-		# initialize:
-		datadir = "data/eval/random_"+setname+"/results"
-		all_files_in_dir = os.listdir(datadir)
-		files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
-		data = {}
-		files.sort()
-	
-		# load data:
-		for file in files:
-			filepath = datadir+"/"+file
-			algo = get_algo_name_from_filename(file)
-			data[algo] = load_axis_data_from_file(filepath, axis, True, True)
-
-	elif type == "RP":
-		data = compute_relative_performance_distribution(setname, graph_set_id, axis)
-		
-	filename_suffix = axis+"_"+type
-			
-	make_boxplot(data, setname, graph_set_id, axis+" ("+type+")", savedir, filename_suffix)
-
-def make_boxplots_allsets(setname, axis="OUTPUT", type="ABSOLUTE"):
-	'''
-	Uses the method "make_boxplot_set" to construct all boxplots (ie one for each subclass) for a set of experiments
-	'''
-	basedir = "data/eval/random_"+setname
-	graphdir = basedir+"/input"
-	resultdir = basedir+"/results"
-	outputdir = basedir+"/plots"
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
-
-	all_graph_set_ids = []
-	for filename in os.listdir(graphdir):
-		all_graph_set_ids.append(re.split(r'\.',filename)[0])
-
-	for graph_set_id in all_graph_set_ids:
-		make_boxplot_set(setname, graph_set_id, axis, type, outputdir)
-
-def make_boxplots_total(setname, axis="OUTPUT", type="ABSOLUTE"):
-	'''
-	Constructs a boxplot-plot of algorithms
-	where each boxplot contains all experiment results of the whole major class of graphs
-	'''
-	basedir = "data/eval/random_"+setname
-	graphdir = basedir+"/input"
-	resultdir = basedir+"/results"
-	outputdir = basedir+"/plots"
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
-
-	data_dict = {}
-	
-	if type == "ABSOLUTE":
-		# initialize:
-		all_files_in_dir = os.listdir(resultdir)
-		files = [file for file in all_files_in_dir if ".json" in file]
-		files.sort()
-		
-		# load data:
-		for file in files:
-			filepath = resultdir+"/"+file
-			algo = get_algo_name_from_filename(file)
-			if algo not in data_dict:
-				data_dict[algo] = []
-			data_dict[algo] += load_axis_data_from_file(filepath, axis, True, True)
-
-	elif type == "RP":
-		for filename in os.listdir(graphdir):
-			graph_set_id = re.split(r'\.',filename)[0]
-			database = compute_relative_performance_distribution(setname, graph_set_id, axis)
-			for algo_key in database:
-				if algo_key not in data_dict:
-					data_dict[algo_key] = []
-				data_dict[algo_key] += database[algo_key]
-	#data = [data_dict[key] for key in data_dict]
-
-	make_boxplot(data_dict, setname, '', ylabel=axis+" ("+type+")", savedir=outputdir, filename_suffix='total_'+axis+"_"+type)
-	
-def plot_performance_by_algorithm(setname, graph_set_id="ALL", axis="OUTPUT", type="ABSOLUTE", savedir=None, filename_suffix=None):
-	'''
-	Construct a 2D-line-plot of the algorithms performance,
-	where all algorithms are on the x-axis and
-	where each graph is a line
-	(i.e. same data as the boxplots)
-	
-	args:
-		setname : the major graph class
-		graph_set_id : specifies the subclass, or "ALL"
-		axis : defines which axis of the experiment result data should be plotted 
-				("OUTPUT" or "TIME")
-		type : defines whether the absolute values or the relative performance should be used for plotting
-				("ABSOLUTE" or "RP")
-		savedir : specifies a directory where the produced plots are saved.
-	'''
-	basedir = "data/eval/random_"+setname
-	graphdir = basedir+"/input"
-	resultdir = basedir+"/results"
-	if savedir == None:
-		savedir = basedir+"/plots"
-	if not os.path.exists(savedir):
-		os.mkdir(savedir)
-		
-	if filename_suffix == None:
-		filename_suffix = axis+"_"+type
-		
-	all_graph_set_ids = []
-	if graph_set_id == "ALL":
-		graph_set_filename_part = "total"
-		for filename in os.listdir(graphdir):
-			all_graph_set_ids.append(re.split(r'\.',filename)[0])
-	else:
-		graph_set_filename_part = graph_set_id
-		all_graph_set_ids.append(graph_set_id)
-		
-	data = {}
-	for graph_set_id in all_graph_set_ids:
-		if type == "ABSOLUTE":
-			# initialize:
-			all_files_in_dir = os.listdir(resultdir)
-			files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
-			files.sort()
-		
-			# load data:
-			for file in files:
-				filepath = resultdir+"/"+file
-				algo = get_algo_name_from_filename(file)
-				if algo not in data:
-					data[algo] = {}
-				if graph_set_id not in data[algo]:
-					data[algo][graph_set_id] = []
-				data[algo][graph_set_id] += load_axis_data_from_file(filepath, axis, True, True)
-	
-		elif type == "RP":
-			database = compute_relative_performance_distribution(setname, graph_set_id, axis)
-			for algo in database:
-				if algo not in data:
-					data[algo] = {}
-				if graph_set_id not in data[algo]:
-					data[algo][graph_set_id] = []
-				data[algo][graph_set_id] += database[algo]
-			
-	algos = [a for a in data.keys()]
-	algo_ids = {}
-	for i in range(len(algos)):
-		algo_ids[algos[i]] = i
-		
-	algo_numbers = [algo_ids[a] for a in algos]
-			
-	linedata = {}
-	for graph_set_id in all_graph_set_ids:
-		#print (graph_set_id)
-		linedata[graph_set_id] = [[-1 for i in range(100)] for a in algos]
-		#print (linedata[graph_set_id])
-	
-	for algo in algos:
-		for graph_set_id in all_graph_set_ids:
-			if graph_set_id in data[algo]:
-				linedata[graph_set_id][algo_ids[algo]] = data[algo][graph_set_id]
-		
-	# create plot:
-	fig, ax1 = plt.subplots(figsize=(len(data), 6))
-	fig.subplots_adjust(bottom=0.3)
-	
-	ax1.set_xlabel("Algorithm")
-	ax1.set_ylabel(axis+" ("+type+")")
-	
-	for graph_set_id in all_graph_set_ids:
-		for i in range(100):
-			#print (graph_data_id)
-			graph_size = re.split('_', graph_set_id)[1]
-			linecolor = gs.PLT_GRAPHSIZE_COLORS[graph_size]
-			this_linedata = [linedata[graph_set_id][algo_ids[algo]][i] for algo in algos]
-			line = ax1.plot(algo_numbers, this_linedata, label=graph_set_id, linewidth=0.5, color=linecolor)
-	
-	#print (algos)
-	ax1.xaxis.set_ticks(range(len(algos)))
-	ax1.set_xticklabels(algos)
-	for tick in ax1.get_xticklabels():
-		tick.set_rotation(90)
-	if savedir == None:
-		plt.show()
-	elif filename_suffix == None:
-		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_algo_line.png")
-	else:
-		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_"+filename_suffix+"_algo_line.png")
-	plt.close()
-
-def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE", savedir=None):
-	'''
-	Constructs a 2D-line-plot of the mean performance of algorithms based on the density of graphs.
-	'''
-	basedir = "data/eval/random_"+setname
-	graphdir = basedir+"/input"
-	resultdir = basedir+"/results"
-	
-	all_graph_set_ids_master = {}
-	for filename in os.listdir(graphdir):
-		if "n"+str(n) in filename:
-			graph_set_id = re.split(r'\.',filename)[0]
-			graph_set_id_parts = re.split('_', graph_set_id)
-			if len(graph_set_id_parts) > 3:
-				if graph_set_id_parts[3] not in all_graph_set_ids_master:
-					all_graph_set_ids_master[graph_set_id_parts[3]] = []
-				all_graph_set_ids_master[graph_set_id_parts[3]].append(graph_set_id)
-			else:
-				if '' not in all_graph_set_ids_master:
-					all_graph_set_ids_master[''] = []
-				all_graph_set_ids_master[''].append(graph_set_id)
-	
-	for graph_set_key in all_graph_set_ids_master:
-		files = []
-		
-		all_graph_set_ids = all_graph_set_ids_master[graph_set_key]
-		filename_suffix = ''
-		if not graph_set_key == '':
-			filename_suffix += graph_set_key+"_"
-			
-		for graph_set_id in all_graph_set_ids:
-			files += [file for file in os.listdir(resultdir) if ".json" in file and graph_set_id in file]
-	
-		database = {}
-		if type == "ABSOLUTE":
-			for file in files:
-				algo = get_algo_name_from_filename(file)
-				evaldata = em.load_evaldata_from_json(basedir, file)
-				avg_m = np.mean([data.m for data in evaldata])
-				if axis == "OUTPUT":
-					data = [data.output for data in evaldata if data.output >= 0]
-				elif axis == "TIME":
-					data = [data.running_time for data in evaldata if data.output >= 0]
-				if algo not in database:
-					database[algo] = {}
-				database[algo][avg_m] = np.mean(data)
-		
-		elif type == "RP":
-			for graph_set_id in all_graph_set_ids:
-				mrt = compute_mean_relative_performance(setname, graph_set_id, axis)
-				examplefile = [file for file in os.listdir(resultdir) if ".json" in file and graph_set_id in file][0]
-				evaldata = em.load_evaldata_from_json(basedir, examplefile)
-				avg_m = np.mean([data.m for data in evaldata])
-				for algo in mrt:
-					if algo not in database:
-						database[algo] = {}
-					database[algo][avg_m] = mrt[algo]
-		
-		fig, ax = plt.subplots()
-		legenditems = {}
-		for algo in database:
-			basealgo = re.split('_', algo)[0]
-			linestyle = '-'
-			if "_B" in algo:
-				if "_R" in algo:
-					linestyle = '-.'
-				else:
-					linestyle = ':'
-			elif "_R" in algo:
-				linestyle = '--'
-			
-			m = sorted([avg_m for avg_m in database[algo]])
-			data = [database[algo][avg_m] for avg_m in m]
-			line = ax.plot(m, data, label=algo, linewidth=0.5, linestyle=linestyle, color=gs.PLT_ALGO_COLORS[basealgo])
-			if basealgo not in legenditems:
-				legenditems[basealgo] = mlines.Line2D([],[], color=gs.PLT_ALGO_COLORS[basealgo], label=basealgo) 
-		
-		ax.set_xlabel('number of edges (i.e. density)')
-		ax.set_ylabel(axis+" ("+type+")")
-		legend = ax.legend(handles=[legenditems[a] for a in legenditems], bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-		
-		if savedir == None:
-			plt.show()
-		else:
-			filename_suffix += axis+"_"+type
-			filename = savedir+"/performance_"+setname+"_n"+str(n)+"_density_"+filename_suffix+".png"
-			#print (filename)
-			plt.savefig(filename, dpi=500, bbox_extra_artists=(legend,), bbox_inches='tight')
-		plt.close()
-		
-def make_performance_plots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
-	basedir = "data/eval/random_"+setname
-	outputdir = basedir+"/plots"
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
-
-	for n in [20, 40, 60, 80, 100]:
-		plot_mean_performance_by_density(setname, n, axis, type, savedir=outputdir)
-
-def performance_plot_analyze_reduction(setname, algo, axis="OUTPUT"):
-	basedir = "data/eval/random_"+setname
-	graphdir = basedir+"/input"
-	resultdir = basedir+"/results"
-	outputdir = basedir+"/plots"
-	if not os.path.exists(outputdir):
-		os.mkdir(outputdir)
-		
-	filenames_reduced = {}
-	filenames_basic = {}
-	for filename in os.listdir(resultdir):
-		if "_"+algo+"_" in filename and not "_R" in filename and ".json" in filename:
-			filenameparts = re.split('_', filename)
-			n = -1
-			p = -1
-			for part in filenameparts:
-				if part[0] == "n":
-					n = int(part[1:])
-				elif part[0] == "p":
-					p = float(re.split('\.',part)[0][2:])/10
-			if "_B_" in filename:
-				if n not in filenames_basic:
-					filenames_basic[n] = {}
-				if p not in filenames_basic[n]:
-					filenames_basic[n][p] = []
-				filenames_basic[n][p].append(filename)
-			else:
-				if n not in filenames_reduced:
-					filenames_reduced[n] = {}
-				if p not in filenames_reduced[n]:
-					filenames_reduced[n][p] = []
-				filenames_reduced[n][p].append(filename)
-	
-	database_basic = {}
-	database_reduced = {}
-	for n in [20, 40, 60, 80, 100]:
-		
-		database_basic[n] = {}
-		database_reduced[n] = {}
-		
-		for p in filenames_basic[n]:
-			database_basic[n][p] = []
-			for file in filenames_basic[n][p]:
-				evaldata = em.load_evaldata_from_json(basedir, file)
-				if axis == "OUTPUT":
-					database_basic[n][p].append([data.output for data in evaldata if data.output >= 0])
-				elif axis == "TIME":
-					database_basic[n][p].append([data.running_time for data in evaldata if data.output >= 0])
-					
-		for p in filenames_reduced[n]:
-			database_reduced[n][p] = []
-			for file in filenames_reduced[n][p]:
-				evaldata = em.load_evaldata_from_json(basedir, file)
-				if axis == "OUTPUT":
-					database_reduced[n][p].append([data.output for data in evaldata if data.output >= 0])
-				elif axis == "TIME":
-					database_reduced[n][p].append([data.running_time for data in evaldata if data.output >= 0])
-	
-	#print (database_reduced)
-	fig, ax = plt.subplots()
-	for n in [20, 40, 60, 80, 100]:
-		linedata_r = [np.mean(database_reduced[n][p][0]) for p in database_reduced[n]]
-		linedata_b = [np.mean(database_basic[n][p][0]) for p in database_basic[n]]
-		xvalues = [p for p in database_reduced[n]]
-		linecolor = gs.PLT_GRAPHSIZE_COLORS["n"+str(n)]
-		line = ax.plot(xvalues, linedata_r, label=str(n), linewidth=0.5, linestyle='-', color=linecolor)
-		line = ax.plot(xvalues, linedata_b, label=str(n), linewidth=0.5, linestyle='--', color=linecolor)
-	
-	plt.show()
-	plt.close()
