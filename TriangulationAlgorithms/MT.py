@@ -61,7 +61,13 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 
 			logging.debug("Current iteration: consider edgesets of size "+str(k))
 			edgesets_size_k = itertools.combinations(self.chordedge_candidates, k)
+			k_edgeset = 0
 			for edgeset in edgesets_size_k:
+				k_edgeset += 1
+				if k_edgeset%10000 == 0:
+					# check timeout every 10k sets:
+					if self.timeout > 0 and time.time() > self.timeout:
+						raise ta.TimeLimitExceededException("Time Limit Exceeded!")
 				H = C.copy()
 				H.add_edges_from(edgeset)
 				if nx.is_chordal(H):
