@@ -59,7 +59,6 @@ logging.basicConfig(
 )
 
 VALID_MODES = ["build", "eval", "output", "test", "evalall", "buildall"]
-VALID_SETS = ["general", "planar", "maxdeg", "maxclique"]
 
 def fix_filenames(datadir):
 	import os
@@ -74,9 +73,7 @@ def fix_filenames(datadir):
 
 def run_eval_all(forcenew=False):
 	algo_codes = ["EG", "EG_R", "LEXM", "MCSM", "SMS", "SMS_R", "CMT", "CMT_R", "EGP", "EGP_R", "MT"]
-	timelimit = 5
 
-	max_num_threads = 10
 	threads = []
 
 	for algo_code in algo_codes:
@@ -85,7 +82,7 @@ def run_eval_all(forcenew=False):
 			randomized = True
 		else:
 			randomized = False
-		for dataset in VALID_SETS:
+		for dataset in gs.GRAPH_CLASSES:
 			data_dir = "data/eval/random_"+dataset
 			if randomized:
 				for rep in gs.RANDOMIZED_REPETITIONS:
@@ -155,21 +152,14 @@ def run_eval_all(forcenew=False):
 
 
 			threads = [p for p in threads if p.is_alive()]
-			while len(threads) >= max_num_threads:
+			while len(threads) >= gs.MAX_NUM_THREADS:
 				#print ("thread limit reached... wait")
 				time.sleep(1.0)
 				threads = [p for p in threads if p.is_alive()]
 				
 def run_build_all(forcenew=False):
-	for set in VALID_SETS:
-		if set == "general":
-			gdo.construct_full_set_random_graphs()
-		elif set == "planar":
-			gdo.construct_full_set_random_planar_graphs()
-		elif set == "maxdeg":
-			gdo.construct_full_set_random_maxdegree_graphs()
-		elif set == "maxclique":
-			gdo.construct_full_set_random_maxclique_graphs()
+	for set in gs.GRAPH_CLASSES:
+		gdo.construct_full_set_graphs()
 
 if __name__ == "__main__":
 	
@@ -192,7 +182,7 @@ if __name__ == "__main__":
 			else:
 				print("Error! Incorrect mode: "+arg_data[1])
 		elif arg_data[0] == "set":
-			if arg_data[1] in VALID_SETS:
+			if arg_data[1] in gs.GRAPH_CLASSES:
 				dataset = arg_data[1]
 				data_dir += "random_"+dataset
 			else:
