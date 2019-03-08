@@ -1,26 +1,31 @@
 #!usr/bin/python
 # -*- coding: utf-8 -*-
 
-from Evaluation import StatisticsManager as sm
+from Evaluation import PlotConstructor as pc
 
 def make_plots():
+	#plot_performance_by_algo_boxplots()
+	#plot_performance_by_algo_lineplots()
+	plot_performance_by_density()
+
+def plot_performance_by_algo_boxplots():
 	for setname in ["general", "planar", "maxdeg", "maxclique"]:
-		sm.make_boxplots_all(setname, axis="TIME", type="ABSOLUTE")
-		sm.make_boxplots_all(setname, axis="OUTPUT", type="RP")
-		sm.make_performance_plots_all(setname, axis="TIME", type="ABSOLUTE")
-		sm.make_performance_plots_all(setname, axis="OUTPUT", type="RP")
+		pc.make_boxplots_total(setname, axis="TIME", type="ABSOLUTE")
+		pc.make_boxplots_total(setname, axis="OUTPUT", type="RP")
+		pc.make_boxplots_allsets(setname, axis="TIME", type="ABSOLUTE")
+		pc.make_boxplots_allsets(setname, axis="OUTPUT", type="RP")
+
+def plot_performance_by_algo_lineplots():
+	for setname in ["general", "planar", "maxdeg", "maxclique"]:
+		pc.plot_performance_by_algorithm(setname, axis="TIME", type="ABSOLUTE")
+		pc.plot_performance_by_algorithm(setname, axis="OUTPUT", type="RP")
+
+def plot_performance_by_density():
+	for setname in ["general", "planar", "maxdeg", "maxclique"]:
+		pc.make_performance_plots_all(setname, axis="TIME", type="ABSOLUTE")
+		pc.make_performance_plots_all(setname, axis="OUTPUT", type="RP")
+	
 
 if __name__ == "__main__":
-	make_plots()
-	
-	#sm.make_stat_boxplot("general", "ER_n20_p01")
-	#mrp = sm.compute_mean_relative_performance("general", "ER_n20_p01")
-	#for algo in mrp:
-	#	print (algo + ": " + str(round(mrp[algo],2)))
-
-	#rp = sm.compute_relative_performance("general", "ER_n20_p01")
-	#print ([algo + ": "+str(rp[algo][:10]) for algo in rp])
-	
-	#sm.make_boxplots_all("maxclique", axis="TIME", type="ABSOLUTE")
-
-	#sm.make_performance_plots_all("general", axis="OUTPUT", type="RP")
+	#make_plots()
+	pc.performance_plot_analyze_reduction("general", "CMT")
