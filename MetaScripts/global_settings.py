@@ -19,7 +19,7 @@ MAX_NUM_THREADS = 10
 BASE_ALGO_CODES = ["EG", "EGPLUS", "SMS", "LexM", "MCSM", "CMT", "MT"]
 
 # plotting settings:
-ALGO_COLORS = {
+PLT_ALGO_COLORS = {
 	"EG" : 'b',
 	"EGPLUS" : 'c',
 	"SMS" : 'g',
