@@ -184,8 +184,12 @@ def run_set_of_experiments(algo, datadir, randomized, repetitions, threaded=Fals
 		result_filename = "results_"+algo.__name__
 		if randomized:
 			result_filename += "_R"+str(repetitions)
+		else: 
+			result_filename += "_X"
 		if not reduce_graph:
 			result_filename += "_B"
+		else: 
+			result_filename += "_X"
 		result_filename += "_"+filename
 		
 		if (not os.path.isfile(datadir+"/results/"+result_filename+".json")) or force_new_data:
