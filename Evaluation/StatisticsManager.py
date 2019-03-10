@@ -212,7 +212,7 @@ def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m
 							p_as_string = p_as_string = "{0:.2f}".format(p)
 							graph_base_filename = "dense_n"+str(n)+"_p"+p_as_string
 						elif density_class == "sparse":
-							graph_base_filename = "sparse_n"+str(n)+"_relm"+str(parameters["rel_m"])
+							graph_base_filename = "sparse_n"+str(n)+"_relm"+str(rel_m)
 							if graphclass == "maxdeg":
 								graph_base_filename += "_d"+str(d)
 							if graphclass == "maxclique":
