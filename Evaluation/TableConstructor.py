@@ -30,7 +30,7 @@ def init_texoutputstring():
 			texoutputstring += line
 	return texoutputstring
 
-def construct_output_table_alldata(columns, dataset, outputfilenamesuffix=""):
+def construct_output_table_alldata(graphclass, columns, dataset, outputfilenamesuffix=""):
 	'''
 	Constructs a tex-file containing a table that contains the statistics
 	computed by the method "compute_statistics" from StatisticsManager
@@ -75,10 +75,17 @@ def construct_output_table_alldata(columns, dataset, outputfilenamesuffix=""):
 		texoutputstring += rowstring+"\\\\\n"
 	texoutputstring += "\\end{longtable}\n"
 	texoutputstring += "\\end{document}\n"
-
-	outputfilename = "table_total_"+outputfilenamesuffix+".tex"
 	
-	with open(outputfilename, "w") as tex_output:
+	if not outputfilenamesuffix == "":
+		outputfilename = "table_total_"+outputfilenamesuffix+".tex"
+	else:
+		outputfilename = "table_stats"+".tex"
+		
+	tablesdir = "data/eval/random_"+graphclass+"/tables"
+	if not os.path.exists(tablesdir):
+		os.mkdir(tablesdir)
+		
+	with open(tablesdir+"/"+outputfilename, "w") as tex_output:
 		tex_output.write(texoutputstring)
 		
 def construct_table_compare_randomized(graphclass, density_class, outputfilenamesuffix=""):
@@ -89,12 +96,12 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 	data = {}
 	for algo in ["EG", "SMS", "CMT", "EGPLUS"]:
 		data[algo] = {}
-		data[algo]["D"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, keep_nulls=True, cutoff_at_timelimit=True)
-		data[algo]["R3"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, randomized=True, rand_repetitions=3, keep_nulls=False, cutoff_at_timelimit=True)
-		data[algo]["R5"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, randomized=True, rand_repetitions=5, keep_nulls=False, cutoff_at_timelimit=True)
-		data[algo]["R10"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, randomized=True, rand_repetitions=10, keep_nulls=False, cutoff_at_timelimit=True)
+		data[algo]["D"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, keep_nulls=True, cutoff_at_timelimit=True)
+		data[algo]["R3"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, randomized=True, rand_repetitions=3, keep_nulls=False, cutoff_at_timelimit=True)
+		data[algo]["R5"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, randomized=True, rand_repetitions=5, keep_nulls=False, cutoff_at_timelimit=True)
+		data[algo]["R10"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, randomized=True, rand_repetitions=10, keep_nulls=False, cutoff_at_timelimit=True)
 		
-	data["MCSM"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode="MCSM", keep_nulls=True, cutoff_at_timelimit=True)
+	data["MCSM"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode="MCSM", reduced=True, keep_nulls=True, cutoff_at_timelimit=True)
 		
 	texoutputstring = init_texoutputstring()
 	tabulardefline = ""
@@ -120,7 +127,7 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 	else:
 		options_for_p = [-1]
 		options_for_relm = [1.5, 2.0, 2.5]
-		tabulartitleline_2 = "p & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 \\\\ \\hline \\hline \n"
+		tabulartitleline_2 = "$\\frac{m}{n}$ & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 \\\\ \\hline \\hline \n"
 	texoutputstring += tabulartitleline_2
 	
 	options_for_n = [20, 60, 100]
@@ -146,14 +153,30 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 						for d in options_for_d:
 							for c in options_for_c:
 								thisdata = data[algo][set][n][p][rel_m][d][c][density_class]
+								comparedata = data["MCSM"][n][p][rel_m][d][c][density_class]
+								if len(comparedata) > 0:
+									cmpmean = np.mean(comparedata)
+								else:
+									cmpmean = -1
 								if len(thisdata) > 0:
 									mean = np.mean(thisdata)
 									if mean > 0:
-										rowdata.append(formatstring.format(round(mean,2)))
+										datatext = formatstring.format(round(mean,2))
 									else:
-										rowdata.append("N/A")
+										datatext = "N/A"
 								else:
-									rowdata.append("N/A")
+									datatext = "N/A"
+									
+								if datatext == "N/A":
+									if cmpmean > 0:
+										rowdata.append("\\cellcolor{red!30}"+datatext)
+									else:
+										rowdata.append("\\cellcolor{blue!30}"+datatext)
+								else:
+									if cmpmean < 0 or mean < cmpmean:
+										rowdata.append("\\cellcolor{green!30}"+datatext)
+									else:
+										rowdata.append("\\cellcolor{red!30}"+datatext)
 								
 			algosetsting += label+" &"+" & ".join(rowdata)+" \\\\"
 			if not set == "R10":
@@ -183,5 +206,9 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 		outputfilename += "_"+outputfilenamesuffix
 	#print (texoutputstring)
 	
-	with open(outputfilename+".tex", "w") as tex_output:
+	tablesdir = "data/eval/random_"+graphclass+"/tables"
+	if not os.path.exists(tablesdir):
+		os.mkdir(tablesdir)
+		
+	with open(tablesdir+"/"+outputfilename+".tex", "w") as tex_output:
 		tex_output.write(texoutputstring)
