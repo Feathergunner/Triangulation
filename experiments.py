@@ -253,7 +253,8 @@ if __name__ == "__main__":
 
 	elif mode == "output":
 		(columns, stats) = sm.compute_statistics(dataset)
-		tc.construct_output_table_alldata(columns, stats, data_dir+"/out.tex")
+		tc.construct_output_table_alldata(dataset, columns, stats, "total")
 		
-		os.chdir(data_dir)
-		call(["pdflatex","out.tex"])
+		os.chdir("data/eval/random_"+setname+"/tables")
+		call(["pdflatex","table_stats_total.tex"])
+		os.chdir("../../../..")
