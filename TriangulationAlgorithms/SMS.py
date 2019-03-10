@@ -60,6 +60,12 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		
 		F = []
 		G_prime = C.copy()
+		
+		self.node_processing_order = [i for i in range(len(C.nodes()))]#[n for n in G.nodes()]
+		if randomized:
+			random.shuffle(self.node_processing_order)
+		logging.debug("Node processing order: "+str(self.node_processing_order))
+		
 		finished = False
 		while not finished:
 			# check timeout:
@@ -68,7 +74,7 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 
 			logging.debug("Next iteration")
 			logging.debug("edges of G_prime: "+str(G_prime.edges()))
-			separator = self.get_minimal_separator(G_prime, randomized=randomized)
+			separator = self.get_minimal_separator(G_prime)
 			if separator == None:
 				finished = True
 			else:
@@ -83,7 +89,7 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 				G_prime.add_edges_from(edges_to_add)
 		return F
 			
-	def get_minimal_separator(self, G, randomized=False):
+	def get_minimal_separator(self, G):
 		'''
 		Searches for a minimal separator in G that is not a clique
 			
@@ -91,20 +97,19 @@ class Algorithm_SMS(ta.TriangulationAlgorithm):
 		
 		Args:
 			G : a graph in networkx format.
-			randomized : if true, the order in which the nodes are processed gets shuffled
+			## randomized : if true, the order in which the nodes are processed gets shuffled
 		
 		Return:
 			S : a set of nodes that form a minimal separator of G, if such a set exists that is not a clique. If every minimal separator of G is a clique, returns None
 		'''
 		logging.info("=== get_minimal_separator ===")
 		
-		node_processing_order = [n for n in G.nodes()]
-		if randomized:
-			random.shuffle(node_processing_order)
-		for i in range(len(node_processing_order)):
+		for k in range(len(self.node_processing_order)):
+			i = self.node_processing_order[k]
 			u = list(G.nodes())[i]
-			neighbors_of_u = list(G.neighbors(u))#[n for n in ]
-			for v in node_processing_order[i+1:]:
+			neighbors_of_u = list(G.neighbors(u))
+			for j in self.node_processing_order[k+1:]:
+				v = list(G.nodes())[j]
 				logging.debug("Consider pair: "+str(u)+", "+str(v))
 				# construct S as set of all nodes that are neighbors of u and reachable from v:
 				S = []
