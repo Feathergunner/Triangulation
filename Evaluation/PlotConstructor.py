@@ -78,6 +78,8 @@ def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", save
 				("ABSOLUTE" or "RP")
 		savedir : specifies a directory where the produced plots are saved.
 	'''
+	#data = sm.load_data(graphclass=graphclass, density_class=density_class, n=n, p=p, rel_m=rel_m, d=d, c=c, algocode=algocode, randomized=randomized, rand_reptetions=rand_reptetions, reduced=reduced, axis="OUTPUT", keep_nulls=True, cutoff_at_timelimit=True)
+	
 	if type == "ABSOLUTE":
 		# initialize:
 		datadir = "data/eval/random_"+setname+"/results"
@@ -89,11 +91,11 @@ def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", save
 		# load data:
 		for file in files:
 			filepath = datadir+"/"+file
-			algo = get_algo_name_from_filename(file)
-			data[algo] = load_axis_data_from_file(filepath, axis, True, True)
+			algo = sm.get_algo_name_from_filename(file)
+			data[algo] = sm.load_axis_data_from_file(filepath, axis, True, True)
 
 	elif type == "RP":
-		data = compute_relative_performance_distribution(setname, graph_set_id, axis)
+		data = sm.compute_relative_performance_distribution(setname, graph_set_id, axis)
 		
 	filename_suffix = axis+"_"+type
 			
@@ -140,15 +142,15 @@ def make_boxplots_total(setname, axis="OUTPUT", type="ABSOLUTE"):
 		# load data:
 		for file in files:
 			filepath = resultdir+"/"+file
-			algo = get_algo_name_from_filename(file)
+			algo = sm.get_algo_name_from_filename(file)
 			if algo not in data_dict:
 				data_dict[algo] = []
-			data_dict[algo] += load_axis_data_from_file(filepath, axis, True, True)
+			data_dict[algo] += sm.load_axis_data_from_file(filepath, axis, True, True)
 
 	elif type == "RP":
 		for filename in os.listdir(graphdir):
 			graph_set_id = re.split(r'\.',filename)[0]
-			database = compute_relative_performance_distribution(setname, graph_set_id, axis)
+			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis)
 			for algo_key in database:
 				if algo_key not in data_dict:
 					data_dict[algo_key] = []
@@ -204,15 +206,15 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", axis="OUTPUT", ty
 			# load data:
 			for file in files:
 				filepath = resultdir+"/"+file
-				algo = get_algo_name_from_filename(file)
+				algo = sm.get_algo_name_from_filename(file)
 				if algo not in data:
 					data[algo] = {}
 				if graph_set_id not in data[algo]:
 					data[algo][graph_set_id] = []
-				data[algo][graph_set_id] += load_axis_data_from_file(filepath, axis, True, True)
+				data[algo][graph_set_id] += sm.load_axis_data_from_file(filepath, axis, True, True)
 	
 		elif type == "RP":
-			database = compute_relative_performance_distribution(setname, graph_set_id, axis)
+			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis)
 			for algo in database:
 				if algo not in data:
 					data[algo] = {}
@@ -302,8 +304,8 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE",
 		database = {}
 		if type == "ABSOLUTE":
 			for file in files:
-				algo = get_algo_name_from_filename(file)
-				evaldata = em.load_evaldata_from_json(basedir, file)
+				algo = sm.get_algo_name_from_filename(file)
+				evaldata = sm.load_evaldata_from_json(basedir, file)
 				avg_m = np.mean([data.m for data in evaldata])
 				if axis == "OUTPUT":
 					data = [data.output for data in evaldata if data.output >= 0]
@@ -315,9 +317,9 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE",
 		
 		elif type == "RP":
 			for graph_set_id in all_graph_set_ids:
-				mrt = compute_mean_relative_performance(setname, graph_set_id, axis)
+				mrt = sm.compute_mean_relative_performance(setname, graph_set_id, axis)
 				examplefile = [file for file in os.listdir(resultdir) if ".json" in file and graph_set_id in file][0]
-				evaldata = em.load_evaldata_from_json(basedir, examplefile)
+				evaldata = sm.load_evaldata_from_json(basedir, examplefile)
 				avg_m = np.mean([data.m for data in evaldata])
 				for algo in mrt:
 					if algo not in database:
@@ -408,7 +410,7 @@ def performance_plot_analyze_reduction(setname, algo, axis="OUTPUT"):
 		for p in filenames_basic[n]:
 			database_basic[n][p] = []
 			for file in filenames_basic[n][p]:
-				evaldata = em.load_evaldata_from_json(basedir, file)
+				evaldata = sm.load_evaldata_from_json(basedir, file)
 				if axis == "OUTPUT":
 					database_basic[n][p].append([data.output for data in evaldata if data.output >= 0])
 				elif axis == "TIME":
@@ -417,7 +419,7 @@ def performance_plot_analyze_reduction(setname, algo, axis="OUTPUT"):
 		for p in filenames_reduced[n]:
 			database_reduced[n][p] = []
 			for file in filenames_reduced[n][p]:
-				evaldata = em.load_evaldata_from_json(basedir, file)
+				evaldata = sm.load_evaldata_from_json(basedir, file)
 				if axis == "OUTPUT":
 					database_reduced[n][p].append([data.output for data in evaldata if data.output >= 0])
 				elif axis == "TIME":

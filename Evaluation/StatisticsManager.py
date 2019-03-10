@@ -1,6 +1,7 @@
 #!usr/bin/python
 # -*- coding: utf-8 -*-
 
+import logging
 import numpy as np
 import json
 import csv
@@ -35,6 +36,8 @@ def load_axis_data_from_file(filename, axis, keep_nulls=False, cutoff_at_timelim
 	return:
 		a list of numbers
 	'''
+	if not os.path.isfile(filename):
+		return [-1 for i in range(100)]
 	with open(filename) as jsonfile:
 		this_file_data = json.load(jsonfile)
 	
@@ -50,7 +53,7 @@ def load_axis_data_from_file(filename, axis, keep_nulls=False, cutoff_at_timelim
 			data = [d["running_time"] if d["running_time"] > 0 and d["running_time"] < d["timelimit"] else d["timelimit"] for d in this_file_data]
 
 	if not keep_nulls:
-		return [d for d in data if d>0]
+		return [d for d in data if d>=0]
 	else:
 		return data
 
@@ -110,7 +113,7 @@ def load_evaldata_from_json(basedir, filename):
 			evaldataset.append(evaldata)
 	return evaldataset
 	
-def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m=None, d=None, c=None, algocode=None, randomized=False, rand_reptetions=None, reduced=False, axis="OUTPUT", keep_nulls=False, cutoff_at_timelimit=False):
+def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m=None, d=None, c=None, algocode=None, randomized=False, rand_repetitions=None, reduced=False, axis="OUTPUT", keep_nulls=False, cutoff_at_timelimit=False):
 	'''
 	loads all data from the evaldata-database that is conform to the specified parameters.
 	
@@ -129,25 +132,25 @@ def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m
 	if not density_class in ["dense", "sparse"]:
 		raise gdo.ParameterMissingException("Wrong parameter: density_class: "+density_class)
 	
-	if p == None and rel_m == None:
-		raise ParameterMissingException("Missing parameters in initialization: p or rel_m")
+	#if p == None and rel_m == None:
+	#	raise gdo.ParameterMissingException("Missing parameters in initialization: p or rel_m")
 		
 	if graphclass == "planar" and density_class == "dense":
 		raise gdo.ParameterMissingException("Incompatible parameters: graphclass: planar and density_class: dense")
 		
 	if graphclass == "maxdeg" and d == None:
-		raise ParameterMissingException("Missing parameters in initialization: d")
+		raise gdo.ParameterMissingException("Missing parameters in initialization: d")
 		
 	if graphclass == "maxclique" and c == None:
-		raise ParameterMissingException("Missing parameters in initialization: c")
+		raise gdo.ParameterMissingException("Missing parameters in initialization: c")
 		
 	if algocode not in gs.BASE_ALGO_CODES:
-		raise ParameterMissingException("Wrong parameter: algocode: "+algocode)
+		raise gdo.ParameterMissingException("Wrong parameter: algocode: "+algocode)
 	
-	if randomized and rand_repetions == None:
-		raise ParameterMissingException("Missing parameters in initialization: rand_reptetions")
+	if randomized and rand_repetitions == None:
+		raise gdo.ParameterMissingException("Missing parameters in initialization: rand_repetitions")
 		
-	base_dir = "data/eval/results/result_"+graphclass
+	base_dir = "data/eval/random_"+graphclass+"/results"
 		
 	if n == None:
 		options_for_n = gs.GRAPH_SIZES
@@ -191,10 +194,20 @@ def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m
 			
 	data = {}
 	for n in options_for_n:
+		if n not in data:
+			data[n] = {}
 		for p in options_for_p:
+			if p not in data[n]:
+				data[n][p] = {}
 			for rel_m in options_for_relm:
+				if rel_m not in data[n][p]:
+					data[n][p][rel_m] = {}
 				for d in options_for_d:
+					if d not in data[n][p][rel_m]:
+						data[n][p][rel_m][d] = {}
 					for c in options_for_c:
+						if c not in data[n][p][rel_m][d]:
+							data[n][p][rel_m][d][c] = {}
 						if density_class == "dense":
 							p_as_string = p_as_string = "{0:.2f}".format(p)
 							graph_base_filename = "dense_n"+str(n)+"_p"+p_as_string
@@ -207,16 +220,22 @@ def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m
 						graph_filename = re.sub('\.','', graph_base_filename)
 						extended_algo_code = algocode
 						if randomized:
-							extended_algo_code += "_R"+str(rand_reptetions)
+							extended_algo_code += "_R"+str(rand_repetitions)
+						else:
+							extended_algo_code += "_X"
 						if not reduced:
 							extended_algo_code += "_B"
+						else:
+							extended_algo_code += "_X"
 							
-						evaldata_filename = "results_"+extended_algo_code
+						evaldata_filename = "results_triangulate_"+extended_algo_code+"_"+graph_filename
+						#print (evaldata_filename)
+						
 						filepath = base_dir+"/"+evaldata_filename+".json"
-						data[n][p][rel_m][d][c][density_class] = extended_algo_code(filepath, axis, keep_nulls, cutoff_at_timelimit)
+						data[n][p][rel_m][d][c][density_class] = load_axis_data_from_file(filepath, axis, keep_nulls, cutoff_at_timelimit)
 	return data								
 				
-def compute_statistics(datadir):
+def compute_statistics(graphclass, density_class=None, algo=None):
 	'''
 	Computes relevant statistic from all EvalData files in a specific directory.
 	Constructs a list of dicts that contains a dictionary for each file in the directory.
@@ -228,12 +247,18 @@ def compute_statistics(datadir):
 		columns : contains the keys of the constructed dictionaries
 		stats : contains the data
 	'''
+	datadir = "data/eval/random_"+graphclass
 	logging.debug("Compute statistics for results in "+datadir)
 
 	stats = []
 	columns = ["graph id", "avg n", "avg m", "algorithm", "reduced", "repeats", "time limit", "mean time", "var time", "moo", "voo", "mmo", "mvo", "success (\%)"]
 	progress = 0
 	allfiles = [file for file in os.listdir(datadir+"/results") if ".json" in file]
+	
+	if not density_class == None:
+		allfiles = [file for file in allfiles if density_class in file]
+	if not algo == None:
+		allfiles = [file for file in allfiles if algo in file]
 	for file in allfiles:
 		meta.print_progress(progress, len(allfiles))
 		progress += 1
@@ -285,59 +310,6 @@ def compute_statistics(datadir):
 	write_stats_to_file(datadir, stats)
 
 	return (columns, stats)
-			
-def construct_output_table(columns, dataset, outputfilename="out.tex"):
-	'''
-	Constructs a tex-file containing a table that contains the statistics
-	computed by the method "compute_statistics" above
-	'''
-	# sort dataset:
-	sorteddataset = sorted(dataset, key=lambda data: (data["avg n"], data["graph id"], data["algorithm"], data["repeats"], data["reduced"]))
-
-	texoutputstring = ""
-	with open("tex_template.txt", "r") as tex_template:
-		for line in tex_template:
-			texoutputstring += line
-
-	tabulardefline = "\\begin{longtable}{"
-	for c in columns:
-		tabulardefline += "c"
-	tabulardefline += "}"
-	texoutputstring += tabulardefline+"\n"
-
-	tabheadline = columns[0]
-	for i in range(1,len(columns)):
-		tabheadline += " & "+columns[i]
-	tabheadline += " \\\\ \\hline \n"
-	texoutputstring += tabheadline
-	#all_graph_ids = [key for key in dataset if not key == "algo"]
-	data_keys = [key for key in columns] #if not key == "algorithm" and not key == "graph id"]
-
-	non_numeric_data_keys = ["algorithm", "graph id", "reduced"]
-	string_data_keys = ["algorithm", "reduced"]
-	might_be_string_data_keys = ["mean time", "var time", "moo", "voo", "mmo", "mvo"]
-
-	for data in sorteddataset:
-		rowstring = "\\verb+"+data["graph id"]+ "+"
-		#rowstring = "\\verb+"+data["algo"] + "+ & \\verb+" + data["graph_id"] + "+"
-		for data_key in data_keys:
-			#print(data_key +": "+str(data[data_key]))
-			if data_key not in non_numeric_data_keys and not isinstance(data[data_key], str):
-				if data_key ==  "mean time":
-					precision = 4
-					formatstring = "${0:.4f}$"
-				else:
-					precision = 2
-					formatstring = "${0:.2f}$"
-				rowstring += " & "+formatstring.format(round(data[data_key],precision))
-			elif data_key in string_data_keys+might_be_string_data_keys:
-				rowstring += " & \\verb+"+data[data_key]+"+"
-		texoutputstring += rowstring+"\\\\\n"
-	texoutputstring += "\\end{longtable}\n"
-	texoutputstring += "\\end{document}\n"
-
-	with open(outputfilename, "w") as tex_output:
-		tex_output.write(texoutputstring)
 	
 def write_stats_to_file(datadir, stats):
 	with open(datadir+"/stats.json", 'w') as statsfile:

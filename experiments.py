@@ -16,6 +16,8 @@ from MetaScripts import global_settings as gs
 from Evaluation import GraphConstructionAlgorithms as gca
 from Evaluation import GraphDataOrganizer as gdo
 from Evaluation import ExperimentManager as em
+from Evaluation import StatisticsManager as sm
+from Evaluation import TableConstructor as tc
 
 from TriangulationAlgorithms import LEX_M
 from TriangulationAlgorithms import MCS_M
@@ -250,8 +252,8 @@ if __name__ == "__main__":
 		em.run_set_of_experiments(algo, data_dir, randomized=randomized, repetitions=num_iter, threaded=threaded, reduce_graph=reduced, timelimit=timelimit, force_new_data=forcenew)
 
 	elif mode == "output":
-		(columns, stats) = em.compute_statistics(data_dir)
-		em.construct_output_table(columns, stats, data_dir+"/out.tex")
+		(columns, stats) = sm.compute_statistics(dataset)
+		tc.construct_output_table_alldata(columns, stats, data_dir+"/out.tex")
 		
 		os.chdir(data_dir)
 		call(["pdflatex","out.tex"])
