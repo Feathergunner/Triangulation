@@ -88,7 +88,7 @@ def construct_output_table_alldata(graphclass, columns, dataset, outputfilenames
 	with open(tablesdir+"/"+outputfilename, "w") as tex_output:
 		tex_output.write(texoutputstring)
 		
-def construct_table_compare_randomized(graphclass, density_class, outputfilenamesuffix=""):
+def construct_table_compare_randomized(graphclass, density_class, outputfilenamesuffix="", axis="OUTPUT"):
 	'''
 	Constructs a table that compares the results of randomized and deterministic runs
 	'''
@@ -96,12 +96,12 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 	data = {}
 	for algo in ["EG", "SMS", "CMT", "EGPLUS"]:
 		data[algo] = {}
-		data[algo]["D"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, keep_nulls=True, cutoff_at_timelimit=True)
-		data[algo]["R3"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, randomized=True, rand_repetitions=3, keep_nulls=False, cutoff_at_timelimit=True)
-		data[algo]["R5"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, randomized=True, rand_repetitions=5, keep_nulls=False, cutoff_at_timelimit=True)
-		data[algo]["R10"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, reduced=True, randomized=True, rand_repetitions=10, keep_nulls=False, cutoff_at_timelimit=True)
+		data[algo]["D"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, keep_nulls=True, cutoff_at_timelimit=True)
+		data[algo]["R3"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, randomized=True, rand_repetitions=3, keep_nulls=False, cutoff_at_timelimit=True)
+		data[algo]["R5"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, randomized=True, rand_repetitions=5, keep_nulls=False, cutoff_at_timelimit=True)
+		data[algo]["R10"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, randomized=True, rand_repetitions=10, keep_nulls=False, cutoff_at_timelimit=True)
 		
-	data["MCSM"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode="MCSM", reduced=True, keep_nulls=True, cutoff_at_timelimit=True)
+	data["MCSM"] = sm.load_data(graphclass, density_class, d=5, c=4, algocode="MCSM", axis=axis, reduced=True, keep_nulls=True, cutoff_at_timelimit=True)
 		
 	texoutputstring = init_texoutputstring()
 	tabulardefline = ""
@@ -172,9 +172,15 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 										rowdata.append("\\cellcolor{red!30}"+datatext)
 									else:
 										rowdata.append("\\cellcolor{blue!30}"+datatext)
+								elif axis == "TIME" and mean >= 2:
+									rowdata.append("\\cellcolor{red!30}"+datatext)
 								else:
-									if cmpmean < 0 or mean < cmpmean:
+									if axis == "OUTPUT" and (cmpmean < 0 or mean < 0.9*cmpmean):
+										rowdata.append("\\cellcolor{blue!30}"+datatext)
+									elif mean < cmpmean:
 										rowdata.append("\\cellcolor{green!30}"+datatext)
+									elif axis == "OUTPUT" and mean < 1.1*cmpmean:
+										rowdata.append("\\cellcolor{yellow!30}"+datatext)
 									else:
 										rowdata.append("\\cellcolor{red!30}"+datatext)
 								
@@ -201,7 +207,7 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 	texoutputstring += "\\end{longtable}\n"
 	texoutputstring += "\\end{document}\n"
 	
-	outputfilename = "table_cmprand_"+graphclass+"_"+density_class
+	outputfilename = "table_cmprand_"+graphclass+"_"+density_class+"_"+axis
 	if not outputfilenamesuffix == "":
 		outputfilename += "_"+outputfilenamesuffix
 	#print (texoutputstring)
