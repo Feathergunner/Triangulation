@@ -339,7 +339,7 @@ def compute_relative_performance_distribution(setname, graph_set_id, axis="OUTPU
 		algo_subset : if not None, only algorithms contained in this subset will be considered
 
 	return:
-		rp : a dict that maps algorithms to lists. For each algorithm a list is constructed that contains the
+		rpd : a dict that maps algorithms to lists. For each algorithm a list is constructed that contains the
 		relative performance on each input graph.
 		That is, if "ALGO_A" performed second best on the 15th test graph, then rp["ALGO_A"][14] = 2
 	'''
@@ -362,8 +362,8 @@ def compute_relative_performance_distribution(setname, graph_set_id, axis="OUTPU
 
 	# compute average_relative_performance:
 	rpd = {algo : [] for algo in data}
-	#rprd = {algo : [] for algo in data}
 	algos = [algo for algo in data]
+
 	for i in range(number_of_results):
 		results = {}
 		for algo in data:
@@ -376,9 +376,12 @@ def compute_relative_performance_distribution(setname, graph_set_id, axis="OUTPU
 			rpd[algoorder[a_i]].append(j)
 			if a_i < len(algos)-1 and results[algoorder[a_i+1]] > results[algoorder[a_i]]:
 				j += 1
-				
+		
 		for algo in algos:
-			rpd[algo][-1] = len(algos)*float(rpd[algo][-1])/j
+			if not j == 1:
+				rpd[algo][i] = 1+((len(algos)-1)*float(rpd[algo][i]-1)/(j-1))
+			else:
+				rpd[algo][i] = len(algos)
 				
 	#rpr = {algo : [x/max(rpd[algo]) for x in rpd[algo]] for algo in rpd}
 	return rpd
