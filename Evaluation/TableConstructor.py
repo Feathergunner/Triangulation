@@ -318,7 +318,7 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 	texoutputstring += "\\end{longtable}\n"
 	texoutputstring += "\\end{document}\n"
 	
-	outputfilename = "table_cmp_"+graphclass+"_"+density_class+"_"+axis
+	outputfilename = "table_cmp_"+graphclass+"_"+density_class+"_"+axis+"_"+type+"_"+values
 	if not outputfilenamesuffix == "":
 		outputfilename += "_"+outputfilenamesuffix
 	#print (texoutputstring)
