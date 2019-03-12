@@ -47,7 +47,40 @@ def build_all_tables_detrand_compare():
 		for tablefile in outputfilenames:
 			call(["pdflatex",tablefile+".tex"])
 		os.chdir("../../../..")
+		
+def build_tables_general_compare():
+	for setname in ["general", "planar", "maxdeg", "maxclique"]:
+		outputfilenames = []
+		for density_class in ["dense", "sparse"]:
+			if not (setname == "planar" and density_class == "dense"):
+				outputfilenames.append(tc.construct_table_compare(
+					setname, 
+					density_class,
+					axis="OUTPUT",
+					type="ABSOLUTE",
+					values="MEAN"
+				))
+				outputfilenames.append(tc.construct_table_compare(
+					setname, 
+					density_class,
+					axis="OUTPUT",
+					type="ABSOLUTE",
+					values="VAR"
+				))
+				outputfilenames.append(tc.construct_table_compare(
+					setname, 
+					density_class,
+					axis="TIME",
+					type="ABSOLUTE",
+					values="MEAN"
+				))
+		
+		os.chdir("data/eval/random_"+setname+"/tables")
+		for tablefile in outputfilenames:
+			call(["pdflatex",tablefile+".tex"])
+		os.chdir("../../../..")
 
 if __name__ == "__main__":
-	#make_plots()
+	make_plots()
 	build_all_tables_detrand_compare()
+	build_tables_general_compare()
