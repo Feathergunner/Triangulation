@@ -218,3 +218,114 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 		
 	with open(tablesdir+"/"+outputfilename+".tex", "w") as tex_output:
 		tex_output.write(texoutputstring)
+
+def construct_table_compare(graphclass, density_class, algocodes=None, randcodes=None, options_for_n=None, options_for_p=None, options_for_relm=None, filename_suffix="", axis="OUTPUT", type="ABSOLUTE", values="MEAN"):
+	'''
+	General method to construct tables to compare and evaluate algorithm output
+	'''
+	if algocodes == None:
+		algocodes = ["MT", "EG", "SMS", "CMT", "EGPLUS", "LexM", "MCSM"]
+	if randcodes == None:
+		randcodes = ["D", "R10"]
+	if graphclass == "maxdeg":
+		options_for_d = [5]
+	else:
+		options_for_d = [-1]
+
+	if options_for_n == None:
+		options_for_n = [20, 60, 100]
+	if options_for_p == None:
+		options_for_p = [0.2, 0.5, 0.8]
+	if options_for_relm == None:
+		options_for_relm = [1.5, 2.0, 2.5]
+		
+	if graphclass == "maxclique":
+		options_for_c = [4]
+	else:
+		options_for_c = [-1]
+
+	data = {}
+	for algo in algocodes:
+		data[algo] = {}
+		for r in randcodes:
+			if r == "D":
+				data[algo][r] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, keep_nulls=True, cutoff_at_timelimit=True)
+			elif algo in ["EG", "SMS", "CMT", "EGPLUS"]:
+				rr = int(r[1:])
+				data[algo][r] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, keep_nulls=True, rand_repetitions=rr, cutoff_at_timelimit=True)
+
+	texoutputstring = init_texoutputstring()
+	tabulardefline = ""
+	tabulartitleline_1 = ""
+	if (density_class == "dense" and graphclass == "general") or density_class == "sparse":
+		tabulardefline = "\\begin{longtable}{l||ccc|ccc|ccc}\n"
+		tabulartitleline_1 = "n & \multicolumn{3}{|c}{20} & \multicolumn{3}{|c}{60} & \multicolumn{3}{|c}{100} \\\\ \n"
+	else:
+		tabulardefline = "\\begin{longtable}{l||cc|cc|cc}\n"
+		tabulartitleline_1 = "n & \multicolumn{2}{|c}{20} & \multicolumn{2}{|c}{60} & \multicolumn{2}{|c}{100} \\\\ \n"
+	texoutputstring += tabulardefline
+	texoutputstring += tabulartitleline_1
+	
+	tabulartitleline_2 = ""
+	if density_class == "dense":
+		options_for_relm = [-1]
+		tabulartitleline_2 = "p"
+		for p in options_for_p:
+			tabulartitleline_2 += " & "+str(p)
+		tabulartitleline_2 += " \\\\ \\hline \\hline \n"
+	else:
+		options_for_p = [-1]
+		tabulartitleline_2 = "$\\frac{m}{n}$"
+		for rm in options_for_relm:
+			tabulartitleline_2 += " & "+str(rm)
+		tabulartitleline_2 += " \\\\ \\hline \\hline \n"
+	texoutputstring += tabulartitleline_2
+
+	formatstring = "${0:.2f}$"
+	for algo in algocodes:
+		algosetsting = ""
+		for r_set in randcodes:
+			rowdata = []
+			label = algo+" "+r_set
+			for n in options_for_n:
+				for p in options_for_p:
+					for rel_m in options_for_relm:
+						for d in options_for_d:
+							for c in options_for_c:
+								thisdatalist = data[algo][r_set][n][p][rel_m][d][c][density_class]
+								if len(thisdatalist) > 0:
+									if values == "MEAN":
+										thisdata = np.mean(thisdatalist)
+									elif values == "VAR":
+										thisdata = np.var(thisdatalist)
+									if thisdata > 0:
+										datatext = formatstring.format(round(thisdata,2))
+									else:
+										datatext = "N/A"
+								else:
+									datatext = "N/A"
+									
+								if datatext == "N/A":
+									rowdata.append("\\cellcolor{red!30}"+datatext)
+								elif axis == "TIME" and thisdata >= 2:
+									rowdata.append("\\cellcolor{red!30}"+datatext)
+								
+			algosetsting += label+" &"+" & ".join(rowdata)+" \\\\"
+			if not r_set == randcodes[-1]:
+				algosetsting += "\n"
+		texoutputstring += algosetsting+"\\hline \n"
+			
+	texoutputstring += "\\end{longtable}\n"
+	texoutputstring += "\\end{document}\n"
+	
+	outputfilename = "table_cmp_"+graphclass+"_"+density_class+"_"+axis
+	if not outputfilenamesuffix == "":
+		outputfilename += "_"+outputfilenamesuffix
+	#print (texoutputstring)
+	
+	tablesdir = "data/eval/random_"+graphclass+"/tables"
+	if not os.path.exists(tablesdir):
+		os.mkdir(tablesdir)
+		
+	with open(tablesdir+"/"+outputfilename+".tex", "w") as tex_output:
+		tex_output.write(texoutputstring)
