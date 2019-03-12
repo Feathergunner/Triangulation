@@ -54,6 +54,7 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		# return first set of edges that makes self.G chordal. this is a minimum triangulation.
 		k = 1
 		found_minimum = False
+		print (self.chordedge_candidates)
 		while not found_minimum and k < size_minimal:
 			# check timeout:
 			if self.timeout > 0 and time.time() > self.timeout:
@@ -63,6 +64,7 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 			edgesets_size_k = itertools.combinations(self.chordedge_candidates, k)
 			k_edgeset = 0
 			for edgeset in edgesets_size_k:
+				#print (edgeset)
 				k_edgeset += 1
 				if k_edgeset%10000 == 0:
 					# check timeout every 10k sets:
@@ -73,8 +75,9 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 				if nx.is_chordal(H):
 					F += [e for e in edgeset]
 					found_minimum = True
+					break
 			k += 1
-		if k == size_minimal:
+		if not found_minimum:
 			F += [e for e in lexm_triang["H"].edges() if e not in C.edges()]
 			
 		return F
