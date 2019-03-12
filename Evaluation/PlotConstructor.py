@@ -243,7 +243,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis=
 					data[algo] = {}
 				if graph_set_id not in data[algo]:
 					data[algo][graph_set_id] = []
-				data[algo][graph_set_id] += sm.load_axis_data_from_file(filepath, axis, True, True)
+				data[algo][graph_set_id] += np.mean(sm.load_axis_data_from_file(filepath, axis, True, True))
 	
 		elif type == "RP":
 			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis, algo_subset=algos)
