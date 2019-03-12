@@ -36,3 +36,5 @@ PLT_GRAPHSIZE_COLORS = {
 	"n80" : 'm',
 	"n100" : 'r'
 }
+
+PLT_DPI = 500

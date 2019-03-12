@@ -88,9 +88,9 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 	if savedir == None:
 		plt.show()
 	elif filename_suffix == None:
-		plt.savefig(savedir+"/performance_"+graph_set_id+"_algo_boxplots.png")
+		plt.savefig(savedir+"/performance_"+graph_set_id+"_algo_boxplots.png", dpi=gs.PLT_DPI)
 	else:
-		plt.savefig(savedir+"/performance_"+graph_set_id+"_"+filename_suffix+"_algo_boxplots.png")
+		plt.savefig(savedir+"/performance_"+graph_set_id+"_"+filename_suffix+"_algo_boxplots.png", dpi=gs.PLT_DPI)
 	plt.close()
 
 def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
@@ -230,6 +230,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis=
 		
 	data = {}
 	for graph_set_id in all_graph_set_ids:
+		#print (graph_set_id)
 		if type == "ABSOLUTE":
 			# initialize:
 			files = get_resultfiles_filenames(resultdir, algos)
@@ -262,9 +263,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis=
 			
 	linedata = {}
 	for graph_set_id in all_graph_set_ids:
-		#print (graph_set_id)
 		linedata[graph_set_id] = [[-1 for i in range(100)] for a in algos]
-		#print (linedata[graph_set_id])
 	
 	for algo in algos:
 		for graph_set_id in all_graph_set_ids:
@@ -272,31 +271,38 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis=
 				linedata[graph_set_id][algo_ids[algo]] = data[algo][graph_set_id]
 		
 	# create plot:
-	fig, ax1 = plt.subplots(figsize=(len(data), 6))
+	fig, ax1 = plt.subplots(figsize=(len(data), len(data)/2))
 	fig.subplots_adjust(bottom=0.3)
 	
 	ax1.set_xlabel("Algorithm")
 	ax1.set_ylabel(axis+" ("+type+")")
 	
 	for graph_set_id in all_graph_set_ids:
-		for i in range(100):
-			#print (graph_data_id)
+		for i in range(len(linedata[graph_set_id][algo_ids[algo]])):
 			graph_size = re.split('_', graph_set_id)[1]
 			linecolor = gs.PLT_GRAPHSIZE_COLORS[graph_size]
 			this_linedata = [linedata[graph_set_id][algo_ids[algo]][i] for algo in algos]
-			line = ax1.plot(algo_numbers, this_linedata, label=graph_set_id, linewidth=0.5, color=linecolor)
+			line = ax1.plot(algo_numbers, this_linedata, label=graph_set_id, linewidth=0.2, color=linecolor)
 	
-	#print (algos)
-	ax1.xaxis.set_ticks(range(len(algos)))
-	ax1.set_xticklabels(algos)
+	labels = []
+	for i in range(len(algos)):
+		labelparts = re.split('_', algos[i])
+		labels.append(labelparts[0])
+		if not labelparts[1] == "X":
+			labels[i] += "_"+labelparts[1]
+		if not labelparts[2] == "X":
+			labels[i] += "_"+labelparts[2]
+			
+	ax1.xaxis.set_ticks(range(len(labels)))
+	ax1.set_xticklabels(labels)
 	for tick in ax1.get_xticklabels():
 		tick.set_rotation(90)
 	if savedir == None:
 		plt.show()
 	elif filename_suffix == None:
-		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_algo_line.png")
+		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_algo_line.png", dpi=gs.PLT_DPI)
 	else:
-		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_"+filename_suffix+"_algo_line.png")
+		plt.savefig(savedir+"/performance_"+graph_set_filename_part+"_"+filename_suffix+"_algo_line.png", dpi=gs.PLT_DPI)
 	plt.close()
 
 def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE", savedir=None):
@@ -386,7 +392,7 @@ def plot_mean_performance_by_density(setname, n, axis="OUTPUT", type="ABSOLUTE",
 			filename_suffix += axis+"_"+type
 			filename = savedir+"/performance_"+setname+"_n"+str(n)+"_density_"+filename_suffix+".png"
 			#print (filename)
-			plt.savefig(filename, dpi=500, bbox_extra_artists=(legend,), bbox_inches='tight')
+			plt.savefig(filename, dpi=gs.PLT_DPI, bbox_extra_artists=(legend,), bbox_inches='tight')
 		plt.close()
 		
 def make_performance_plots_all(setname, axis="OUTPUT", type="ABSOLUTE"):

@@ -63,14 +63,7 @@ def get_algo_name_from_filename(filename):
 	'''
 	algo_parts = re.split('_',filename)
 	algo_name = algo_parts[2]+"_"+algo_parts[3]+"_"+algo_parts[4]
-	'''
-	b_id = 3
-	if algo_parts[3][0] == "R":
-		algo_name += "_"+algo_parts[3]
-		b_id += 1
-	if algo_parts[b_id] == "B":
-		algo_name += "_B"
-	'''
+	
 	return algo_name
 
 def load_evaldata_from_json(basedir, filename):
