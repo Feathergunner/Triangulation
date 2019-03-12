@@ -23,6 +23,25 @@ from Evaluation import StatisticsManager as sm
 from MetaScripts import meta
 from MetaScripts import global_settings as gs
 
+def get_resultfiles_filenames(directory, algos=None):
+	'''
+	get all filenames of files that contain experiment result data 
+	
+	args:
+		directory: the directory where the files are
+		algos : a list of algorithm-codes. If not None, only the specified algorithms will be considered.
+	'''
+	all_files_in_dir = os.listdir(directory)
+	allfiles = [file for file in all_files_in_dir if ".json" in file]
+	if not algos == None:
+		files = []
+		for algocode in algos:
+			files += [file for file in allfiles if "_"+algocode+"_" in file]
+	else:
+		files = allfiles
+	files.sort()
+	return files
+
 def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suffix=None):
 	'''
 	create a figure containing the boxplots of a specific dataset.
@@ -43,6 +62,15 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
 	labels = [key for key in data]
+	for i in range(len(labels)):
+		labelparts = re.split('_', labels[i])
+		labels[i] = labelparts[0]
+		if not labelparts[1] == "X":
+			labels[i] += "_"+labelparts[1]
+		if not labelparts[2] == "X":
+			labels[i] += "_"+labelparts[2]
+	
+	#print (labels)
 	# create plot:
 	fig, ax1 = plt.subplots(figsize=(len(data), 6))
 	#fig.canvas.set_window_title('A Boxplot Example')
@@ -51,7 +79,7 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 	ax1.set_xlabel('Algorithm')
 	ax1.set_ylabel(ylabel)
 	
-	bp = ax1.boxplot([data[key] for key in labels], notch=0, sym='+', vert=1, whis=1.5)
+	bp = ax1.boxplot([data[key] for key in data], notch=0, sym='+', vert=1, whis=1.5)
 	plt.setp(bp['boxes'], color='black')
 	ax1.set_xticklabels(labels)
 	for tick in ax1.get_xticklabels():
@@ -119,10 +147,14 @@ def make_boxplots_allsets(setname, axis="OUTPUT", type="ABSOLUTE"):
 	for graph_set_id in all_graph_set_ids:
 		make_boxplot_set(setname, graph_set_id, axis, type, outputdir)
 
-def make_boxplots_total(setname, axis="OUTPUT", type="ABSOLUTE"):
+def make_boxplots_total(setname, algos=None, axis="OUTPUT", type="ABSOLUTE"):
 	'''
 	Constructs a boxplot-plot of algorithms
 	where each boxplot contains all experiment results of the whole major class of graphs
+	
+	args:
+		setname : the major graph class to plot
+		algos : a list of algorithm-codes. If not None, only the specified algorithms will be considered.
 	'''
 	basedir = "data/eval/random_"+setname
 	graphdir = basedir+"/input"
@@ -135,9 +167,7 @@ def make_boxplots_total(setname, axis="OUTPUT", type="ABSOLUTE"):
 	
 	if type == "ABSOLUTE":
 		# initialize:
-		all_files_in_dir = os.listdir(resultdir)
-		files = [file for file in all_files_in_dir if ".json" in file]
-		files.sort()
+		files = get_resultfiles_filenames(resultdir, algos)
 		
 		# load data:
 		for file in files:
@@ -150,16 +180,18 @@ def make_boxplots_total(setname, axis="OUTPUT", type="ABSOLUTE"):
 	elif type == "RP":
 		for filename in os.listdir(graphdir):
 			graph_set_id = re.split(r'\.',filename)[0]
-			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis)
+			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis, algo_subset=algos)
 			for algo_key in database:
-				if algo_key not in data_dict:
-					data_dict[algo_key] = []
-				data_dict[algo_key] += database[algo_key]
+				if algos == None or algo_key in algos:
+					if algo_key not in data_dict:
+						data_dict[algo_key] = []
+					#print (algo_key)
+					data_dict[algo_key] += database[algo_key]
 	#data = [data_dict[key] for key in data_dict]
-
+	
 	make_boxplot(data_dict, setname, '', ylabel=axis+" ("+type+")", savedir=outputdir, filename_suffix='total_'+axis+"_"+type)
 	
-def plot_performance_by_algorithm(setname, graph_set_id="ALL", axis="OUTPUT", type="ABSOLUTE", savedir=None, filename_suffix=None):
+def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis="OUTPUT", type="ABSOLUTE", savedir=None, filename_suffix=None):
 	'''
 	Construct a 2D-line-plot of the algorithms performance,
 	where all algorithms are on the x-axis and
@@ -169,6 +201,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", axis="OUTPUT", ty
 	args:
 		setname : the major graph class
 		graph_set_id : specifies the subclass, or "ALL"
+		algos :  a list of algorithm-codes. If not None, only the specified algorithms will be considered.
 		axis : defines which axis of the experiment result data should be plotted 
 				("OUTPUT" or "TIME")
 		type : defines whether the absolute values or the relative performance should be used for plotting
@@ -199,9 +232,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", axis="OUTPUT", ty
 	for graph_set_id in all_graph_set_ids:
 		if type == "ABSOLUTE":
 			# initialize:
-			all_files_in_dir = os.listdir(resultdir)
-			files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
-			files.sort()
+			files = get_resultfiles_filenames(resultdir, algos)
 		
 			# load data:
 			for file in files:
@@ -214,7 +245,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", axis="OUTPUT", ty
 				data[algo][graph_set_id] += sm.load_axis_data_from_file(filepath, axis, True, True)
 	
 		elif type == "RP":
-			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis)
+			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis, algo_subset=algos)
 			for algo in database:
 				if algo not in data:
 					data[algo] = {}
