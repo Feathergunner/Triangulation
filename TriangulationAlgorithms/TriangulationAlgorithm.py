@@ -52,7 +52,7 @@ class TriangulationAlgorithm:
 		if reduce_graph:
 			self.get_relevant_components()
 			self.get_chordedge_candidates()
-		
+			
 		self.H = None
 		self.edges_of_triangulation = []
 		self.alpha = {}
@@ -127,9 +127,13 @@ class TriangulationAlgorithm:
 		#pos = nx.shell_layout(self.G)
 		pos = nx.kamada_kawai_layout(self.G)
 		
-		nx.draw_networkx_nodes(self.H, pos, node_color='r', node_size=50)
-		nx.draw_networkx_edges(self.H, pos, edgelist=edges_original, width=1, edge_color='black')
-		nx.draw_networkx_edges(self.H, pos, edgelist=self.edges_of_triangulation, width=1, edge_color='blue')
+		if not self.H == None:
+			nx.draw_networkx_nodes(self.H, pos, node_color='r', node_size=50)
+			nx.draw_networkx_edges(self.H, pos, edgelist=edges_original, width=1, edge_color='black')
+			nx.draw_networkx_edges(self.H, pos, edgelist=self.edges_of_triangulation, width=1, edge_color='blue')
+		else:
+			nx.draw_networkx_nodes(self.G, pos, node_color='r', node_size=50)
+			nx.draw_networkx_edges(self.G, pos, edgelist=self.G.edges(), width=1, edge_color='black')
 
 		labels = {}
 		for n in self.G.nodes():
