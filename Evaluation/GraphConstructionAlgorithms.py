@@ -90,7 +90,7 @@ class GraphGenerator:
 			
 		return self.ensure_connectivity(G)
 
-	def construct_planar_random(self, n, m):
+	def construct_planar_random(self, n, p):
 		'''
 		Constructs a random planar graph with n nodes and m edges.
 		Edges are introduced iteratively in batches. Each edge is chosen uniform from all possible remaining edges. A batch of edges is only added if the graph remains planar.
@@ -98,7 +98,7 @@ class GraphGenerator:
 		'''
 		#logging.info("=== construct_planar_random ===")
 		
-		m = int(m)
+		m = int(n*p)
 		if m > 3*n-6:
 			# number of edges is too large: no planar graph possible
 			raise TooManyEdgesException("Number of edges too large. No planar graph with these parameters can exist.")
@@ -108,7 +108,7 @@ class GraphGenerator:
 
 		edges_to_add = {(i,j) for i in range(n) for j in range(i+1,n)}
 		
-		batch_size = int(m/2)
+		batch_size = 2#int(m/2)
 		number_failed_attempts = 0
 		while len(G.edges()) < m:
 			#logging.debug ("edges to add:")
