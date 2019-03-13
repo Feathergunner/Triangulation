@@ -208,10 +208,10 @@ def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m
 							graph_base_filename = "dense_n"+str(n)+"_p"+p_as_string
 						elif density_class == "sparse":
 							graph_base_filename = "sparse_n"+str(n)+"_relm"+str(rel_m)
-							if graphclass == "maxdeg":
-								graph_base_filename += "_d"+str(d)
-							if graphclass == "maxclique":
-								graph_base_filename += "_c"+str(c)
+						if graphclass == "maxdeg":
+							graph_base_filename += "_d"+str(d)
+						if graphclass == "maxclique":
+							graph_base_filename += "_c"+str(c)
 						graph_filename = re.sub('\.','', graph_base_filename)
 						extended_algo_code = algocode
 						if randomized:
