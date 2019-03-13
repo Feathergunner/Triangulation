@@ -180,10 +180,7 @@ def construct_set_random_graph(parameters, force_new_data=False):
 	elif "rel_m" in parameters:
 		subclass = "sparse"
 		p = round((2*parameters["rel_m"]*n)/(2*(n*(n-1))),2)
-	
-	print (parameters)
-	print (p)
-	
+		
 	graphdir = "data/eval/random_"+graphclass+"/input/"
 	check_filepath(graphdir)
 	
