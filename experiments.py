@@ -235,7 +235,7 @@ if __name__ == "__main__":
 		print ("Error! Missing parameters!")
 		
 	elif mode == "build":
-		gdo.construct_full_set_graphs(dataset)
+		gdo.construct_full_set_graphs(dataset, threaded=threaded)
 
 	elif mode == "eval":
 		algo = ALGORITHMS[algo_code]
