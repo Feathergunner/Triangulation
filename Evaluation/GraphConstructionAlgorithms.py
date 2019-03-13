@@ -101,7 +101,7 @@ class GraphGenerator:
 		m = int(p*n*(n-1))
 		if m > 3*n-6:
 			# number of edges is too large: no planar graph possible
-			raise TooManyEdgesException("Number of edges too large. No planar graph with these parameters can exist.")
+			raise TooManyEdgesException("Number of edges too large. No planar graph with these parameters can exist: n="+str(n)+", m="+str(m))
 
 		G = nx.Graph()
 		G.add_nodes_from([i for i in range(n)])
