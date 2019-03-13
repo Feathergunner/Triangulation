@@ -264,12 +264,28 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 	texoutputstring = init_texoutputstring()
 	tabulardefline = ""
 	tabulartitleline_1 = ""
-	if (density_class == "dense" and graphclass == "general") or density_class == "sparse":
-		tabulardefline = "\\begin{longtable}{l||ccc|ccc|ccc}\n"
-		tabulartitleline_1 = "n & \multicolumn{3}{|c}{20} & \multicolumn{3}{|c}{60} & \multicolumn{3}{|c}{100} \\\\ \n"
+	if density_class == "dense":
+		tabulardefline = "\\begin{longtable}{l||"
+		for n in options_for_n:
+			for p in options_for_p:
+				tabulardefline += "c"
+			tabulardefline += "|"
+		tabulardefline += "}\n"
+		tabulartitleline_1 = "n"
+		for n in options_for_n:
+			tabulartitleline_1 += " & \multicolumn{"+str(len(options_for_p))+"}{c|}{"+str(n)+"}"
+		tabulartitleline_1 += " \\\\ \n"
 	else:
-		tabulardefline = "\\begin{longtable}{l||cc|cc|cc}\n"
-		tabulartitleline_1 = "n & \multicolumn{2}{|c}{20} & \multicolumn{2}{|c}{60} & \multicolumn{2}{|c}{100} \\\\ \n"
+		tabulardefline = "\\begin{longtable}{l||"
+		for n in options_for_n:
+			for rm in options_for_relm:
+				tabulardefline += "c"
+			tabulardefline += "|"
+		tabulardefline += "}\n"
+		tabulartitleline_1 = "n"
+		for n in options_for_n:
+			tabulartitleline_1 += " & \multicolumn{"+str(len(options_for_relm))+"}{c|}{"+str(n)+"}"
+		tabulartitleline_1 += " \\\\ \n"
 	texoutputstring += tabulardefline
 	texoutputstring += tabulartitleline_1
 	
@@ -290,7 +306,9 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 		tabulartitleline_2 += " \\\\ \\hline \\hline \n"
 	texoutputstring += tabulartitleline_2
 
-	formatstring = "${0:.2f}$"
+	formatstring_2 = "${0:.2f}$"
+	formatstring_1 = "${0:.1f}$"
+	formatstring_0 = "${0:.0f}$"
 	for algo in algocodes:
 		algosetsting = ""
 		for r_set in randcodes:
@@ -303,24 +321,48 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 							for d in options_for_d:
 								for c in options_for_c:
 									thisdatalist = data[algo][r_set][n][p][rel_m][d][c][density_class]
+									if axis == "TIME":
+										pterm = len([d for d in thisdatalist if d < 2])
+									else:
+										pterm = len(thisdatalist)
 									if len(thisdatalist) > 0:
 										if values == "MEAN":
 											thisdata = np.mean(thisdatalist)
 										elif values == "VAR":
 											thisdata = np.var(thisdatalist)
+										elif values == "PTERM":
+											thisdata = pterm
 										if thisdata > 0:
-											datatext = formatstring.format(round(thisdata,2))
+											if not values == "PTERM":
+												if thisdata >= 100:
+													datatext = formatstring_0.format(round(thisdata,0))
+												elif thisdata >= 10:
+													datatext = formatstring_1.format(round(thisdata,1))
+												else:
+													datatext = formatstring_2.format(round(thisdata,2))
+											else:
+												datatext = str(pterm)
 										else:
 											datatext = "N/A"
+									elif values == "PTERM":
+										thisdata = 0
+										datatext = "0"
 									else:
 										datatext = "N/A"
 										
-									if datatext == "N/A":
+									if values == "PTERM":
+										datatext += "\%"
+									
+									if pterm == 0:
 										rowdata.append("\\cellcolor{red!30}"+datatext)
-									elif axis == "TIME" and thisdata >= 2:
-										rowdata.append("\\cellcolor{red!30}"+datatext)
+									elif pterm < 50:
+										rowdata.append("\\cellcolor{orange!30}"+datatext)
+									elif pterm < 80:
+										rowdata.append("\\cellcolor{yellow!30}"+datatext)
+									elif pterm < 100:
+										rowdata.append("\\cellcolor{green!30}"+datatext)
 									else:
-										rowdata.append(datatext)
+										rowdata.append("\\cellcolor{blue!30}"+datatext)
 									
 				algosetsting += label+" &"+" & ".join(rowdata)+" \\\\"
 				if not r_set == randcodes[-1]:
