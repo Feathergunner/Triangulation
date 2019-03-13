@@ -235,14 +235,7 @@ if __name__ == "__main__":
 		print ("Error! Missing parameters!")
 		
 	elif mode == "build":
-		if dataset == "general":
-			gdo.construct_full_set_random_graphs()
-		elif dataset == "planar":
-			gdo.construct_full_set_random_planar_graphs()
-		elif dataset == "maxdeg":
-			gdo.construct_full_set_random_maxdegree_graphs()
-		elif dataset == "maxclique":
-			gdo.construct_full_set_random_maxclique_graphs()
+		gdo.construct_full_set_graphs(dataset)
 
 	elif mode == "eval":
 		algo = ALGORITHMS[algo_code]
