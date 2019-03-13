@@ -98,7 +98,7 @@ class GraphGenerator:
 		'''
 		#logging.info("=== construct_planar_random ===")
 		
-		m = int(n*p)
+		m = int(p*n*(n-1))
 		if m > 3*n-6:
 			# number of edges is too large: no planar graph possible
 			raise TooManyEdgesException("Number of edges too large. No planar graph with these parameters can exist.")
