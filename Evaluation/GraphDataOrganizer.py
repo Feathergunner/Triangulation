@@ -91,8 +91,6 @@ def parse_graph_filename(filename):
 	return parameters
 
 def check_parameters(parameters):
-	print (parameters)
-
 	if not "class" in parameters or parameters["class"] not in gs.GRAPH_CLASSES:
 		raise ParameterMissingException("Missing parameters in initialization: class")
 	
@@ -228,7 +226,6 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 		options_for_d = gs.MAXDEGREE_SETTINGS
 	else:
 		options_for_d = [-1]
-
 	if graphclass == "maxclique":
 		options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
 		options_for_c = gs.MAXCLIQUE_SETTINGS
