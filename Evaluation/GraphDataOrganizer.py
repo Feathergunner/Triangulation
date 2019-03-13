@@ -179,7 +179,7 @@ def construct_set_random_graph(parameters, force_new_data=False):
 		p = parameters["p"]
 	elif "rel_m" in parameters:
 		subclass = "sparse"
-		p = round((2*parameters["rel_m"]*n)/(2*(n*(n-1))),2)
+		p = (2*parameters["rel_m"]*n)/(n*(n-1))
 		
 	graphdir = "data/eval/random_"+graphclass+"/input/"
 	check_filepath(graphdir)
@@ -213,7 +213,6 @@ def construct_set_random_graph(parameters, force_new_data=False):
 				graphs.append(gg.construct_random_max_clique_size(n, p, parameters["clique_bound"]))
 	
 		write_graphs_to_json(graphs, filepath, parameters)
-	
 
 def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, threaded=True):
 	logging.info("=== construct_full_set_raphs ===")

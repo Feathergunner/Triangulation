@@ -261,6 +261,7 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 	#print (data[algocodes[0]][randcodes[0]])
 				
 	texoutputstring = init_texoutputstring()
+	puretexstring = ""
 	tabulardefline = ""
 	tabulartitleline_1 = ""
 	if density_class == "dense":
@@ -287,6 +288,8 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 		tabulartitleline_1 += " \\\\ \n"
 	texoutputstring += tabulardefline
 	texoutputstring += tabulartitleline_1
+	puretexstring += tabulardefline.replace("longtable", "tabular")
+	puretexstring += tabulartitleline_1
 	
 	tabulartitleline_2 = ""
 	if density_class == "dense":
@@ -304,12 +307,13 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 				tabulartitleline_2 += " & "+str(rm)
 		tabulartitleline_2 += " \\\\ \\hline \\hline \n"
 	texoutputstring += tabulartitleline_2
+	puretexstring += tabulartitleline_2
 
 	formatstring_2 = "${0:.2f}$"
 	formatstring_1 = "${0:.1f}$"
 	formatstring_0 = "${0:.0f}$"
 	for algo in algocodes:
-		algosetsting = ""
+		algosetstring = ""
 		for r_set in randcodes:
 			if not "R" in r_set or algo in ["EG", "SMS", "CMT", "EGPLUS"]:
 				rowdata = []
@@ -364,13 +368,15 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 									else:
 										rowdata.append("\\cellcolor{blue!30}"+datatext)
 									
-				algosetsting += label+" &"+" & ".join(rowdata)+" \\\\"
+				algosetstring += label+" &"+" & ".join(rowdata)+" \\\\"
 				if not r_set == randcodes[-1]:
-					algosetsting += "\n"
-		texoutputstring += algosetsting+"\\hline \n"
+					algosetstring += "\n"
+		texoutputstring += algosetstring+"\\hline \n"
+		puretexstring += algosetstring+"\\hline \n"
 			
 	texoutputstring += "\\end{longtable}\n"
 	texoutputstring += "\\end{document}\n"
+	puretexstring += "\\end{tabular}\n"
 	
 	outputfilename = "table_cmp_"+graphclass+"_"+density_class+"_"+axis+"_"+type+"_"+values
 	if not filename_suffix == "":
@@ -383,5 +389,8 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 		
 	with open(tablesdir+"/"+outputfilename+".tex", "w") as tex_output:
 		tex_output.write(texoutputstring)
+		
+	with open(tablesdir+"/puretex_"+outputfilename+".tex", "w") as tex_output:
+		tex_output.write(puretexstring)
 		
 	return outputfilename

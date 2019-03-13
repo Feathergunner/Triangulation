@@ -97,8 +97,9 @@ class GraphGenerator:
 		Note that this algorithm differs significantly from the Erdös-Renyi random graph.
 		'''
 		#logging.info("=== construct_planar_random ===")
+				
+		m = int(p*n*(n-1)/2)
 		
-		m = int(p*n*(n-1))
 		if m > 3*n-6:
 			# number of edges is too large: no planar graph possible
 			raise TooManyEdgesException("Number of edges too large. No planar graph with these parameters can exist: n="+str(n)+", m="+str(m))
@@ -108,7 +109,7 @@ class GraphGenerator:
 
 		edges_to_add = {(i,j) for i in range(n) for j in range(i+1,n)}
 		
-		batch_size = 2#int(m/2)
+		batch_size = int(m/2)
 		number_failed_attempts = 0
 		while len(G.edges()) < m:
 			#logging.debug ("edges to add:")
