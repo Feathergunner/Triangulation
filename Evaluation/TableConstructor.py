@@ -232,6 +232,10 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 		options_for_d = [5]
 	else:
 		options_for_d = [-1]
+	if graphclass == "maxclique":
+		options_for_c = [4]
+	else:
+		options_for_c = [-1]
 
 	if options_for_n == None:
 		options_for_n = [20, 60, 100]
@@ -243,11 +247,6 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 	if options_for_relm == None:
 		options_for_relm = [1.5, 2.0, 2.5]
 		
-	if graphclass == "maxclique":
-		options_for_c = [4]
-	else:
-		options_for_c = [-1]
-
 	data = {}
 	for algo in algocodes:
 		data[algo] = {}
@@ -322,7 +321,7 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 								for c in options_for_c:
 									thisdatalist = data[algo][r_set][n][p][rel_m][d][c][density_class]
 									if axis == "TIME":
-										pterm = len([d for d in thisdatalist if d < 2])
+										pterm = len([d for d in thisdatalist if d < 2 and d > 0])
 									else:
 										pterm = len(thisdatalist)
 									if len(thisdatalist) > 0:
@@ -332,7 +331,8 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 											thisdata = np.var(thisdatalist)
 										elif values == "PTERM":
 											thisdata = pterm
-										if thisdata > 0:
+											
+										if thisdata >= 0:
 											if not values == "PTERM":
 												if thisdata >= 100:
 													datatext = formatstring_0.format(round(thisdata,0))
@@ -373,8 +373,8 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 	texoutputstring += "\\end{document}\n"
 	
 	outputfilename = "table_cmp_"+graphclass+"_"+density_class+"_"+axis+"_"+type+"_"+values
-	#if not outputfilenamesuffix == "":
-	#	outputfilename += "_"+outputfilenamesuffix
+	if not filename_suffix == "":
+		outputfilename += "_"+filename_suffix
 	#print (texoutputstring)
 	
 	tablesdir = "data/eval/random_"+graphclass+"/tables"
