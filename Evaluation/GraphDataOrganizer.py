@@ -91,6 +91,8 @@ def parse_graph_filename(filename):
 	return parameters
 
 def check_parameters(parameters):
+	print (parameters)
+
 	if not "class" in parameters or parameters["class"] not in gs.GRAPH_CLASSES:
 		raise ParameterMissingException("Missing parameters in initialization: class")
 	
@@ -262,7 +264,7 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 					logging.debug("Constructing graphs with parameters n: "+str(n)+", p: "+str(p)+", d: "+str(d)+", c: "+str(c))
 					
 					if threaded:
-						process = Process(target=construct_set_random_graph, args=({"params":params}))
+						process = Process(target=construct_set_random_graph, kwargs={"parameters":params})
 						threads.append(process)
 						process.start()
 						
@@ -285,11 +287,13 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 						params["deg_bound"] = d
 					if graphclass == "maxclique":
 						params["clique_bound"] = c
+					
+					print (params)
 						
 					logging.debug("Constructing sparse graphs with parameters n: "+str(n)+", rel_m "+str(rel_m)+", d: "+str(d)+", c: "+str(c))
 					
 					if threaded:
-						process = Process(target=construct_set_random_graph, args=(params))
+						process = Process(target=construct_set_random_graph, kwargs={"parameters":params})
 						threads.append(process)
 						process.start()
 						
