@@ -287,8 +287,6 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 						params["deg_bound"] = d
 					if graphclass == "maxclique":
 						params["clique_bound"] = c
-					
-					print (params)
 						
 					logging.debug("Constructing sparse graphs with parameters n: "+str(n)+", rel_m "+str(rel_m)+", d: "+str(d)+", c: "+str(c))
 					
