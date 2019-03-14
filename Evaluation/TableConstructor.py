@@ -353,9 +353,6 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 										datatext = "0"
 									else:
 										datatext = "N/A"
-										
-									if values == "PTERM":
-										datatext += "\%"
 									
 									if pterm == 0:
 										rowdata.append("\\cellcolor{red!30}"+datatext)
