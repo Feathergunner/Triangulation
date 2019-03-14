@@ -172,7 +172,7 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 										rowdata.append("\\cellcolor{red!30}"+datatext)
 									else:
 										rowdata.append("\\cellcolor{blue!30}"+datatext)
-								elif axis == "TIME" and mean >= 2:
+								elif axis == "TIME" and mean >= gs.TIMELIMIT:
 									rowdata.append("\\cellcolor{red!30}"+datatext)
 								else:
 									if axis == "OUTPUT" and (cmpmean < 0 or mean < 0.9*cmpmean):
@@ -325,7 +325,7 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 								for c in options_for_c:
 									thisdatalist = data[algo][r_set][n][p][rel_m][d][c][density_class]
 									if axis == "TIME":
-										pterm = len([d for d in thisdatalist if d < 2 and d > 0])
+										pterm = len([d for d in thisdatalist if d < gs.TIMELIMIT and d > 0])
 									else:
 										pterm = len(thisdatalist)
 									if len(thisdatalist) > 0:

@@ -89,6 +89,7 @@ def run_eval_all(forcenew=False):
 			if randomized:
 				for rep in gs.RANDOMIZED_REPETITIONS:
 					# run randomized experiments
+					# without preprocessing:
 					p = Process(
 						target=em.run_set_of_experiments,
 						args=(
@@ -104,6 +105,7 @@ def run_eval_all(forcenew=False):
 					)
 					threads.append(p)
 					p.start()
+					# with preprocessing:
 					p = Process(
 						target=em.run_set_of_experiments,
 						args=(
@@ -121,6 +123,7 @@ def run_eval_all(forcenew=False):
 					p.start()
 			else:
 				# run non-randomized experiments
+				# without preprocessing:
 				p = Process(
 					target=em.run_set_of_experiments,
 					args=(
@@ -136,6 +139,7 @@ def run_eval_all(forcenew=False):
 				)
 				threads.append(p)
 				p.start()
+				# with preprocessing:
 				p = Process(
 					target=em.run_set_of_experiments,
 					args=(

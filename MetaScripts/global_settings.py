@@ -2,11 +2,11 @@
 GRAPH_CLASSES = ["general", "planar", "maxdeg", "maxclique"]
 
 GRAPH_SIZES = [20, 40, 60, 80, 100]
-GRAPH_DENSITIY_P = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+GRAPH_DENSITIY_P = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 SPARSE_DENSITY_RELM = [1.5, 1.75, 2.0, 2.25, 2.5]
 
-BOUNDEDGRAPHS_DENSITY_P = [0.1, 0.2, 0.3, 0.4, 0.5]
+#BOUNDEDGRAPHS_DENSITY_P = [0.1, 0.2, 0.3, 0.4, 0.5]
 MAXDEGREE_SETTINGS = [3, 5, 10]
 MAXCLIQUE_SETTINGS = [3, 4, 5]
 
@@ -14,7 +14,7 @@ MAXCLIQUE_SETTINGS = [3, 4, 5]
 RANDOMIZED_REPETITIONS = [3, 5, 10]
 
 # experiment settings:
-TIMELIMIT = 2
+TIMELIMIT = 4
 MAX_NUM_THREADS = 10
 BASE_ALGO_CODES = ["EG", "EGPLUS", "SMS", "LexM", "MCSM", "CMT", "MT"]
 

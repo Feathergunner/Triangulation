@@ -130,8 +130,8 @@ def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m
 	#if p == None and rel_m == None:
 	#	raise gdo.ParameterMissingException("Missing parameters in initialization: p or rel_m")
 		
-	if graphclass == "planar" and density_class == "dense":
-		raise gdo.ParameterMissingException("Incompatible parameters: graphclass: planar and density_class: dense")
+	if density_class == "dense" and not graphclass == "general":
+		raise gdo.ParameterMissingException("Incompatible parameters: graphclass: not general and density_class: dense")
 		
 	if graphclass == "maxdeg" and d == None:
 		raise gdo.ParameterMissingException("Missing parameters in initialization: d")
@@ -154,10 +154,7 @@ def load_data(graphclass="general", density_class="dense", n=None, p=None, rel_m
 	
 	if density_class == "dense":
 		if p == None:
-			if graphclass == "general":
-				options_for_p = gs.GRAPH_DENSITIY_P
-			elif graphclass == "maxdeg" or graphclass == "maxclique":
-				options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
+			options_for_p = gs.GRAPH_DENSITIY_P
 		else:
 			options_for_p = [p]
 	else:

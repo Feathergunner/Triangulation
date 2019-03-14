@@ -244,12 +244,10 @@ def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, t
 	if graphclass == "general":
 		options_for_p = gs.GRAPH_DENSITIY_P
 	if graphclass == "maxdeg":
-		options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
 		options_for_d = gs.MAXDEGREE_SETTINGS
 	else:
 		options_for_d = [-1]
 	if graphclass == "maxclique":
-		options_for_p = gs.BOUNDEDGRAPHS_DENSITY_P
 		options_for_c = gs.MAXCLIQUE_SETTINGS
 	else:
 		options_for_c = [-1]	
