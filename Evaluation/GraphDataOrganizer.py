@@ -91,6 +91,10 @@ def parse_graph_filename(filename):
 	return parameters
 
 def check_parameters(parameters):
+	'''
+	Checks a parameter-dict for the method construct_set_random_graph below.
+	If required parameters are missing, an exception is raised.
+	'''
 	if not "class" in parameters or parameters["class"] not in gs.GRAPH_CLASSES:
 		raise ParameterMissingException("Missing parameters in initialization: class")
 	
@@ -168,6 +172,14 @@ def load_graphs_from_json(filename):
 	return list_of_graphs
 
 def construct_set_random_graph(parameters, force_new_data=False):
+	'''
+	Constructs random graphs for a parameterized subclass.
+	The graphs are stored in a single json file in data/eval/random_[graphclass]/input
+	
+	Args:
+		parameters : a dict containing all parameters of the graph class.
+		force_new_data : if False, existing files will not be overwritten.
+	'''	
 	check_parameters(parameters)
 		
 	graphclass = parameters["class"]
@@ -215,6 +227,17 @@ def construct_set_random_graph(parameters, force_new_data=False):
 		write_graphs_to_json(graphs, filepath, parameters)
 
 def construct_full_set_graphs(graphclass, number_of_graphs_per_subclass = 100, threaded=True):
+	'''
+	Constructs a full set of random graphs for one of the major graph classes
+	"general", "planar", "maxdeg", "maxclique"
+	using the parameters defined in global_settings.
+	The graphs of each subclass are stored in a single json file in data/eval/random_[graphclass]/input
+	
+	Args:
+		graphclass : the major graph class for which the set of graphs should be constructed
+		number_of_graphs_per_subclass : the size of each individual parameterized subclass.
+		threaded : if True, will use multithreading.
+	'''
 	logging.info("=== construct_full_set_raphs ===")
 	
 	options_for_p = []
