@@ -78,7 +78,7 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 
 	ax1.set_xlabel('Algorithm')
 	ax1.set_ylabel(ylabel)
-	
+		
 	bp = ax1.boxplot([data[key] for key in data], notch=0, sym='+', vert=1, whis=1.5)
 	plt.setp(bp['boxes'], color='black')
 	ax1.set_xticklabels(labels)
@@ -88,9 +88,9 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 	if savedir == None:
 		plt.show()
 	elif filename_suffix == None:
-		plt.savefig(savedir+"/performance_"+graph_set_id+"_algo_boxplots.png", dpi=gs.PLT_DPI)
+		plt.savefig(savedir+"/performance_"+setname+"_"+graph_set_id+"_algo_boxplots.png", dpi=gs.PLT_DPI)
 	else:
-		plt.savefig(savedir+"/performance_"+graph_set_id+"_"+filename_suffix+"_algo_boxplots.png", dpi=gs.PLT_DPI)
+		plt.savefig(savedir+"/performance_"+setname+"_"+graph_set_id+"_"+filename_suffix+"_algo_boxplots.png", dpi=gs.PLT_DPI)
 	plt.close()
 
 def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
@@ -185,9 +185,10 @@ def make_boxplots_total(setname, algos=None, axis="OUTPUT", type="ABSOLUTE"):
 				if algos == None or algo_key in algos:
 					if algo_key not in data_dict:
 						data_dict[algo_key] = []
-					#print (algo_key)
 					data_dict[algo_key] += database[algo_key]
-	#data = [data_dict[key] for key in data_dict]
+	
+	#print ([k for k in data_dict])
+	#print (data_dict["MT_X_X"])
 	
 	make_boxplot(data_dict, setname, '', ylabel=axis+" ("+type+")", savedir=outputdir, filename_suffix='total_'+axis+"_"+type)
 	
