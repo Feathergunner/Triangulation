@@ -93,7 +93,7 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 		plt.savefig(savedir+"/performance_"+setname+"_"+graph_set_id+"_"+filename_suffix+"_algo_boxplots.png", dpi=gs.PLT_DPI)
 	plt.close()
 
-def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
+def make_boxplot_set(setname, density_class, graph_set_id, axis="OUTPUT", type="ABSOLUTE", savedir=None):
 	'''
 	Wrapper method for the function above ("make_boxplot"). This method loads data and calls make_boxplots.
 
@@ -106,13 +106,12 @@ def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", save
 				("ABSOLUTE" or "RP")
 		savedir : specifies a directory where the produced plots are saved.
 	'''
-	#data = sm.load_data(graphclass=graphclass, density_class=density_class, n=n, p=p, rel_m=rel_m, d=d, c=c, algocode=algocode, randomized=randomized, rand_reptetions=rand_reptetions, reduced=reduced, axis="OUTPUT", keep_nulls=True, cutoff_at_timelimit=True)
 	
 	if type == "ABSOLUTE":
 		# initialize:
 		datadir = "data/eval/random_"+setname+"/results"
 		all_files_in_dir = os.listdir(datadir)
-		files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
+		files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file and density_class in file]
 		data = {}
 		files.sort()
 	
@@ -123,7 +122,7 @@ def make_boxplot_set(setname, graph_set_id, axis="OUTPUT", type="ABSOLUTE", save
 			data[algo] = sm.load_axis_data_from_file(filepath, axis, True, True)
 
 	elif type == "RP":
-		data = sm.compute_relative_performance_distribution(setname, graph_set_id, axis)
+		data = sm.compute_relative_performance_distribution_for_subclass(setname, density_class, graph_set_id, axis)
 		
 	filename_suffix = axis+"_"+type
 			
@@ -147,13 +146,14 @@ def make_boxplots_allsets(setname, axis="OUTPUT", type="ABSOLUTE"):
 	for graph_set_id in all_graph_set_ids:
 		make_boxplot_set(setname, graph_set_id, axis, type, outputdir)
 
-def make_boxplots_total(setname, algos=None, axis="OUTPUT", type="ABSOLUTE"):
+def make_boxplots_total(setname, density_class, algos=None, axis="OUTPUT", type="ABSOLUTE"):
 	'''
 	Constructs a boxplot-plot of algorithms
 	where each boxplot contains all experiment results of the whole major class of graphs
 	
 	args:
 		setname : the major graph class to plot
+		density_class : "sparse" or "dense"
 		algos : a list of algorithm-codes. If not None, only the specified algorithms will be considered.
 	'''
 	basedir = "data/eval/random_"+setname
@@ -180,7 +180,7 @@ def make_boxplots_total(setname, algos=None, axis="OUTPUT", type="ABSOLUTE"):
 	elif type == "RP":
 		for filename in os.listdir(graphdir):
 			graph_set_id = re.split(r'\.',filename)[0]
-			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis, algo_subset=algos)
+			database = sm.compute_relative_performance_distribution_for_subclass(setname, density_class, graph_set_id, axis, algo_subset=algos)
 			for algo_key in database:
 				if algos == None or algo_key in algos:
 					if algo_key not in data_dict:
@@ -192,7 +192,7 @@ def make_boxplots_total(setname, algos=None, axis="OUTPUT", type="ABSOLUTE"):
 	
 	make_boxplot(data_dict, setname, '', ylabel=axis+" ("+type+")", savedir=outputdir, filename_suffix='total_'+axis+"_"+type)
 	
-def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis="OUTPUT", type="ABSOLUTE", savedir=None, filename_suffix=None):
+def plot_performance_by_algorithm(setname, density_class, graph_set_id="ALL", algos=None, axis="OUTPUT", type="ABSOLUTE", savedir=None, filename_suffix=None):
 	'''
 	Construct a 2D-line-plot of the algorithms performance,
 	where all algorithms are on the x-axis and
@@ -201,6 +201,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis=
 	
 	args:
 		setname : the major graph class
+		density_class : the subclass
 		graph_set_id : specifies the subclass, or "ALL"
 		algos :  a list of algorithm-codes. If not None, only the specified algorithms will be considered.
 		axis : defines which axis of the experiment result data should be plotted 
@@ -224,7 +225,8 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis=
 	if graph_set_id == "ALL":
 		graph_set_filename_part = "total"
 		for filename in os.listdir(graphdir):
-			all_graph_set_ids.append(re.split(r'\.',filename)[0])
+			if density_class in filename:
+				all_graph_set_ids.append(re.split(r'\.',filename)[0])
 	else:
 		graph_set_filename_part = graph_set_id
 		all_graph_set_ids.append(graph_set_id)
@@ -247,7 +249,7 @@ def plot_performance_by_algorithm(setname, graph_set_id="ALL", algos=None, axis=
 				data[algo][graph_set_id] += np.mean(sm.load_axis_data_from_file(filepath, axis, True, True))
 	
 		elif type == "RP":
-			database = sm.compute_relative_performance_distribution(setname, graph_set_id, axis, algo_subset=algos)
+			database = sm.compute_relative_performance_distribution_for_subclass(setname, density_class, graph_set_id, axis, algo_subset=algos)
 			for algo in database:
 				if algo not in data:
 					data[algo] = {}
@@ -405,7 +407,16 @@ def make_performance_plots_all(setname, axis="OUTPUT", type="ABSOLUTE"):
 	for n in [20, 40, 60, 80, 100]:
 		plot_mean_performance_by_density(setname, n, axis, type, savedir=outputdir)
 
-def performance_plot_analyze_reduction(setname, algo, axis="OUTPUT"):
+def performance_plot_analyze_reduction(setname, density_class, algocodes=None, n=100, axis="OUTPUT"):
+	'''
+	print (setname)
+	print (density_class)
+	print (n)
+	print (axis)
+	'''
+	if algocodes == None:
+		algocodes = ["MT", "EG", "SMS", "CMT", "EGPLUS", "LexM", "MCSM"]
+		
 	basedir = "data/eval/random_"+setname
 	graphdir = basedir+"/input"
 	resultdir = basedir+"/results"
@@ -416,62 +427,96 @@ def performance_plot_analyze_reduction(setname, algo, axis="OUTPUT"):
 	filenames_reduced = {}
 	filenames_basic = {}
 	for filename in os.listdir(resultdir):
-		if "_"+algo+"_" in filename and not "_R" in filename and ".json" in filename:
+		if density_class in filename and "n"+str(n) in filename and not "_R" in filename and ".json" in filename:
 			filenameparts = re.split('_', filename)
-			n = -1
-			p = -1
-			for part in filenameparts:
-				if part[0] == "n":
-					n = int(part[1:])
-				elif part[0] == "p":
-					p = float(re.split('\.',part)[0][2:])/10
-			if "_B_" in filename:
-				if n not in filenames_basic:
-					filenames_basic[n] = {}
-				if p not in filenames_basic[n]:
-					filenames_basic[n][p] = []
-				filenames_basic[n][p].append(filename)
-			else:
-				if n not in filenames_reduced:
-					filenames_reduced[n] = {}
-				if p not in filenames_reduced[n]:
-					filenames_reduced[n][p] = []
-				filenames_reduced[n][p].append(filename)
+			this_n = -1
+			this_p = -1
+			algo = filenameparts[2]
+			if algo in algocodes:
+				if algo not in filenames_basic:
+					filenames_basic[algo] = {}
+					filenames_reduced[algo] = {}
+				for part in filenameparts:
+					if part[0] == "n":
+						this_n = int(part[1:])
+					elif part[0] == "p":
+						this_p = float(re.split('\.',part)[0][2:])/100
+					elif part[:4] == "relm":
+						this_p = float(re.split('\.',part)[0][4:])/10
+						if this_p > 10:
+							this_p /= 10
+							
+				if "_B_" in filename:
+					if this_n not in filenames_basic[algo]:
+						filenames_basic[algo][this_n] = {}
+					if this_p not in filenames_basic[algo][this_n]:
+						filenames_basic[algo][this_n][this_p] = []
+					filenames_basic[algo][this_n][this_p].append(filename)
+				else:
+					if this_n not in filenames_reduced[algo]:
+						filenames_reduced[algo][this_n] = {}
+					if this_p not in filenames_reduced[algo][this_n]:
+						filenames_reduced[algo][this_n][this_p] = []
+					filenames_reduced[algo][this_n][this_p].append(filename)
 	
 	database_basic = {}
 	database_reduced = {}
-	for n in [20, 40, 60, 80, 100]:
-		
-		database_basic[n] = {}
-		database_reduced[n] = {}
-		
-		for p in filenames_basic[n]:
-			database_basic[n][p] = []
-			for file in filenames_basic[n][p]:
-				evaldata = sm.load_evaldata_from_json(basedir, file)
-				if axis == "OUTPUT":
-					database_basic[n][p].append([data.output for data in evaldata if data.output >= 0])
-				elif axis == "TIME":
-					database_basic[n][p].append([data.running_time for data in evaldata if data.output >= 0])
-					
-		for p in filenames_reduced[n]:
-			database_reduced[n][p] = []
-			for file in filenames_reduced[n][p]:
-				evaldata = sm.load_evaldata_from_json(basedir, file)
-				if axis == "OUTPUT":
-					database_reduced[n][p].append([data.output for data in evaldata if data.output >= 0])
-				elif axis == "TIME":
-					database_reduced[n][p].append([data.running_time for data in evaldata if data.output >= 0])
+	legenditems = {}
 	
-	#print (database_reduced)
 	fig, ax = plt.subplots()
-	for n in [20, 40, 60, 80, 100]:
-		linedata_r = [np.mean(database_reduced[n][p][0]) for p in database_reduced[n]]
-		linedata_b = [np.mean(database_basic[n][p][0]) for p in database_basic[n]]
-		xvalues = [p for p in database_reduced[n]]
-		linecolor = gs.PLT_GRAPHSIZE_COLORS["n"+str(n)]
-		line = ax.plot(xvalues, linedata_r, label=str(n), linewidth=0.5, linestyle='-', color=linecolor)
-		line = ax.plot(xvalues, linedata_b, label=str(n), linewidth=0.5, linestyle='--', color=linecolor)
 	
-	plt.show()
+	for algo in filenames_basic:
+		database_basic[algo] = {}
+		if n in filenames_basic[algo]:
+			for p in filenames_basic[algo][n]:
+				database_basic[algo][p] = []
+				for file in filenames_basic[algo][n][p]:
+					evaldata = sm.load_evaldata_from_json(basedir, file)
+					if axis == "OUTPUT":
+						database_basic[algo][p].append([data.output for data in evaldata if data.output >= 0])
+					elif axis == "TIME":
+						database_basic[algo][p].append([data.running_time for data in evaldata if data.output >= 0])
+		legenditems[algo+"_X"] = mlines.Line2D([],[], linestyle='--', color=gs.PLT_ALGO_COLORS[algo], label=algo+" (basic)") 
+		linedata_b = [np.mean(database_basic[algo][p][0]) for p in database_basic[algo]]
+		xvalues_b = [float(p) for p in database_basic[algo]]
+		linecolor = gs.PLT_ALGO_COLORS[algo]
+		line = ax.plot(xvalues_b, linedata_b, label=str(n), linewidth=0.5, linestyle='--', color=linecolor)
+		
+					
+	for algo in filenames_reduced:
+		database_reduced[algo] = {}
+		if n in filenames_reduced[algo]:
+			for p in filenames_reduced[algo][n]:
+				database_reduced[algo][p] = []
+				for file in filenames_reduced[algo][n][p]:
+					evaldata = sm.load_evaldata_from_json(basedir, file)
+					if axis == "OUTPUT":
+						database_reduced[algo][p].append([data.output for data in evaldata if data.output >= 0])
+					elif axis == "TIME":
+						database_reduced[algo][p].append([data.running_time for data in evaldata if data.output >= 0])
+		legenditems[algo+"_B"] = mlines.Line2D([],[], linestyle='-', color=gs.PLT_ALGO_COLORS[algo], label=algo+" (reduced)") 
+		linedata_r = [np.mean(database_reduced[algo][p][0]) for p in database_reduced[algo]]
+		xvalues_r = [float(p) for p in database_reduced[algo]]
+		linecolor = gs.PLT_ALGO_COLORS[algo]
+		line = ax.plot(xvalues_r, linedata_r, label=str(n), linewidth=0.5, linestyle='-', color=linecolor)
+	
+	xlabel = "density"
+	if density_class == "dense":
+		xlabel += " (edge-probability p)"
+	else:
+		xlabel += " (relative edge-probability m/n)"
+	ax.set_xlabel(xlabel)
+	if axis == "TIME":
+		ax.set_ylabel("Average runtime (in sec.)")
+	else:
+		ax.set_ylabel("Average size of fill-in")
+		
+	ax.xaxis.set_ticks(xvalues_r)
+	#ax.set_xticklabels(xvalues_r)
+	
+	legend = ax.legend(handles=[legenditems[a] for a in legenditems], bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+	
+	filename = outputdir+"/cmp_reduction_"+setname+"_"+density_class+"_"+axis+"_n"+str(n)+".png"
+	plt.savefig(filename, dpi=gs.PLT_DPI, bbox_extra_artists=(legend,), bbox_inches='tight')
 	plt.close()
+	
