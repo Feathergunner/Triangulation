@@ -247,15 +247,20 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 	if options_for_relm == None:
 		options_for_relm = [1.5, 2.0, 2.5]
 		
+	if density_class == "dense":
+		reduced = False
+	else:
+		reduced = True
+		
 	data = {}
 	for algo in algocodes:
 		data[algo] = {}
 		for r in randcodes:
 			if r == "D":
-				data[algo][r] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, keep_nulls=False, cutoff_at_timelimit=True)
+				data[algo][r] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=reduced, keep_nulls=False, cutoff_at_timelimit=True)
 			elif algo in ["EG", "SMS", "CMT", "EGPLUS"]:
 				rr = int(r[1:])
-				data[algo][r] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=True, keep_nulls=False, randomized=True, rand_repetitions=rr, cutoff_at_timelimit=True)
+				data[algo][r] = sm.load_data(graphclass, density_class, d=5, c=4, algocode=algo, axis=axis, reduced=reduced, keep_nulls=False, randomized=True, rand_repetitions=rr, cutoff_at_timelimit=True)
 
 	#print ([algo+": "+r for r in data[algo] for algo in data])
 	#print (data[algocodes[0]][randcodes[0]])
