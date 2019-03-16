@@ -334,19 +334,17 @@ def compute_relative_performance_distribution(data, negative_is_invalid=True):
 		
 	Return:
 		rpd : a dict {algorithm : relative performance distribution}
-	'''
-	
-	
+	'''	
 	if not isinstance(data, dict):
 		## TODO : raise exception
 		return
 	
 	rpd = {algo : [] for algo in data}
 	algos = [algo for algo in data]
-	
-	number_of_results = len(dict[algos[0]])
+		
+	number_of_results = len(data[algos[0]])
 	for a in algos:
-		if not len(dict[a]) == number_of_results:
+		if not len(data[a]) == number_of_results:
 			## TODO : raise exception
 			return rpd
 			
@@ -403,35 +401,14 @@ def compute_relative_performance_distribution_for_subclass(setname, density_clas
 		filepath = datadir+"/"+algofile
 		algo = get_algo_name_from_filename(algofile)
 		if algo_subset == None or algo in algo_subset:
+			#algo_basecode = re.split('_', algo)[0]
 			data[algo] = load_axis_data_from_file(filepath, axis, True, True)
-	
-	return compute_relative_performance_distribution(data)
-	'''
-	# compute average_relative_performance:
-	rpd = {algo : [] for algo in data}
-	algos = [algo for algo in data]
-
-	for i in range(number_of_results):
-		results = {}
-		for algo in data:
-			results[algo] = data[algo][i]
-			if results[algo] < 0:
-				results[algo] += 1000000
-		algoorder = sorted(algos, key=lambda a: results[a])
-		j = 1
-		for a_i in range(len(algos)):
-			rpd[algoorder[a_i]].append(j)
-			if a_i < len(algos)-1 and results[algoorder[a_i+1]] > results[algoorder[a_i]]:
-				j += 1
-		
-		for algo in algos:
-			if not j == 1:
-				rpd[algo][i] = 1+((len(algos)-1)*float(rpd[algo][i]-1)/(j-1))
-			else:
-				rpd[algo][i] = len(algos)
-				
-	return rpd
-	'''
+			
+	#print (setname+" - "+density_class+" - "+graph_set_id)
+	if len(data.keys()) > 0:
+		return compute_relative_performance_distribution(data)
+	else:
+		return {}
 
 def compute_mean_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 	# initialize:
