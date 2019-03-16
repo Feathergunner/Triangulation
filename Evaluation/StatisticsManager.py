@@ -23,7 +23,7 @@ from Evaluation import ExperimentManager as em
 from MetaScripts import meta
 from MetaScripts import global_settings as gs
 
-def load_axis_data_from_file(filename, axis, keep_nulls=False, cutoff_at_timelimit=False):
+def load_axis_data_from_file(filename, axis, keep_nulls=False, cutoff_at_timelimit=True):
 	'''
 	loads evaluation data from a file
 
@@ -322,20 +322,71 @@ def load_stats_from_file(datadir):
 
 	return data
 	
-def compute_relative_performance_distribution(setname, graph_set_id, axis="OUTPUT", algo_subset=None):
+def compute_relative_performance_distribution(data, negative_is_invalid=True):
+	'''
+	computes relative performance distribution for a set of algorithms on a set of experiments
+	
+	Args:
+		data : a dict {algorithm : results}
+			where dict[algorithm] is a list of numeric values, and has the same length for all algorithms
+		negative_is_invales : if True, negative values in the result data are interpreted as invalid results
+			and get set to infinity when computing the relative performance.
+		
+	Return:
+		rpd : a dict {algorithm : relative performance distribution}
+	'''
+	
+	
+	if not isinstance(data, dict):
+		## TODO : raise exception
+		return
+	
+	rpd = {algo : [] for algo in data}
+	algos = [algo for algo in data]
+	
+	number_of_results = len(dict[algos[0]])
+	for a in algos:
+		if not len(dict[a]) == number_of_results:
+			## TODO : raise exception
+			return rpd
+			
+	for i in range(number_of_results):
+		results = {}
+		# compute relative performance:
+		for algo in algos:
+			results[algo] = data[algo][i]
+			if negative_is_invalid and results[algo] < 0:
+				results[algo] = float("inf")
+		algoorder = sorted(algos, key=lambda a: results[a])
+		j = 1
+		for a_i in range(len(algos)):
+			rpd[algoorder[a_i]].append(j)
+			if a_i < len(algos)-1 and results[algoorder[a_i+1]] > results[algoorder[a_i]]:
+				j += 1
+		
+		# scale relative performance:
+		for algo in algos:
+			if not j == 1:
+				rpd[algo][i] = 1+((len(algos)-1)*float(rpd[algo][i]-1)/(j-1))
+			else:
+				rpd[algo][i] = len(algos)
+				
+	return rpd	
+
+def compute_relative_performance_distribution_for_subclass(setname, density_class, graph_set_id, axis="OUTPUT", algo_subset=None):
 	'''
 	for a set of experiments defined by a setname and a graph_set_id,
 	this method computes the relative performance of all algorithms individually
 	for each graph of the dataset.
 	That is, for each graph of the dataset the algorithms get ordered by performance.
 
-	args:
+	Args:
 		setname : the name of the major graph class (ie. "general", "planar", ...)
 		graph_set_id : the id of the subclass of graphs
 		axis : the axis of evaluation output that should be used for evaluation, ie "OUTPUT" or "TIME"
 		algo_subset : if not None, only algorithms contained in this subset will be considered
 
-	return:
+	Return:
 		rpd : a dict that maps algorithms to lists. For each algorithm a list is constructed that contains the
 		relative performance on each input graph.
 		That is, if "ALGO_A" performed second best on the 15th test graph, then rp["ALGO_A"][14] = 2
@@ -343,20 +394,19 @@ def compute_relative_performance_distribution(setname, graph_set_id, axis="OUTPU
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
 	all_files_in_dir = os.listdir(datadir)
-	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
+	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file and density_class in file]
 	data = {}
 	files.sort()
-	number_of_results = 0
 
 	# load data:
 	for algofile in files:
 		filepath = datadir+"/"+algofile
 		algo = get_algo_name_from_filename(algofile)
 		if algo_subset == None or algo in algo_subset:
-			data[algo] = load_axis_data_from_file(filepath, axis, True)
-			if number_of_results == 0:
-				number_of_results = len(data[algo])
-
+			data[algo] = load_axis_data_from_file(filepath, axis, True, True)
+	
+	return compute_relative_performance_distribution(data)
+	'''
 	# compute average_relative_performance:
 	rpd = {algo : [] for algo in data}
 	algos = [algo for algo in data]
@@ -380,8 +430,8 @@ def compute_relative_performance_distribution(setname, graph_set_id, axis="OUTPU
 			else:
 				rpd[algo][i] = len(algos)
 				
-	#rpr = {algo : [x/max(rpd[algo]) for x in rpd[algo]] for algo in rpd}
 	return rpd
+	'''
 
 def compute_mean_relative_performance(setname, graph_set_id, axis="OUTPUT"):
 	# initialize:
