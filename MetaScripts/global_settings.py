@@ -38,3 +38,6 @@ PLT_GRAPHSIZE_COLORS = {
 }
 
 PLT_DPI = 500
+
+# misc:
+EASTER_EGG = "{\\tiny \\color{white} BATMAN!}"

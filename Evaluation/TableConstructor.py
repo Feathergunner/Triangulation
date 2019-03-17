@@ -127,7 +127,7 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 	else:
 		options_for_p = [-1]
 		options_for_relm = [1.5, 2.0, 2.5]
-		tabulartitleline_2 = "$\\frac{m}{n}$ & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 \\\\ \\hline \\hline \n"
+		tabulartitleline_2 = "$\\ ^m/_n$ & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 & 1.5 & 2.0 & 2.5 \\\\ \\hline \\hline \n"
 	texoutputstring += tabulartitleline_2
 	
 	options_for_n = [20, 60, 100]
@@ -241,9 +241,9 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 		options_for_n = [20, 60, 100]
 	if options_for_p == None:
 		if graphclass == "general":
-			options_for_p = [0.1, 0.5, 0.8]
+			options_for_p = [0.1, 0.5, 0.9]
 		else:
-			options_for_p = [0.1, 0.5]
+			options_for_p = []
 	if options_for_relm == None:
 		options_for_relm = [1.5, 2.0, 2.5]
 		
@@ -276,7 +276,7 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 				tabulardefline += "c"
 			tabulardefline += "|"
 		tabulardefline += "}\n"
-		tabulartitleline_1 = "n"
+		tabulartitleline_1 = "~n"
 		for n in options_for_n:
 			tabulartitleline_1 += " & \multicolumn{"+str(len(options_for_p))+"}{c|}{"+str(n)+"}"
 		tabulartitleline_1 += " \\\\ \n"
@@ -287,7 +287,7 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 				tabulardefline += "c"
 			tabulardefline += "|"
 		tabulardefline += "}\n"
-		tabulartitleline_1 = "n"
+		tabulartitleline_1 = "~n"
 		for n in options_for_n:
 			tabulartitleline_1 += " & \multicolumn{"+str(len(options_for_relm))+"}{c|}{"+str(n)+"}"
 		tabulartitleline_1 += " \\\\ \n"
@@ -299,14 +299,14 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 	tabulartitleline_2 = ""
 	if density_class == "dense":
 		options_for_relm = [-1]
-		tabulartitleline_2 = "p"
+		tabulartitleline_2 = "~p"
 		for n in options_for_n:
 			for p in options_for_p:
 				tabulartitleline_2 += " & "+str(p)
 		tabulartitleline_2 += " \\\\ \\hline \\hline \n"
 	else:
 		options_for_p = [-1]
-		tabulartitleline_2 = "$\\frac{m}{n}$"
+		tabulartitleline_2 = "$\\ ^m/_n$"
 		for n in options_for_n:
 			for rm in options_for_relm:
 				tabulartitleline_2 += " & "+str(rm)
@@ -323,6 +323,8 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 			if not "R" in r_set or algo in ["EG", "SMS", "CMT", "EGPLUS"]:
 				rowdata = []
 				label = algo+" "+r_set
+				if algo == "MT" and not values == "PTERM":
+					label += gs.EASTER_EGG
 				for n in options_for_n:
 					for p in options_for_p:
 						for rel_m in options_for_relm:
@@ -333,7 +335,7 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 										pterm = len([d for d in thisdatalist if d < gs.TIMELIMIT and d > 0])
 									else:
 										pterm = len(thisdatalist)
-									if len(thisdatalist) > 0:
+									if pterm > 0:
 										if values == "MEAN":
 											thisdata = np.mean(thisdatalist)
 										elif values == "VAR":

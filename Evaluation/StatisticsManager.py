@@ -380,6 +380,7 @@ def compute_relative_performance_distribution_for_subclass(setname, density_clas
 
 	Args:
 		setname : the name of the major graph class (ie. "general", "planar", ...)
+		density_class : the density_class. If this is set to None, all density settings will be considered.
 		graph_set_id : the id of the subclass of graphs
 		axis : the axis of evaluation output that should be used for evaluation, ie "OUTPUT" or "TIME"
 		algo_subset : if not None, only algorithms contained in this subset will be considered
@@ -392,7 +393,11 @@ def compute_relative_performance_distribution_for_subclass(setname, density_clas
 	# initialize:
 	datadir = "data/eval/random_"+setname+"/results"
 	all_files_in_dir = os.listdir(datadir)
-	files = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file and density_class in file]
+	files_all = [file for file in all_files_in_dir if ".json" in file and graph_set_id in file]
+	if not density_class == None:
+		files = [file for file in files_all if density_class in file]
+	else:
+		files = files_all
 	data = {}
 	files.sort()
 

@@ -124,7 +124,7 @@ def make_boxplot_set(setname, density_class, graph_set_id, axis="OUTPUT", type="
 	elif type == "RP":
 		data = sm.compute_relative_performance_distribution_for_subclass(setname, density_class, graph_set_id, axis)
 		
-	filename_suffix = axis+"_"+type
+	filename_suffix = axis+"_"+type+"_"+density_class
 			
 	make_boxplot(data, setname, graph_set_id, axis+" ("+type+")", savedir, filename_suffix)
 
@@ -146,7 +146,7 @@ def make_boxplots_allsets(setname, axis="OUTPUT", type="ABSOLUTE"):
 	for graph_set_id in all_graph_set_ids:
 		make_boxplot_set(setname, graph_set_id, axis, type, outputdir)
 
-def make_boxplots_total(setname, density_class, algos=None, axis="OUTPUT", type="ABSOLUTE"):
+def make_boxplots_total(setname, density_class=None, algos=None, axis="OUTPUT", type="ABSOLUTE"):
 	'''
 	Constructs a boxplot-plot of algorithms
 	where each boxplot contains all experiment results of the whole major class of graphs
@@ -190,7 +190,10 @@ def make_boxplots_total(setname, density_class, algos=None, axis="OUTPUT", type=
 	#print ([k for k in data_dict])
 	#print (data_dict["MT_X_X"])
 	
-	make_boxplot(data_dict, setname, '', ylabel=axis+" ("+type+")", savedir=outputdir, filename_suffix='total_'+axis+"_"+type)
+	filename_suffix = 'total_'+axis+"_"+type
+	if not density_class == None:
+		filename_suffix += "_"+density_class
+	make_boxplot(data_dict, setname, '', ylabel=axis+" ("+type+")", savedir=outputdir, filename_suffix=filename_suffix)
 	
 def plot_performance_by_algorithm(setname, density_class, graph_set_id="ALL", algos=None, axis="OUTPUT", type="ABSOLUTE", savedir=None, filename_suffix=None):
 	'''
