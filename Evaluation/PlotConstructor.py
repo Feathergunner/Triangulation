@@ -418,7 +418,7 @@ def performance_plot_analyze_reduction(setname, density_class, algocodes=None, n
 	print (axis)
 	'''
 	if algocodes == None:
-		algocodes = ["MT", "EG", "SMS", "CMT", "EGPLUS", "LexM", "MCSM"]
+		algocodes = ["EG", "SMS", "CMT", "EGPLUS", "LexM", "MCSM"]
 		
 	basedir = "data/eval/random_"+setname
 	graphdir = basedir+"/input"
@@ -483,7 +483,7 @@ def performance_plot_analyze_reduction(setname, density_class, algocodes=None, n
 		linedata_b = [np.mean(database_basic[algo][p][0]) for p in database_basic[algo]]
 		xvalues_b = [float(p) for p in database_basic[algo]]
 		linecolor = gs.PLT_ALGO_COLORS[algo]
-		line = ax.plot(xvalues_b, linedata_b, label=str(n), linewidth=0.5, linestyle='--', color=linecolor)
+		line = ax.plot(xvalues_b, linedata_b, label=str(n), linewidth=1, linestyle='--', color=linecolor)
 		
 					
 	for algo in filenames_reduced:
@@ -501,13 +501,13 @@ def performance_plot_analyze_reduction(setname, density_class, algocodes=None, n
 		linedata_r = [np.mean(database_reduced[algo][p][0]) for p in database_reduced[algo]]
 		xvalues_r = [float(p) for p in database_reduced[algo]]
 		linecolor = gs.PLT_ALGO_COLORS[algo]
-		line = ax.plot(xvalues_r, linedata_r, label=str(n), linewidth=0.5, linestyle='-', color=linecolor)
+		line = ax.plot(xvalues_r, linedata_r, label=str(n), linewidth=1, linestyle='-', color=linecolor)
 	
 	xlabel = "density"
 	if density_class == "dense":
 		xlabel += " (edge-probability p)"
 	else:
-		xlabel += " (relative edge-probability m/n)"
+		xlabel += " (relative amount of edges (m/n))"
 	ax.set_xlabel(xlabel)
 	if axis == "TIME":
 		ax.set_ylabel("Average runtime (in sec.)")

@@ -220,7 +220,7 @@ def construct_table_compare_randomized(graphclass, density_class, outputfilename
 		tex_output.write(texoutputstring)
 	return outputfilename
 
-def construct_table_compare(graphclass, density_class, algocodes=None, randcodes=None, options_for_n=None, options_for_p=None, options_for_relm=None, filename_suffix="", axis="OUTPUT", type="ABSOLUTE", values="MEAN"):
+def construct_table_compare(graphclass, density_class, algocodes=None, randcodes=None, options_for_n=None, options_for_p=None, options_for_relm=None, filename_suffix="", axis="OUTPUT", type="ABSOLUTE", values="MEAN", colormode="PTERM", min_pterm=0):
 	'''
 	General method to construct tables to compare and evaluate algorithm output
 	'''
@@ -251,6 +251,15 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 		reduced = False
 	else:
 		reduced = True
+		
+	if "CMP" in colormode:
+		color_cmp_key = re.split('_', colormode)[1]
+		if not color_cmp_key in gs.BASE_ALGO_CODES:
+			colormode = "NONE"
+		else:
+			colormode = "CMP"
+	elif not colormode == "PTERM":
+		colormode = "NONE"
 		
 	data = {}
 	for algo in algocodes:
@@ -331,11 +340,23 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 							for d in options_for_d:
 								for c in options_for_c:
 									thisdatalist = data[algo][r_set][n][p][rel_m][d][c][density_class]
+									if colormode == "CMP":
+										cmpdatalist = data[color_cmp_key]["D"][n][p][rel_m][d][c][density_class]
 									if axis == "TIME":
 										pterm = len([d for d in thisdatalist if d < gs.TIMELIMIT and d > 0])
+										if colormode == "CMP":
+											if len([d for d in cmpdatalist if d < gs.TIMELIMIT and d > 0]) > 0:
+												cmpmean = np.mean(cmpdatalist)
+											else:
+												cmpmean = -1
 									else:
 										pterm = len(thisdatalist)
-									if pterm > 0:
+										if colormode == "CMP":
+											if len(cmpdatalist) > 0:
+												cmpmean = np.mean(cmpdatalist)
+											else:
+												cmpmean = -1
+									if pterm > min_pterm:
 										if values == "MEAN":
 											thisdata = np.mean(thisdatalist)
 										elif values == "VAR":
@@ -361,16 +382,35 @@ def construct_table_compare(graphclass, density_class, algocodes=None, randcodes
 									else:
 										datatext = "N/A"
 									
-									if pterm == 0:
-										rowdata.append("\\cellcolor{red!30}"+datatext)
-									elif pterm < 50:
-										rowdata.append("\\cellcolor{orange!30}"+datatext)
-									elif pterm < 80:
-										rowdata.append("\\cellcolor{yellow!30}"+datatext)
-									elif pterm < 100:
-										rowdata.append("\\cellcolor{green!30}"+datatext)
-									else:
-										rowdata.append("\\cellcolor{blue!30}"+datatext)
+									colorstring = ""
+									if colormode == "PTERM":
+										if pterm == 0:
+											colorstring = "\\cellcolor{red!30}"
+										elif pterm < 50:
+											colorstring = "\\cellcolor{orange!30}"
+										elif pterm < 80:
+											colorstring = "\\cellcolor{yellow!30}"
+										elif pterm < 100:
+											colorstring = "\\cellcolor{green!30}"
+										else:
+											colorstring = "\\cellcolor{blue!30}"
+									elif colormode == "CMP" and not algo == color_cmp_key:
+										if datatext == "N/A":
+											if cmpmean > 0:
+												colorstring = "\\cellcolor{red!30}"
+											else:
+												colorstring = "\\cellcolor{blue!30}"
+										else:
+											if axis == "OUTPUT" and (cmpmean < 0 or thisdata < 0.9*cmpmean):
+												colorstring = "\\cellcolor{blue!30}"
+											elif thisdata < cmpmean:
+												colorstring = "\\cellcolor{green!30}"
+											elif axis == "OUTPUT" and thisdata < 1.1*cmpmean:
+												colorstring = "\\cellcolor{yellow!30}"
+											else:
+												colorstring = "\\cellcolor{red!30}"
+											
+									rowdata.append(colorstring+datatext)
 									
 				algosetstring += label+" &"+" & ".join(rowdata)+" \\\\"
 				if not r_set == randcodes[-1]:
