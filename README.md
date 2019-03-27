@@ -16,7 +16,7 @@ Check out the jupyter notebook [TriangulationDemo](TriangulationDemo.ipynb).
 - CMT.py: Create a minimal triangulation with the Clique Minimal Triangulation algorithm.
 - EG.py: Create an arbitrary triangulation with the elimination game algorithm. Also contains a randomized version, and also a combined algorithm that minimizes a triangulation by EG with CMT.
 - LEX_M.py: Create a minimal triangulation with the algorithm LEX-M. Also contains a randomized version.
-- MSC_M.py: Create a minimal triangulation with the algorithm MCS-M. Also contains a randomized version.
+- MCS_M.py: Create a minimal triangulation with the algorithm MCS-M. Also contains a randomized version.
 - SMS.py: Create a minimal triangulation by saturating all minimal separators. Also contains a randomized version.
 #### Algorithms with exponential complexity:
 - MT.py: Create a minimum triangulation by checking all subsets of possible chord-edges.
