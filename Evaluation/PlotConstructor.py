@@ -78,8 +78,12 @@ def make_boxplot(data, setname, graph_set_id, ylabel, savedir=None, filename_suf
 
 	ax1.set_xlabel('Algorithm')
 	ax1.set_ylabel(ylabel)
+	
+	if len(data.keys()) == 0:
+		print ("Error! No data!")
+		return
 		
-	bp = ax1.boxplot([data[key] for key in data], notch=0, sym='+', vert=1, whis=1.5)
+	bp = ax1.boxplot([data[key] for key in data], notch=0, sym='+', vert=1, whis=[5, 95])
 	plt.setp(bp['boxes'], color='black')
 	ax1.set_xticklabels(labels)
 	for tick in ax1.get_xticklabels():

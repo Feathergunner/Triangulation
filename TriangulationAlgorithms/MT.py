@@ -54,7 +54,7 @@ class Algorithm_MinimumTriangulation(ta.TriangulationAlgorithm):
 		# return first set of edges that makes self.G chordal. this is a minimum triangulation.
 		k = 1
 		found_minimum = False
-		print (self.chordedge_candidates)
+		#print (self.chordedge_candidates)
 		while not found_minimum and k < size_minimal:
 			# check timeout:
 			if self.timeout > 0 and time.time() > self.timeout:
