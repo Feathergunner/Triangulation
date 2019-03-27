@@ -22,9 +22,9 @@ from Evaluation import TableConstructor as tc
 from TriangulationAlgorithms import LEX_M
 from TriangulationAlgorithms import MCS_M
 from TriangulationAlgorithms import MT
-from TriangulationAlgorithms import MTA
+#from TriangulationAlgorithms import MTA
 from TriangulationAlgorithms import EG
-from TriangulationAlgorithms import RAMT
+#from TriangulationAlgorithms import RAMT
 from TriangulationAlgorithms import SMS
 from TriangulationAlgorithms import CMT
 
@@ -36,8 +36,6 @@ ALGORITHMS = {
 	"MCSM"		: MCS_M.triangulate_MCSM,
 	"MCSM_R"	: MCS_M.triangulate_MCSM,
 	"MT"		: MT.triangulate_MT,
-	"MTA"		: MTA.triangulate_MTA, 
-	"MT_R"		: RAMT.triangulate_RAMT, 
 	"SMS"		: SMS.triangulate_SMS,
 	"SMS_R"		: SMS.triangulate_SMS,
 	"CMT"		: CMT.triangulate_CMT,
@@ -166,6 +164,14 @@ def run_eval_all(forcenew=False):
 def run_build_all(forcenew=False):
 	for set in gs.GRAPH_CLASSES:
 		gdo.construct_full_set_graphs(set)
+		
+def printhelp():
+	print()
+	print("This is a script to automatically construct a set of random graphs or run a set of experiments.")
+	print()
+	print("Basic Usage:")
+	print("\t mode=buildall : builds a set of random graphs using the specifications in global_settings.py")
+	print("\t mode=evalall : evaluates all algorithms (with additional parameters as specified in global_settings.py) on all existing graphs")
 
 if __name__ == "__main__":
 	
@@ -180,7 +186,7 @@ if __name__ == "__main__":
 	timelimit = -1
 	forcenew = False
 	
-	for arg in sys.argv[1:]:
+	for arg in sys.argv[1:]:			
 		arg_data = re.split(r'=', arg)
 		if arg_data[0] == "mode":
 			if arg_data[1] in VALID_MODES:
@@ -237,6 +243,7 @@ if __name__ == "__main__":
 		
 	elif (mode == "undefined" or dataset == "undefined" or (mode == "eval" and algo_code == None)):
 		print ("Error! Missing parameters!")
+		printhelp()
 		
 	elif mode == "build":
 		gdo.construct_full_set_graphs(dataset, threaded=threaded)
