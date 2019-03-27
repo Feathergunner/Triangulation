@@ -99,7 +99,7 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 			G : a graph
 			F : a set of edges, s.t. G + F is chordal
 			randomized : if set to True, get_removeable_edge is randomized
-			T : a pre-initialized database of removeable edges
+			T : a pre-initialized database of removeable edges. If G + F is not a full graph, it is required to specify T!
 			
 		Returns:
 			F_prime : a subset of F, s.t. G + F_prime is minimal chordal
