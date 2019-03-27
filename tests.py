@@ -19,8 +19,6 @@ from TriangulationAlgorithms import LEX_M
 from TriangulationAlgorithms import MCS_M
 from TriangulationAlgorithms import CMT
 from TriangulationAlgorithms import MT
-from TriangulationAlgorithms import MTA
-from TriangulationAlgorithms import RAMT
 
 log_format = ('[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')
 logging.basicConfig(
@@ -59,6 +57,7 @@ logging.info(GRAPH_TEST)
 NUM_NODES = 50
 PROB_EDGES = 0.3
 NUM_EDGES_PLANAR = int(1.5 * NUM_NODES)
+PROB_EDGES_PLANAR = float(2*NUM_EDGES_PLANAR)/(NUM_NODES*(NUM_NODES-1))
 MAX_DEGREE = 4
 MAX_CLIQUE_SIZE = 4
 logging.info("Parameters for graph construction:")
@@ -111,7 +110,7 @@ if DO_TEST_GGEN:
 	logging.info("===== TEST PLANAR RANDOM GRAPH =====")
 	print("TEST PLANAR RANDOM GRAPH")
 	try:
-		planar_random = gg.construct_planar_random(NUM_NODES, NUM_EDGES_PLANAR)
+		planar_random = gg.construct_planar_random(NUM_NODES, PROB_EDGES_PLANAR)
 		logging.debug("Constructed graph:")
 		logging.debug("number of nodes: "+str(len(planar_random.nodes())))
 		logging.debug("number of edges: "+str(len(planar_random.edges())))
@@ -244,6 +243,7 @@ if DO_TEST_ALGO:
 	logging.debug("Size of minimum triangulation "+str(triangulation_mt["size"]))
 	print("ok")
 
+	'''
 	# ===== Approximative Minimum Triangulation =====
 	logging.info("===== TEST APPROX MINIMUM TRIANGULATION =====")
 	print("TEST APPROX MINIMUM TRIANGULATION")
@@ -257,3 +257,4 @@ if DO_TEST_ALGO:
 	triangulation_ramt = RAMT.triangulate_RAMT(GRAPH_TEST.copy())
 	logging.debug("Size of rand. approx. for minimum triangulation "+str(triangulation_ramt["size"]))
 	print("ok")
+	'''
