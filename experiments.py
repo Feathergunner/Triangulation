@@ -172,6 +172,9 @@ def printhelp():
 	print("Basic Usage:")
 	print("\t mode=buildall : builds a set of random graphs using the specifications in global_settings.py")
 	print("\t mode=evalall : evaluates all algorithms (with additional parameters as specified in global_settings.py) on all existing graphs")
+	print()
+	print("The data of the constructed graphs is written to the subdirectory data/eval/random_[graphclass]/input")
+	print("The data of the experimental results is written to the subdirectory data/eval/random_[graphclass]/results")
 
 if __name__ == "__main__":
 	
