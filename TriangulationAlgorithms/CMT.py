@@ -140,9 +140,16 @@ class Algorithm_CMT(ta.TriangulationAlgorithm):
 				if (u,x) in F_prime:
 					for e in [e for e in T[(u,x)] if v in e]:
 						T[(u,x)].discard(e)
+				# edges here are tuples, order is required for equality
+				if (x,u) in F_prime:
+					for e in [e for e in T[(x,u)] if v in e]:
+						T[(x,u)].discard(e)
 				if (v,x) in F_prime:
 					for e in [e for e in T[(v,x)] if u in e]:
 						T[(v,x)].discard(e)
+				if (x,v) in F_prime:
+					for e in [e for e in T[(x,v)] if u in e]:
+						T[(x,v)].discard(e)
 			F_prime.remove(edge_uv)
 			H.remove_edges_from([edge_uv])
 			edge_uv = self.get_removeable_edge(F_prime, T, randomized)
